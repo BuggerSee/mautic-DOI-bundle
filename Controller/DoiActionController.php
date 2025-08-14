@@ -97,7 +97,7 @@ class DoiActionController extends CommonFormController
         }
 
         $passthroughVars = [
-            'mauticContent' => 'formAction',
+            'mauticContent' => 'formDoiAction',
             'success'       => $success,
             'route'         => false,
         ];
@@ -224,7 +224,7 @@ class DoiActionController extends CommonFormController
             }
 
             $passthroughVars = [
-                'mauticContent' => 'formAction',
+                'mauticContent' => 'formDoiAction',
                 'success'       => $success,
                 'route'         => false,
             ];
@@ -297,7 +297,7 @@ class DoiActionController extends CommonFormController
             }
 
             $dataArray = [
-                'mauticContent' => 'formAction',
+                'mauticContent' => 'formDoiAction',
                 'success'       => 1,
                 'route'         => false,
             ];
