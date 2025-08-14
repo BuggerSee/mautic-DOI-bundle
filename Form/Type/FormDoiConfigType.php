@@ -8,7 +8,9 @@ use Mautic\EmailBundle\Form\Type\EmailListType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Url;
 
 class FormDoiConfigType extends AbstractType
 {
@@ -26,10 +28,10 @@ class FormDoiConfigType extends AbstractType
                     'class' => 'form-control',
                     'tooltip' => 'mautic.plugin.doi.form.field.verification_email.tooltip',
                 ],
-                'validation_groups' => ['doi_config'],
                 'constraints'       => [
                     new NotBlank([
                         'message' => 'mautic.core.value.required',
+                        'groups' => ['doi_config'],
                     ]),
                 ],
             ])
@@ -52,6 +54,12 @@ class FormDoiConfigType extends AbstractType
                     'class' => 'form-control',
                     'tooltip' => 'mautic.plugin.doi.form.field.success_redirect_url.tooltip',
                 ],
+                'constraints' => [
+                    new Url([
+                        'message' => 'mautic.core.value.url.invalid',
+                        'groups' => ['doi_config'],
+                    ]),
+                ],
             ])
             ->add('errorRedirectUrl', UrlType::class, [
                 'label' => 'mautic.plugin.doi.form.field.error_redirect_url',
@@ -61,6 +69,20 @@ class FormDoiConfigType extends AbstractType
                     'class' => 'form-control',
                     'tooltip' => 'mautic.plugin.doi.form.field.error_redirect_url.tooltip',
                 ],
+                'constraints' => [
+                    new Url([
+                        'message' => 'mautic.core.value.url.invalid',
+                        'groups' => ['doi_config'],
+                    ]),
+                ],
             ]);
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'validation_groups' => ['doi_config'],
+            'data_class' => null, // Allow array data
+        ]);
     }
 }

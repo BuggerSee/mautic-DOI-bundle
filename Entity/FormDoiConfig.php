@@ -48,18 +48,6 @@ class FormDoiConfig
         $this->updatedAt = new \DateTime();
     }
 
-    public static function loadValidatorMetadata(ClassMetadata $metadata): void
-    {
-        $metadata->addPropertyConstraint('form', new Assert\NotNull([
-            'message' => 'mautic.form.doi_config.form.required',
-            'groups'  => ['doi_config'],
-        ]));
-        $metadata->addPropertyConstraint('verificationEmail', new Assert\NotNull([
-            'message' => 'mautic.form.doi_config.verification_email.required',
-            'groups'  => ['doi_config'],
-        ]));
-    }
-
     public function getId(): ?int
     {
         return $this->id;
