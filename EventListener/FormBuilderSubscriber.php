@@ -7,14 +7,15 @@ namespace MauticPlugin\MauticDoiBundle\EventListener;
 use Mautic\FormBundle\Event\FormEvent;
 use Mautic\FormBundle\FormEvents;
 use MauticPlugin\MauticDoiBundle\Model\FormDoiActionManager;
+use MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 class FormBuilderSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private SessionInterface $session,
-        private FormDoiActionManager $formDoiActionManager
+        private FormDoiActionManager $formDoiActionManager,
+        private FormDoiActionSessionManager $formDoiActionSessionManager
     ){
     }
 
@@ -29,7 +30,7 @@ class FormBuilderSubscriber implements EventSubscriberInterface
     {
         $form = $event->getForm();
         $formId = $form->getId();
-        $actions = $this->session->get('mautic.form.' . $formId . '.actions.doi_verified.modified');
+        $actions = $this->formDoiActionSessionManager->getActionsFromSession($formId);
         if (!empty($actions)) {
             $this->formDoiActionManager->saveActions($form, $actions);
         }

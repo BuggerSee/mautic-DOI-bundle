@@ -6,6 +6,7 @@ use Mautic\CoreBundle\Controller\FormController as CommonFormController;
 use Mautic\FormBundle\Form\Type\ActionType;
 use Mautic\FormBundle\Model\FormModel;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
+use MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,12 +18,11 @@ class DoiActionController extends CommonFormController
      *
      * @return Response
      */
-    public function newAction(Request $request)
+    public function newAction(Request $request, FormDoiActionSessionManager $formDoiActionSessionManager)
     {
         $success = 0;
         $valid   = $cancelled   = false;
         $method  = $request->getMethod();
-        $session = $request->getSession();
 
         if ('POST' == $method) {
             $formAction = $request->request->all()['formaction'] ?? [];
@@ -66,8 +66,6 @@ class DoiActionController extends CommonFormController
                     // form is valid so process the data
                     $keyId = 'new'.hash('sha1', uniqid(mt_rand()));
 
-                    // save the properties to session
-                    $actions          = $session->get('mautic.form.'.$formId.'.actions.doi_verified.modified', []);
                     $formData         = $form->getData();
                     $formAction       = array_merge($formAction, $formData);
                     $formAction['id'] = $keyId;
@@ -75,8 +73,7 @@ class DoiActionController extends CommonFormController
                         // set it to the event default
                         $formAction['name'] = $this->translator->trans($formAction['settings']['label']);
                     }
-                    $actions[$keyId] = $formAction;
-                    $session->set('mautic.form.'.$formId.'.actions.doi_verified.modified', $actions);
+                    $formDoiActionSessionManager->updateActionInSession($formId, $keyId, $formAction);
                 } else {
                     $success = 0;
                 }
@@ -143,13 +140,12 @@ class DoiActionController extends CommonFormController
      *
      * @return Response
      */
-    public function editAction(Request $request, $objectId)
+    public function editAction(Request $request, $objectId, FormDoiActionSessionManager $formDoiActionSessionManager)
     {
-        $session    = $request->getSession();
         $method     = $request->getMethod();
         $formaction = $request->request->get('formaction') ?? [];
         $formId     = 'POST' === $method ? ($formaction['formId'] ?? '') : $request->query->get('formId');
-        $actions    = $session->get('mautic.form.'.$formId.'.actions.doi_verified.modified', []);
+        $actions    = $formDoiActionSessionManager->getActionsFromSession($formId);
         $success    = 0;
         $valid      = $cancelled      = false;
         $formAction = array_key_exists($objectId, $actions) ? $actions[$objectId] : null;
@@ -183,10 +179,6 @@ class DoiActionController extends CommonFormController
                         $success = 1;
 
                         // form is valid so process the data
-
-                        // save the properties to session
-                        $session  = $request->getSession();
-                        $actions  = $session->get('mautic.form.'.$formId.'.actions.doi_verified.modified');
                         $formData = $form->getData();
                         // overwrite with updated data
                         $formAction = array_merge($actions[$objectId], $formData);
@@ -194,24 +186,23 @@ class DoiActionController extends CommonFormController
                             // set it to the event default
                             $formAction['name'] = $this->translator->trans($formAction['settings']['label']);
                         }
-                        $actions[$objectId] = $formAction;
-                        $session->set('mautic.form.'.$formId.'.actions.doi_verified.modified', $actions);
+                        $formDoiActionSessionManager->updateActionInSession($formId, $objectId, $formAction);
 
                         // generate HTML for the field
                         $keyId = $objectId;
 
                         // take note if this is a submit button or not
                         if ('button' == $actionType) {
-                            $submits = $session->get('mautic.formactions.submits', []);
+                            $submits = $request->getSession()->get('mautic.formactions.submits', []);
                             if ('submit' == $formAction['properties']['type'] && !in_array($keyId, $submits)) {
                                 // button type updated to submit
                                 $submits[] = $keyId;
-                                $session->set('mautic.formactions.submits', $submits);
+                                $request->getSession()->set('mautic.formactions.submits', $submits);
                             } elseif ('submit' != $formAction['properties']['type'] && in_array($keyId, $submits)) {
                                 // button type updated to something other than submit
                                 $key = array_search($keyId, $submits);
                                 unset($submits[$key]);
-                                $session->set('mautic.formactions.submits', $submits);
+                                $request->getSession()->set('mautic.formactions.submits', $submits);
                             }
                         }
                     }
@@ -277,12 +268,10 @@ class DoiActionController extends CommonFormController
      *
      * @return JsonResponse
      */
-    public function deleteAction(Request $request, $objectId)
+    public function deleteAction(Request $request, $objectId, FormDoiActionSessionManager $formDoiActionSessionManager)
     {
-        $session = $request->getSession();
         $formId  = $request->query->get('formId');
-        $actions = $session->get('mautic.form.'.$formId.'.actions.doi_verified.modified', []);
-        $delete  = $session->get('mautic.form.'.$formId.'.actions.doi_verified.deleted', []);
+        $actions = $formDoiActionSessionManager->getActionsFromSession($formId);
 
         // ajax only for form fields
         if (!$request->isXmlHttpRequest()
@@ -293,20 +282,17 @@ class DoiActionController extends CommonFormController
 
         $formAction = (array_key_exists($objectId, $actions)) ? $actions[$objectId] : null;
         if ('POST' == $request->getMethod() && null !== $formAction) {
-            // add the field to the delete list
-            if (!in_array($objectId, $delete)) {
-                $delete[] = $objectId;
-                $session->set('mautic.form.'.$formId.'.actions.doi_verified.deleted', $delete);
-            }
+            // Remove the action from the session
+            $formDoiActionSessionManager->removeActionFromSession($formId, $objectId);
 
             // take note if this is a submit button or not
             if ('button' == $formAction['type']) {
-                $submits    = $session->get('mautic.formactions.submits', []);
+                $submits    = $request->getSession()->get('mautic.formactions.submits', []);
                 $properties = $formAction['properties'];
                 if ('submit' == $properties['type'] && in_array($objectId, $submits)) {
                     $key = array_search($objectId, $submits);
                     unset($submits[$key]);
-                    $session->set('mautic.formactions.submits', $submits);
+                    $request->getSession()->set('mautic.formactions.submits', $submits);
                 }
             }
 

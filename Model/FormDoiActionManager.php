@@ -17,6 +17,14 @@ class FormDoiActionManager
         $this->entityManager = $entityManager;
     }
 
+    public function getFormDoiActions(Form $form): array
+    {
+        $actions = $this->entityManager->getRepository(FormDoiAction::class)
+            ->findBy(['form' => $form], ['order' => 'ASC']);
+
+        return array_map(fn(FormDoiAction $action) => $action->convertToArray(), $actions);
+    }
+
     public function saveActions(Form $form, array $actions): void
     {
         // Remove existing actions
