@@ -5,8 +5,6 @@ namespace MauticPlugin\MauticDoiBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\EmailBundle\Entity\Email;
-use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Mapping\ClassMetadata;
 
 #[ORM\Entity(repositoryClass: FormDoiConfigRepository::class)]
 #[ORM\Table(name: 'form_doi_config')]
@@ -23,7 +21,7 @@ class FormDoiConfig
     private ?Form $form = null;
 
     #[ORM\ManyToOne(targetEntity: Email::class)]
-    #[ORM\JoinColumn(name: 'verification_email_id', referencedColumnName: 'id', nullable: false, onDelete: 'RESTRICT')]
+    #[ORM\JoinColumn(name: 'verification_email_id', referencedColumnName: 'id', nullable: true, onDelete: 'RESTRICT')]
     private ?Email $verificationEmail = null;
 
     #[ORM\ManyToOne(targetEntity: Email::class)]
@@ -41,6 +39,9 @@ class FormDoiConfig
 
     #[ORM\Column(type: 'datetime')]
     private \DateTime $updatedAt;
+
+    #[ORM\Column(type: 'boolean')]
+    private bool $enabled = false;
 
     public function __construct()
     {
@@ -64,7 +65,7 @@ class FormDoiConfig
         return $this->form;
     }
 
-    public function setVerificationEmail(Email $email): self
+    public function setVerificationEmail(?Email $email): self
     {
         $this->verificationEmail = $email;
         return $this;
@@ -128,6 +129,17 @@ class FormDoiConfig
     public function getUpdatedAt(): \DateTime
     {
         return $this->updatedAt;
+    }
+
+    public function setEnabled(bool $enabled): self
+    {
+        $this->enabled = $enabled;
+        return $this;
+    }
+
+    public function isEnabled(): bool
+    {
+        return $this->enabled;
     }
 
     public function convertToArray(): array

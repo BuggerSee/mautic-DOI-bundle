@@ -239,15 +239,23 @@ Variables
                             </div>
                         </div>
                         <div class="tab-pane fade bdr-w-0" id="doi-container">
-                            <h3 class="mt-md mb-md">{{ 'mautic.plugin.doi.form.tab.doi.header'|trans }}</h3>
                             <div class="row">
                                 <div class="col-md-6">
-                                    {% if form.doiConfig is defined %}
-                                        {{ form_row(form.doiConfig.verificationEmailId) }}
-                                        {{ form_row(form.doiConfig.followUpEmailId) }}
-                                        {{ form_row(form.doiConfig.successRedirectUrl) }}
-                                        {{ form_row(form.doiConfig.errorRedirectUrl) }}
-                                    {% endif %}
+                                    <h3 class="mt-md mb-md">{{ 'mautic.plugin.doi.form.tab.doi.header'|trans }}</h3>
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form_row(form.doiConfig.enabled) }}
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form_row(form.doiConfig.verificationEmailId) }}
+                                    {{ form_row(form.doiConfig.successRedirectUrl) }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form_row(form.doiConfig.followUpEmailId) }}
+                                    {{ form_row(form.doiConfig.errorRedirectUrl) }}
                                 </div>
                             </div>
                         </div>

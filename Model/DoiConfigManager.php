@@ -35,6 +35,8 @@ class DoiConfigManager
             if ($verificationEmail) {
                 $doiConfig->setVerificationEmail($verificationEmail);
             }
+        } else {
+            $doiConfig->setVerificationEmail(null);
         }
 
         if (!empty($formData['followUpEmailId'])) {
@@ -46,6 +48,7 @@ class DoiConfigManager
 
         $doiConfig->setSuccessRedirectUrl($formData['successRedirectUrl'] ?? null);
         $doiConfig->setErrorRedirectUrl($formData['errorRedirectUrl'] ?? null);
+        $doiConfig->setEnabled((bool) $formData['enabled'] ?? false);
 
         $doiConfig->setForm($form);
         $doiConfig->setUpdatedAt(new \DateTime());

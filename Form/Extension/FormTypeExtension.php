@@ -39,6 +39,7 @@ class FormTypeExtension extends AbstractTypeExtension {
             'followUpEmailId' => $doiConfig->getFollowUpEmail()?->getId(),
             'successRedirectUrl' => $doiConfig->getSuccessRedirectUrl(),
             'errorRedirectUrl' => $doiConfig->getErrorRedirectUrl(),
+            'enabled' => $doiConfig->isEnabled(),
         ];
 
         // Add DOI config fields with ID data
