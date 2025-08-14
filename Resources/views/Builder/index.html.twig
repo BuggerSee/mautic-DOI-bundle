@@ -130,6 +130,7 @@ Variables
                         </div>
                         <div class="tab-pane fade bdr-w-0" id="actions-container">
                             <div id="mauticforms_actions">
+                                <h3 class="mt-md mb-md">{{ 'mautic.plugin.doi.form.add_action.immediately.header'|trans }}</h3>
                                 <div class="row">
                                     <div class="available-actions mb-md col-sm-4">
                                         <select class="chosen form-builder-new-component" data-placeholder="{{ 'mautic.form.form.component.submitactions'|trans }}">
@@ -175,6 +176,58 @@ Variables
                                     {% endfor %}
                                 </div>
                                 {% if 0 == formActions|length %}
+                                    <div class="alert alert-info" id="form-action-placeholder">
+                                        <p>{{ 'mautic.form.form.addaction'|trans }}</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div id="mauticforms-doi-verified-actions">
+                                <h3 class="mt-md mb-md">{{ 'mautic.plugin.doi.form.add_action.doi_verified.header'|trans }}</h3>
+                                <div class="row">
+                                    <div class="available-actions mb-md col-sm-4">
+                                        <select class="chosen form-builder-new-component" data-placeholder="{{ 'mautic.form.form.component.submitactions'|trans }}">
+                                            <option value=""></option>
+                                            {% for group, groupActions in actions %}
+                                                {% set campaignActionFound = false %}
+                                                {% for k, e in groupActions %}
+                                                    {% if e.allowCampaignForm is defined and e.allowCampaignForm is not empty %}
+                                                        {% set campaignActionFound = true %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% set class = campaignActionFound is empty ? 'action-standalone-only' : '' %}
+                                                {% if not campaignActionFound and not activeForm.isStandalone %}
+                                                    {% set class = class ~ ' hide' %}
+                                                {% endif %}
+                                                <optgroup class="{{ class }}" label="{{ group|trans }}"></optgroup>
+                                                {% for k, e in groupActions %}
+                                                    {{ include('@MauticDoi/Action/_option.html.twig', {
+                                                        'action': e,
+                                                        'type': k,
+                                                        'isStandalone': activeForm.isStandalone,
+                                                        'formId': form['sessionId'].vars['data'],
+                                                    }, with_context=false) }}
+                                                {% endfor %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                {% if formDoiActions is defined and formDoiActions is not empty %}
+                                    <div class="drop-here">
+                                        {% for action in formDoiActions %}
+                                            {% set template = actionSettings[action.type].template|default('@MauticDoi/Action/_generic.html.twig') %}
+                                            {% set action = action|merge({
+                                                'settings': actionSettings[action.type],
+                                            }) %}
+                                            {{ include(template, {
+                                                'action': action,
+                                                'inForm': true,
+                                                'id': action.id,
+                                                'formId': formId,
+                                            }, with_context=false) }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
                                     <div class="alert alert-info" id="form-action-placeholder">
                                         <p>{{ 'mautic.form.form.addaction'|trans }}</p>
                                     </div>
