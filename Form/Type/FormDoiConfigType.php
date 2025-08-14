@@ -8,6 +8,7 @@ use Mautic\EmailBundle\Form\Type\EmailListType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 class FormDoiConfigType extends AbstractType
 {
@@ -26,6 +27,11 @@ class FormDoiConfigType extends AbstractType
                     'tooltip' => 'mautic.plugin.doi.form.field.verification_email.tooltip',
                 ],
                 'validation_groups' => ['doi_config'],
+                'constraints'       => [
+                    new NotBlank([
+                        'message' => 'mautic.core.value.required',
+                    ]),
+                ],
             ])
             ->add('followUpEmailId', EmailListType::class, [
                 'label' => 'mautic.plugin.doi.form.field.followup_email',

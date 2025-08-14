@@ -34,13 +34,15 @@ class FormBuilderTemplateSubscriber implements EventSubscriberInterface
             /** @var Form $form */
             $form = $vars['activeForm'];
 
-            $formDoiActions = $this->formDoiActionManager->getFormDoiActions($form);
-            $this->formDoiActionSessionManager->loadActionsIntoSession($form->getId(), $formDoiActions);
+            if ($form->getId()) {
+                $formDoiActions = $this->formDoiActionManager->getFormDoiActions($form);
+                $this->formDoiActionSessionManager->loadActionsIntoSession($form->getId(), $formDoiActions);
 
-            // Add FormDoiActions to template variables
-            $vars['formDoiActions'] = $formDoiActions;
+                // Add FormDoiActions to template variables
+                $vars['formDoiActions'] = $formDoiActions;
+                $event->setVars($vars);
+            }
 
-            $event->setVars($vars);
             $event->setTemplate('@MauticDoi/Builder/index.html.twig');
         }
     }

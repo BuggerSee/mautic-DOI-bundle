@@ -13,13 +13,12 @@ use Symfony\Component\Form\FormEvents;
 
 class FormTypeExtension extends AbstractTypeExtension {
     public function __construct(
-        private DoiConfigManager $doiConfigService
+        private DoiConfigManager $doiConfigManager
     ) {}
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder->addEventListener(FormEvents::PRE_SET_DATA, [$this, 'onPreSetData']);
-        $builder->addEventListener(FormEvents::POST_SUBMIT, [$this, 'onPostSubmit']);
     }
 
     public function onPreSetData(FormEvent $event): void
@@ -27,12 +26,12 @@ class FormTypeExtension extends AbstractTypeExtension {
         $form = $event->getForm();
         $entity = $event->getData();
 
-        if (!$entity || !$entity->getId()) {
-            return;
-        }
-
         // Load existing DOI config
-        $doiConfig = $this->doiConfigService->getFormDoiConfig($entity) ?? new FormDoiConfig();
+        if (!$entity->getId()) {
+            $doiConfig = new FormDoiConfig();
+        } else {
+            $doiConfig = $this->doiConfigManager->getFormDoiConfig($entity) ?? new FormDoiConfig();
+        }
 
         // Convert entities to IDs for the form
         $formData = [
@@ -47,21 +46,6 @@ class FormTypeExtension extends AbstractTypeExtension {
             'data' => $formData,
             'mapped' => false,
         ]);
-    }
-
-    public function onPostSubmit(FormEvent $event): void
-    {
-        $form = $event->getForm();
-        $entity = $event->getData();
-
-        if (!$form->has('doiConfig') || !$form->get('doiConfig')->isValid()) {
-            return;
-        }
-
-        $formData = $form->get('doiConfig')->getData();
-
-        // Convert the form data (IDs) back to a proper FormDoiConfig entity
-        $this->doiConfigService->saveFormDoiConfig($entity, $formData);
     }
 
     public static function getExtendedTypes(): iterable
