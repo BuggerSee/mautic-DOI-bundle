@@ -27,6 +27,7 @@ Variables
 {% endblock %}
 
 {% block content %}
+    {{ includeScript('plugins/MauticDoiBundle/Assets/js/form-doi.js') }}
     {% set formId = form.sessionId.vars.data %}
     {% set inBuilder = inBuilder|default(false) %}
     {% set fieldsTabError = false %}
@@ -182,7 +183,7 @@ Variables
                                 {% endif %}
                             </div>
 
-                            <div id="mauticforms-doi-verified-actions">
+                            <div id="mauticforms-doi-verified-actions" data-onload-callback="onFormDoiActionsBuilder">
                                 <h3 class="mt-md mb-md">{{ 'mautic.plugin.doi.form.add_action.doi_verified.header'|trans }}</h3>
                                 <div class="row">
                                     <div class="available-actions mb-md col-sm-4">
