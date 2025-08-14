@@ -7,52 +7,54 @@ namespace MauticPlugin\MauticDoiBundle\Model;
 use Doctrine\ORM\EntityManagerInterface;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
 use Mautic\FormBundle\Entity\Form;
+use MauticPlugin\MauticDoiBundle\Entity\FormDoiActionRepository;
 
 class FormDoiActionManager
 {
-    private EntityManagerInterface $entityManager;
-
-    public function __construct(EntityManagerInterface $entityManager)
-    {
-        $this->entityManager = $entityManager;
-    }
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private FormDoiActionRepository $formDoiActionRepository
+    ) {}
 
     public function getFormDoiActions(Form $form): array
     {
-        $actions = $this->entityManager->getRepository(FormDoiAction::class)
-            ->findBy(['form' => $form], ['order' => 'ASC']);
-
+        $actions = $this->formDoiActionRepository->findBy(['form' => $form], ['order' => 'ASC']);
         return array_map(fn(FormDoiAction $action) => $action->convertToArray(), $actions);
     }
 
-    public function saveActions(Form $form, array $actions): void
+    public function saveActions(Form $form, array $newActions): void
     {
-        // Remove existing actions
-        $this->deleteExistingActions($form);
+        $existingActions = $this->formDoiActionRepository->findBy(['form' => $form]);
+        $existingActionMap = [];
+        foreach ($existingActions as $action) {
+            $existingActionMap[$action->getId()] = $action;
+        }
 
-        // Save new actions
-        foreach ($actions as $action) {
-            $actionDoi = new FormDoiAction();
-            $actionDoi->setForm($form);
-            $actionDoi->setName($action['name']);
-            $actionDoi->setDescription($action['description']);
-            $actionDoi->setType($action['type']);
-            $actionDoi->setProperties($action['properties']);
-            $actionDoi->setOrder($action['order'] ?? 0);
+        foreach ($newActions as $newAction) {
+            if (isset($newAction['id']) && isset($existingActionMap[$newAction['id']])) {
+                // Update existing action
+                $action = $existingActionMap[$newAction['id']];
+                unset($existingActionMap[$newAction['id']]);
+            } else {
+                // Create new action
+                $action = new FormDoiAction();
+                $action->setForm($form);
+            }
 
-            $this->entityManager->persist($actionDoi);
+            $action->setName($newAction['name']);
+            $action->setDescription($newAction['description']);
+            $action->setType($newAction['type']);
+            $action->setProperties($newAction['properties']);
+            $action->setOrder($newAction['order'] ?? 0);
+
+            $this->entityManager->persist($action);
+        }
+
+        // Remove actions that are no longer present
+        foreach ($existingActionMap as $actionToRemove) {
+            $this->entityManager->remove($actionToRemove);
         }
 
         $this->entityManager->flush();
-    }
-
-    private function deleteExistingActions(Form $form): void
-    {
-        $this->entityManager->createQueryBuilder()
-            ->delete(FormDoiAction::class, 'a')
-            ->where('a.form = :form')
-            ->setParameter('form', $form)
-            ->getQuery()
-            ->execute();
     }
 }
