@@ -21,4 +21,7 @@ return function (ContainerConfigurator $configurator): void {
 
     $services->load('MauticPlugin\\MauticDoiBundle\\', '../')
         ->exclude('../{'.implode(',', array_merge(MauticCoreExtension::DEFAULT_EXCLUDES, $excludes)).'}');
+
+    $services->set('mautic.plugin.doi.model.doi_config_manager', \MauticPlugin\MauticDoiBundle\Model\DoiConfigManager::class)
+        ->public();
 };

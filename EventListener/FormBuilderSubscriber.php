@@ -39,6 +39,10 @@ class FormBuilderSubscriber implements EventSubscriberInterface
         $request = $this->requestStack->getCurrentRequest();
         $mauticForm = $request->request->all('mauticform');
 
+        if (empty($mauticForm)) {
+            return;
+        }
+
         $sessionId = $mauticForm[self::SESSION_ID_KEY] ?? '';
         $doiConfig = $mauticForm[self::DOI_CONFIG_KEY] ?? [];
 

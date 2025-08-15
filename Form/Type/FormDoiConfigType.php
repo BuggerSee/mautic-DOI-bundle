@@ -39,7 +39,7 @@ class FormDoiConfigType extends AbstractType
                 ],
                 'constraints' => [
                     new NotBlank([
-                        'message' => 'mautic.core.value.required',
+                        'message' => 'mautic.plugin.doi.form.field.verification_email.required',
                         'groups' => ['doi_enabled'],
                     ]),
                 ],
