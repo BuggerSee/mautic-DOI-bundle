@@ -5,8 +5,10 @@ namespace MauticPlugin\MauticDoiBundle\Tests\Controller;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\EmailBundle\Entity\Email;
 use Mautic\FormBundle\Entity\Form;
+use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\MauticDoiBundle\Model\DoiConfigManager;
+use Symfony\Component\DomCrawler\Crawler;
 
 class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 {
@@ -231,6 +233,265 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
 
         return $form;
+    }
+
+    public function testSaveFormWithDoiActions(): void
+    {
+        $form = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
+        $verificationEmail = $this->createEmail('DOI Verification Email');
+        $sessionId = $form->getId();
+
+        $this->submitNewDoiActionForm($sessionId);
+        $this->assertDoiActionInSession($sessionId);
+
+        $sessionData = $this->storeSessionData();
+
+        // Get the form edit page
+        $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        $this->restoreSessionData($sessionData);
+
+        $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
+
+        // Now submit the main form with DOI config, including sessionId
+        $formElement->setValues([
+            'mauticform[doiConfig][enabled]' => '1',
+            'mauticform[doiConfig][verificationEmailId]' => $verificationEmail->getId(),
+            'mauticform[sessionId]' => $sessionId,
+        ]);
+
+        $this->client->submit($formElement);
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        // Verify DOI action is persisted in database
+        $doiActionRepository = $this->em->getRepository(FormDoiAction::class);
+        $savedActions = $doiActionRepository->findBy(['form' => $form]);
+        $this->assertCount(1, $savedActions);
+
+        $savedAction = $savedActions[0];
+        $this->assertEquals('form.email', $savedAction->getType());
+        $this->assertEquals('Test email subject', $savedAction->getProperties()['subject']);
+        $this->assertEquals('Test email message', $savedAction->getProperties()['message']);
+    }
+
+    public function testEditFormDoiAction(): void
+    {
+        $form = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
+        $verificationEmail = $this->createEmail('DOI Verification Email');
+        $sessionId = $form->getId();
+
+        // Create initial action
+        $this->submitNewDoiActionForm($sessionId);
+        $this->assertDoiActionInSession($sessionId);
+
+        $sessionData = $this->storeSessionData();
+
+        // Get the form edit page
+        $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        $this->restoreSessionData($sessionData);
+
+        $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
+
+        // Now submit the main form with DOI config, including sessionId
+        $formElement->setValues([
+            'mauticform[doiConfig][enabled]' => '1',
+            'mauticform[doiConfig][verificationEmailId]' => $verificationEmail->getId()
+        ]);
+
+        $this->client->submit($formElement);
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        $doiActionRepository = $this->em->getRepository(FormDoiAction::class);
+        $savedActions = $doiActionRepository->findBy(['form' => $form]);
+        $this->assertCount(1, $savedActions);
+        $doiAction = $savedActions[0];
+
+        $this->submitEditDoiActionForm($sessionId, $doiAction->getId());
+
+        $this->assertDoiActionInSession($sessionId);
+
+        $sessionData = $this->storeSessionData();
+
+        // Get the form edit page
+        $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        $this->restoreSessionData($sessionData);
+
+        $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
+
+        // Now submit the main form with DOI config, including sessionId
+        $formElement->setValues([
+            'mauticform[doiConfig][enabled]' => '1',
+            'mauticform[doiConfig][verificationEmailId]' => $verificationEmail->getId()
+        ]);
+
+        $this->client->submit($formElement);
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        // Verify the action was updated
+        $updatedAction = $doiActionRepository->find($doiAction->getId());
+        $this->assertEquals('Updated DOI Email Action', $updatedAction->getName());
+        $this->assertEquals('Updated action description', $updatedAction->getDescription());
+        $this->assertEquals('Updated email subject', $updatedAction->getProperties()['subject']);
+        $this->assertEquals('Updated email message', $updatedAction->getProperties()['message']);
+    }
+
+    public function testRemoveFormDoiAction(): void
+    {
+        $form = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
+        $verificationEmail = $this->createEmail('DOI Verification Email');
+        $sessionId = $form->getId();
+
+        // Create initial action
+        $this->submitNewDoiActionForm($sessionId);
+        $this->assertDoiActionInSession($sessionId);
+
+        $sessionData = $this->storeSessionData();
+
+        // Get the form edit page
+        $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        $this->restoreSessionData($sessionData);
+
+        $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
+
+        // Submit the main form with DOI config, including sessionId
+        $formElement->setValues([
+            'mauticform[doiConfig][enabled]' => '1',
+            'mauticform[doiConfig][verificationEmailId]' => $verificationEmail->getId(),
+            'mauticform[sessionId]' => $sessionId,
+        ]);
+
+        $this->client->submit($formElement);
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        // Verify DOI action is persisted in database
+        $doiActionRepository = $this->em->getRepository(FormDoiAction::class);
+        $savedActions = $doiActionRepository->findBy(['form' => $form]);
+        $this->assertCount(1, $savedActions);
+        $doiAction = $savedActions[0];
+
+        // Remove the DOI action
+        $this->client->request(
+            'POST',
+            sprintf('/s/forms-doi/action/delete/%d?formId=%d', $doiAction->getId(), $form->getId()),
+            [],
+            [],
+            $this->createAjaxHeaders()
+        );
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        // Verify the action was removed from the session
+        $this->assertDoiActionNotInSession($sessionId);
+
+        // Save the form again to persist changes
+        $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
+        $formElement->setValues([
+            'mauticform[doiConfig][enabled]' => '1',
+            'mauticform[doiConfig][verificationEmailId]' => $verificationEmail->getId(),
+            'mauticform[sessionId]' => $sessionId,
+        ]);
+
+        $this->client->submit($formElement);
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        // Verify the action was removed from the database
+        $remainingActions = $doiActionRepository->findBy(['form' => $form]);
+        $this->assertCount(0, $remainingActions, 'DOI action should be removed from the database');
+    }
+
+    private function submitNewDoiActionForm(string $sessionId): void
+    {
+        $this->client->request(
+            'GET',
+            '/s/forms-doi/action/new',
+            [
+                'formId' => $sessionId,
+                'type'   => 'form.email',
+            ],
+            [],
+            $this->createAjaxHeaders()
+        );
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        $content = json_decode($this->client->getResponse()->getContent())->newContent;
+        $crawler = new Crawler($content, $this->client->getInternalRequest()->getUri());
+        $actionForm = $crawler->filter('form')->form();
+
+        $actionForm->setValues([
+            'formaction[properties][subject]' => 'Test email subject',
+            'formaction[properties][message]' => 'Test email message',
+            'formaction[name]' => 'Test DOI Email Action',
+            'formaction[description]' => 'Test action description',
+            'formaction[type]' => 'form.email',
+            'formaction[formId]' => $sessionId,
+        ]);
+        $this->client->submit($actionForm, [], $this->createAjaxHeaders());
+        $this->assertTrue($this->client->getResponse()->isOk());
+    }
+
+    private function submitEditDoiActionForm(string $sessionId, int $doiActionId): void
+    {
+        $this->client->request(
+            'GET',
+            sprintf('/s/forms-doi/action/edit/%d', $doiActionId),
+            [
+                'formId' => $sessionId,
+                'type'   => 'form.email',
+            ],
+            [],
+            $this->createAjaxHeaders()
+        );
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        $content = json_decode($this->client->getResponse()->getContent())->newContent;
+        $crawler = new Crawler($content, $this->client->getInternalRequest()->getUri());
+        $actionForm = $crawler->filter('form')->form();
+
+        $actionForm->setValues([
+            'formaction[properties][subject]' => 'Updated email subject',
+            'formaction[properties][message]' => 'Updated email message',
+            'formaction[name]' => 'Updated DOI Email Action',
+            'formaction[description]' => 'Updated action description',
+            'formaction[type]' => 'form.email',
+            'formaction[formId]' => $sessionId,
+        ]);
+        $this->client->submit($actionForm, [], $this->createAjaxHeaders());
+        $this->assertTrue($this->client->getResponse()->isOk());
+    }
+
+    private function assertDoiActionNotInSession(string $sessionId): void
+    {
+        $sessionManager = $this->getContainer()->get('MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager');
+        $actionsInSession = $sessionManager->getActionsFromSession($sessionId);
+        $this->assertEmpty($actionsInSession, 'Actions should not be in session');
+    }
+
+    private function assertDoiActionInSession(string $sessionId): void
+    {
+        $sessionManager = $this->getContainer()->get('MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager');
+        $actionsInSession = $sessionManager->getActionsFromSession($sessionId);
+        $this->assertNotEmpty($actionsInSession, 'Actions should be in session');
+    }
+
+    private function storeSessionData(): array
+    {
+        return $this->client->getRequest()->getSession()->all();
+    }
+
+    private function restoreSessionData(array $sessionData): void
+    {
+        foreach ($sessionData as $key => $value) {
+            $this->client->getRequest()->getSession()->set($key, $value);
+        }
     }
 
     private function createEmail(string $name): Email
