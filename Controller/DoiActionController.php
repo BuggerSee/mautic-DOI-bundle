@@ -2,7 +2,7 @@
 
 namespace MauticPlugin\MauticDoiBundle\Controller;
 
-use Mautic\CoreBundle\Controller\FormController as CommonFormController;
+use Mautic\CoreBundle\Controller\AbstractStandardFormController;
 use Mautic\FormBundle\Form\Type\ActionType;
 use Mautic\FormBundle\Model\FormModel;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
@@ -11,15 +11,13 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-/** @phpstan-ignore-next-line */
-class DoiActionController extends CommonFormController
+class DoiActionController extends AbstractStandardFormController
 {
-    /**
-     * Generates new form and processes post data.
-     *
-     * @return Response
-     */
-    public function newAction(Request $request, FormDoiActionSessionManager $formDoiActionSessionManager)
+
+    public function newAction(
+        Request $request,
+        FormDoiActionSessionManager $formDoiActionSessionManager,
+        FormModel $formModel): JsonResponse|Response
     {
         $success = 0;
         $valid   = $cancelled   = false;
@@ -47,8 +45,6 @@ class DoiActionController extends CommonFormController
         }
 
         // fire the form builder event
-        $formModel = $this->getModel('form.form');
-        \assert($formModel instanceof FormModel);
         $customComponents = $formModel->getCustomComponents();
         $form             = $this->formFactory->create(ActionType::class, $formAction, [
             'action'   => $this->generateUrl('mautic_doi_formaction_action', ['objectAction' => 'new']),
@@ -75,8 +71,6 @@ class DoiActionController extends CommonFormController
                         $formAction['name'] = $this->translator->trans($formAction['settings']['label']);
                     }
                     $formDoiActionSessionManager->updateActionInSession($formId, $keyId, $formAction);
-                } else {
-                    $success = 0;
                 }
             }
         }
@@ -134,14 +128,11 @@ class DoiActionController extends CommonFormController
         ]);
     }
 
-    /**
-     * Generates edit form and processes post data.
-     *
-     * @param int $objectId
-     *
-     * @return Response
-     */
-    public function editAction(Request $request, $objectId, FormDoiActionSessionManager $formDoiActionSessionManager)
+    public function editAction(
+        Request                     $request,
+        string                      $objectId,
+        FormDoiActionSessionManager $formDoiActionSessionManager,
+        FormModel                   $formModel): JsonResponse|Response
     {
         $method     = $request->getMethod();
         $formaction = $request->request->get('formaction') ?? [];
@@ -152,8 +143,6 @@ class DoiActionController extends CommonFormController
         $formAction = array_key_exists($objectId, $actions) ? $actions[$objectId] : null;
 
         if (null !== $formAction) {
-            $formModel = $this->getModel('form.form');
-            \assert($formModel instanceof FormModel);
             $actionType             = $formAction['type'];
             $customComponents       = $formModel->getCustomComponents();
             $formAction['settings'] = $customComponents['actions'][$actionType];
@@ -302,5 +291,10 @@ class DoiActionController extends CommonFormController
         }
 
         return new JsonResponse($dataArray);
+    }
+
+    protected function getModelName(): string
+    {
+        return 'MauticDoiBundle:DoiAction';
     }
 }
