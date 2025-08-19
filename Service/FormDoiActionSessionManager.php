@@ -16,6 +16,9 @@ class FormDoiActionSessionManager
         $this->session = $session;
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $actions
+     */
     public function loadActionsIntoSession(int|string $formId, array $actions): void
     {
         $modifiedActions = [];
@@ -28,16 +31,17 @@ class FormDoiActionSessionManager
         $this->session->set($this->getSessionKey($formId), $modifiedActions);
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getActionsFromSession(int|string $formId): array
     {
         return $this->session->get($this->getSessionKey($formId), []);
     }
 
-    public function removeActionsFromSession(int|string $formId): void
-    {
-        $this->session->remove($this->getSessionKey($formId));
-    }
-
+    /**
+     * @param array<string, mixed> $updatedAction
+     */
     public function updateActionInSession(int|string $formId, int|string $actionId, array $updatedAction): void
     {
         $actions = $this->getActionsFromSession($formId);
@@ -45,14 +49,7 @@ class FormDoiActionSessionManager
         $this->loadActionsIntoSession($formId, $actions);
     }
 
-    public function addActionToSession(int|string $formId, array $newAction): void
-    {
-        $actions = $this->getActionsFromSession($formId);
-        $actions[] = $newAction;
-        $this->loadActionsIntoSession($formId, $actions);
-    }
-
-    public function removeActionFromSession(int $formId, int|string $actionId): void
+    public function removeActionFromSession(int|string $formId, int|string $actionId): void
     {
         $actions = $this->getActionsFromSession($formId);
         unset($actions[$actionId]);

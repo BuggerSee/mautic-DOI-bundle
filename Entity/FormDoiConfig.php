@@ -142,6 +142,9 @@ class FormDoiConfig
         return $this->enabled;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function convertToArray(): array
     {
         return get_object_vars($this);

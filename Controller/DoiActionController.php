@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/** @phpstan-ignore-next-line */
 class DoiActionController extends CommonFormController
 {
     /**
@@ -64,7 +65,7 @@ class DoiActionController extends CommonFormController
                     $success = 1;
 
                     // form is valid so process the data
-                    $keyId = 'new'.hash('sha1', uniqid(mt_rand()));
+                    $keyId = 'new'.hash('sha1', uniqid((string)mt_rand()));
 
                     $formData         = $form->getData();
                     $formAction       = array_merge($formAction, $formData);
@@ -263,12 +264,7 @@ class DoiActionController extends CommonFormController
         return new JsonResponse(['success' => 0]);
     }
 
-    /**
-     * Deletes the entity.
-     *
-     * @return JsonResponse
-     */
-    public function deleteAction(Request $request, $objectId, FormDoiActionSessionManager $formDoiActionSessionManager)
+    public function deleteAction(Request $request, int $objectId, FormDoiActionSessionManager $formDoiActionSessionManager): JsonResponse
     {
         $formId  = $request->query->get('formId');
         $actions = $formDoiActionSessionManager->getActionsFromSession($formId);

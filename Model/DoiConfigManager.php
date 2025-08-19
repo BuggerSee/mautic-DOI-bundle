@@ -24,6 +24,9 @@ class DoiConfigManager
         return $this->repository->findOneBy(['form' => $form]);
     }
 
+    /**
+     * @param array<string, mixed> $formData
+     */
     public function saveFormDoiConfig(Form $form, array $formData): FormDoiConfig
     {
         // Get existing config or create new one
@@ -48,7 +51,7 @@ class DoiConfigManager
 
         $doiConfig->setSuccessRedirectUrl($formData['successRedirectUrl'] ?? null);
         $doiConfig->setErrorRedirectUrl($formData['errorRedirectUrl'] ?? null);
-        $doiConfig->setEnabled((bool) $formData['enabled'] ?? false);
+        $doiConfig->setEnabled((bool) $formData['enabled']);
 
         $doiConfig->setForm($form);
         $doiConfig->setUpdatedAt(new \DateTime());

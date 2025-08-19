@@ -16,12 +16,18 @@ class FormDoiActionManager
         private FormDoiActionRepository $formDoiActionRepository
     ) {}
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public function getFormDoiActions(Form $form): array
     {
         $actions = $this->formDoiActionRepository->findBy(['form' => $form], ['order' => 'ASC']);
         return array_map(fn(FormDoiAction $action) => $action->convertToArray(), $actions);
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $newActions
+     */
     public function saveActions(Form $form, array $newActions): void
     {
         $existingActions = $this->formDoiActionRepository->findBy(['form' => $form]);

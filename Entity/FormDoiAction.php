@@ -29,6 +29,9 @@ class FormDoiAction
     #[ORM\Column(name: 'action_order', type: 'integer')]
     private int $order = 0;
 
+    /**
+     * @var array<string, mixed>
+     */
     #[ORM\Column(type: 'array')]
     private array $properties = [];
 
@@ -60,12 +63,18 @@ class FormDoiAction
         return $this->order;
     }
 
+    /**
+     * @param array<string, mixed> $properties
+     */
     public function setProperties(array $properties): self
     {
         $this->properties = $properties;
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getProperties(): array
     {
         return $this->properties;
@@ -115,6 +124,9 @@ class FormDoiAction
         return $this->name;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function convertToArray(): array
     {
         return get_object_vars($this);
