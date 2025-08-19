@@ -53,9 +53,7 @@ class FormBuilderSubscriber implements EventSubscriberInterface
     private function handleSaveDoiActions(Form $form, string $sessionId): void
     {
         $actions = $this->formDoiActionSessionManager->getActionsFromSession($sessionId);
-        if (!empty($actions)) {
-            $this->formDoiActionManager->saveActions($form, $actions);
-        }
+        $this->formDoiActionManager->saveActions($form, $actions);
     }
     private function handleSaveDoiConfig(Form $form, array $doiConfigData = []): void
     {
