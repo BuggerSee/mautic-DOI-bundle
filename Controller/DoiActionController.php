@@ -7,6 +7,7 @@ use Mautic\FormBundle\Form\Type\ActionType;
 use Mautic\FormBundle\Model\FormModel;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
 use MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,7 +20,6 @@ class DoiActionController extends AbstractStandardFormController
         FormDoiActionSessionManager $formDoiActionSessionManager,
         FormModel $formModel): JsonResponse|Response
     {
-        $success = 0;
         $valid   = $cancelled   = false;
         $method  = $request->getMethod();
 
@@ -58,8 +58,6 @@ class DoiActionController extends AbstractStandardFormController
         if ('POST' == $method) {
             if (!$cancelled = $this->isFormCancelled($form)) {
                 if ($valid = $this->isFormValid($form)) {
-                    $success = 1;
-
                     // form is valid so process the data
                     $keyId = 'new'.hash('sha1', uniqid((string)mt_rand()));
 
@@ -75,25 +73,12 @@ class DoiActionController extends AbstractStandardFormController
             }
         }
 
-        $viewParams = ['type' => $actionType];
-
-        if ($cancelled || $valid) {
-            $closeModal = true;
-        } else {
-            $closeModal                 = false;
-            $viewParams['tmpl']         = 'action';
-            $viewParams['form']         = $form->createView();
-            $header                     = $formAction['settings']['label'];
-            $viewParams['actionHeader'] = $this->translator->trans($header);
-
-            if (isset($formAction['settings']['formTheme'])) {
-                $viewParams['formTheme'] = $formAction['settings']['formTheme'];
-            }
-        }
+        $result = $this->determineViewParamsAndModalClosure($actionType, $cancelled, $valid, $form, $formAction);
+        $viewParams = $result['viewParams'];
+        $closeModal = $result['closeModal'];
 
         $passthroughVars = [
             'mauticContent' => 'formDoiAction',
-            'success'       => $success,
             'route'         => false,
         ];
 
@@ -138,7 +123,6 @@ class DoiActionController extends AbstractStandardFormController
         $formaction = $request->request->get('formaction') ?? [];
         $formId     = 'POST' === $method ? ($formaction['formId'] ?? '') : $request->query->get('formId');
         $actions    = $formDoiActionSessionManager->getActionsFromSession($formId);
-        $success    = 0;
         $valid      = $cancelled      = false;
         $formAction = array_key_exists($objectId, $actions) ? $actions[$objectId] : null;
 
@@ -166,8 +150,6 @@ class DoiActionController extends AbstractStandardFormController
             if ('POST' == $method) {
                 if (!$cancelled = $this->isFormCancelled($form)) {
                     if ($valid = $this->isFormValid($form)) {
-                        $success = 1;
-
                         // form is valid so process the data
                         $formData = $form->getData();
                         // overwrite with updated data
@@ -199,23 +181,12 @@ class DoiActionController extends AbstractStandardFormController
                 }
             }
 
-            $viewParams = ['type' => $actionType];
-            if ($cancelled || $valid) {
-                $closeModal = true;
-            } else {
-                $closeModal                 = false;
-                $viewParams['tmpl']         = 'action';
-                $viewParams['form']         = $form->createView();
-                $viewParams['actionHeader'] = $this->translator->trans($formAction['settings']['label']);
-
-                if (isset($formAction['settings']['formTheme'])) {
-                    $viewParams['formTheme'] = $formAction['settings']['formTheme'];
-                }
-            }
+            $result = $this->determineViewParamsAndModalClosure($actionType, $cancelled, $valid, $form, $formAction);
+            $viewParams = $result['viewParams'];
+            $closeModal = $result['closeModal'];
 
             $passthroughVars = [
                 'mauticContent' => 'formDoiAction',
-                'success'       => $success,
                 'route'         => false,
             ];
 
@@ -249,14 +220,13 @@ class DoiActionController extends AbstractStandardFormController
                 'passthroughVars' => $passthroughVars,
             ]);
         }
-
-        return new JsonResponse(['success' => 0]);
     }
 
     public function deleteAction(Request $request, int $objectId, FormDoiActionSessionManager $formDoiActionSessionManager): JsonResponse
     {
         $formId  = $request->query->get('formId');
         $actions = $formDoiActionSessionManager->getActionsFromSession($formId);
+        $dataArray = [];
 
         // ajax only for form fields
         if (!$request->isXmlHttpRequest()
@@ -283,11 +253,8 @@ class DoiActionController extends AbstractStandardFormController
 
             $dataArray = [
                 'mauticContent' => 'formDoiAction',
-                'success'       => 1,
                 'route'         => false,
             ];
-        } else {
-            $dataArray = ['success' => 0];
         }
 
         return new JsonResponse($dataArray);
@@ -296,5 +263,28 @@ class DoiActionController extends AbstractStandardFormController
     protected function getModelName(): string
     {
         return 'MauticDoiBundle:DoiAction';
+    }
+
+    private function determineViewParamsAndModalClosure(string $actionType, bool $cancelled, bool $valid, FormInterface $form, array $formAction): array
+    {
+        $viewParams = ['type' => $actionType];
+        $closeModal = false;
+
+        if ($cancelled || $valid) {
+            $closeModal = true;
+        } else {
+            $viewParams['tmpl']         = 'action';
+            $viewParams['form']         = $form->createView();
+            $viewParams['actionHeader'] = $this->translator->trans($formAction['settings']['label']);
+
+            if (isset($formAction['settings']['formTheme'])) {
+                $viewParams['formTheme'] = $formAction['settings']['formTheme'];
+            }
+        }
+
+        return [
+            'viewParams' => $viewParams,
+            'closeModal' => $closeModal,
+        ];
     }
 }
