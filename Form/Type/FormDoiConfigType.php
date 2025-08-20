@@ -64,7 +64,7 @@ class FormDoiConfigType extends AbstractType
                 ],
                 'constraints' => [
                     new Url([
-                        'message' => 'mautic.core.value.url.invalid',
+                        'message' => 'mautic.core.valid_url_required',
                         'groups'  => ['doi_config'],
                     ]),
                 ],
@@ -79,7 +79,7 @@ class FormDoiConfigType extends AbstractType
                 ],
                 'constraints' => [
                     new Url([
-                        'message' => 'mautic.core.value.url.invalid',
+                        'message' => 'mautic.core.valid_url_required',
                         'groups'  => ['doi_config'],
                     ]),
                 ],
