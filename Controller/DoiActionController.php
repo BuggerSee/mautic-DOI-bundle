@@ -59,7 +59,7 @@ class DoiActionController extends AbstractStandardFormController
             if (!$cancelled = $this->isFormCancelled($form)) {
                 if ($valid = $this->isFormValid($form)) {
                     // form is valid so process the data
-                    $keyId = 'new'.hash('sha1', uniqid((string)mt_rand()));
+                    $keyId = 'new'.hash('sha1', uniqid((string) mt_rand()));
 
                     $formData         = $form->getData();
                     $formAction       = array_merge($formAction, $formData);
@@ -73,7 +73,7 @@ class DoiActionController extends AbstractStandardFormController
             }
         }
 
-        $result = $this->determineViewParamsAndModalClosure($actionType, $cancelled, $valid, $form, $formAction);
+        $result     = $this->determineViewParamsAndModalClosure($actionType, $cancelled, $valid, $form, $formAction);
         $viewParams = $result['viewParams'];
         $closeModal = $result['closeModal'];
 
@@ -114,10 +114,10 @@ class DoiActionController extends AbstractStandardFormController
     }
 
     public function editAction(
-        Request                     $request,
-        string                      $objectId,
+        Request $request,
+        string $objectId,
         FormDoiActionSessionManager $formDoiActionSessionManager,
-        FormModel                   $formModel): JsonResponse|Response
+        FormModel $formModel): JsonResponse|Response
     {
         $method     = $request->getMethod();
         $formaction = $request->request->get('formaction') ?? [];
@@ -181,7 +181,7 @@ class DoiActionController extends AbstractStandardFormController
                 }
             }
 
-            $result = $this->determineViewParamsAndModalClosure($actionType, $cancelled, $valid, $form, $formAction);
+            $result     = $this->determineViewParamsAndModalClosure($actionType, $cancelled, $valid, $form, $formAction);
             $viewParams = $result['viewParams'];
             $closeModal = $result['closeModal'];
 
@@ -224,8 +224,8 @@ class DoiActionController extends AbstractStandardFormController
 
     public function deleteAction(Request $request, int $objectId, FormDoiActionSessionManager $formDoiActionSessionManager): JsonResponse
     {
-        $formId  = $request->query->get('formId');
-        $actions = $formDoiActionSessionManager->getActionsFromSession($formId);
+        $formId    = $request->query->get('formId');
+        $actions   = $formDoiActionSessionManager->getActionsFromSession($formId);
         $dataArray = [];
 
         // ajax only for form fields
@@ -262,7 +262,7 @@ class DoiActionController extends AbstractStandardFormController
 
     protected function getModelName(): string
     {
-        return 'MauticDoiBundle:DoiAction';
+        return 'mautic.plugin.doi.doi_action_manager';
     }
 
     private function determineViewParamsAndModalClosure(string $actionType, bool $cancelled, bool $valid, FormInterface $form, array $formAction): array
