@@ -266,9 +266,9 @@ class DoiActionController extends AbstractStandardFormController
         return 'mautic.plugin.doi.doi_action_manager';
     }
 
-
     /**
      * @param array<string, mixed> $formAction
+     *
      * @return array<string, mixed>
      */
     private function determineViewParamsAndModalClosure(string $actionType, bool $cancelled, bool $valid, FormInterface $form, array $formAction): array
