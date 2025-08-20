@@ -89,7 +89,7 @@ class FormDoiConfigType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'validation_groups' => function (FormInterface $form) {
+            'validation_groups' => function (FormInterface $form): array {
                 $data   = $form->getData();
                 $groups = ['doi_config'];
 

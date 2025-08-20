@@ -9,11 +9,8 @@ class FormDoiActionSessionManager
     private const SESSION_KEY_PREFIX = 'mautic.form.';
     private const SESSION_KEY_SUFFIX = '.actions.doi_verified';
 
-    private SessionInterface $session;
-
-    public function __construct(SessionInterface $session)
+    public function __construct(private SessionInterface $session)
     {
-        $this->session = $session;
     }
 
     /**
