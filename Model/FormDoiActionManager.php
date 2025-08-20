@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MauticPlugin\MauticDoiBundle\Model;
 
 use Doctrine\ORM\EntityManagerInterface;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
 use Mautic\FormBundle\Entity\Form;
+use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiActionRepository;
 
 class FormDoiActionManager
@@ -14,7 +14,8 @@ class FormDoiActionManager
     public function __construct(
         private EntityManagerInterface $entityManager,
         private FormDoiActionRepository $formDoiActionRepository
-    ) {}
+    ) {
+    }
 
     /**
      * @return array<int, array<string, mixed>>
@@ -22,7 +23,8 @@ class FormDoiActionManager
     public function getFormDoiActions(Form $form): array
     {
         $actions = $this->formDoiActionRepository->findBy(['form' => $form], ['order' => 'ASC']);
-        return array_map(fn(FormDoiAction $action) => $action->convertToArray(), $actions);
+
+        return array_map(fn (FormDoiAction $action) => $action->convertToArray(), $actions);
     }
 
     /**
@@ -30,7 +32,7 @@ class FormDoiActionManager
      */
     public function saveActions(Form $form, array $newActions): void
     {
-        $existingActions = $this->formDoiActionRepository->findBy(['form' => $form]);
+        $existingActions   = $this->formDoiActionRepository->findBy(['form' => $form]);
         $existingActionMap = [];
         foreach ($existingActions as $action) {
             $existingActionMap[$action->getId()] = $action;

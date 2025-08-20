@@ -24,7 +24,7 @@ class FormDoiActionSessionManager
         $modifiedActions = [];
 
         foreach ($actions as $action) {
-            $id = $action['id'];
+            $id                   = $action['id'];
             $modifiedActions[$id] = $action;
         }
 
@@ -44,7 +44,7 @@ class FormDoiActionSessionManager
      */
     public function updateActionInSession(int|string $formId, int|string $actionId, array $updatedAction): void
     {
-        $actions = $this->getActionsFromSession($formId);
+        $actions            = $this->getActionsFromSession($formId);
         $actions[$actionId] = $updatedAction;
         $this->loadActionsIntoSession($formId, $actions);
     }
@@ -58,6 +58,6 @@ class FormDoiActionSessionManager
 
     private function getSessionKey(int|string $formId): string
     {
-        return self::SESSION_KEY_PREFIX . $formId . self::SESSION_KEY_SUFFIX;
+        return self::SESSION_KEY_PREFIX.$formId.self::SESSION_KEY_SUFFIX;
     }
 }

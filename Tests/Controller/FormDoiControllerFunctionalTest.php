@@ -27,20 +27,20 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
      */
     public function testSaveDoiConfigWhenEnabled(): void
     {
-        $form = $this->createForm('Test DOI Form', 'test_doi_form');
+        $form              = $this->createForm('Test DOI Form', 'test_doi_form');
         $verificationEmail = $this->createEmail('DOI Verification Email');
-        $followUpEmail = $this->createEmail('DOI Follow-up Email');
+        $followUpEmail     = $this->createEmail('DOI Follow-up Email');
 
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
         $this->assertTrue($this->client->getResponse()->isOk());
 
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
         $formElement->setValues([
-            'mauticform[doiConfig][enabled]' => '1',
+            'mauticform[doiConfig][enabled]'             => '1',
             'mauticform[doiConfig][verificationEmailId]' => $verificationEmail->getId(),
-            'mauticform[doiConfig][followUpEmailId]' => $followUpEmail->getId(),
-            'mauticform[doiConfig][successRedirectUrl]' => 'https://example.com/success',
-            'mauticform[doiConfig][errorRedirectUrl]' => 'https://example.com/error',
+            'mauticform[doiConfig][followUpEmailId]'     => $followUpEmail->getId(),
+            'mauticform[doiConfig][successRedirectUrl]'  => 'https://example.com/success',
+            'mauticform[doiConfig][errorRedirectUrl]'    => 'https://example.com/error',
         ]);
 
         $this->client->submit($formElement);
@@ -96,14 +96,14 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
             // No verification email provided
         ]);
 
-        $crawler = $this->client->submit($formElement);
+        $crawler  = $this->client->submit($formElement);
         $response = $this->client->getResponse();
         $this->assertTrue($response->isOk());
 
         // Check that validation error is displayed
         $validationText = 'Verification email is required when DOI is enabled';
-        $pageContent = $crawler->filter('body')->text();
-        $this->assertStringContainsString($validationText, $pageContent, "Validation text not found on the page");
+        $pageContent    = $crawler->filter('body')->text();
+        $this->assertStringContainsString($validationText, $pageContent, 'Validation text not found on the page');
     }
 
     /**
@@ -136,9 +136,9 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
      */
     public function testExistingDoiConfigIsLoadedInForm(): void
     {
-        $form = $this->createForm('Test Existing DOI Config', 'test_existing_doi_config');
+        $form              = $this->createForm('Test Existing DOI Config', 'test_existing_doi_config');
         $verificationEmail = $this->createEmail('Existing Verification Email');
-        
+
         // Create DOI config directly
         $doiConfig = new FormDoiConfig();
         $doiConfig->setForm($form);
@@ -168,9 +168,9 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
     public function testUpdateExistingDoiConfig(): void
     {
         // Create initial form and emails
-        $form = $this->createForm('Test DOI Update Form', 'test_doi_update_form');
+        $form                     = $this->createForm('Test DOI Update Form', 'test_doi_update_form');
         $initialVerificationEmail = $this->createEmail('Initial Verification Email');
-        $initialFollowUpEmail = $this->createEmail('Initial Follow-up Email');
+        $initialFollowUpEmail     = $this->createEmail('Initial Follow-up Email');
 
         // Create initial DOI config
         $initialDoiConfig = new FormDoiConfig();
@@ -185,7 +185,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Create new emails for update
         $newVerificationEmail = $this->createEmail('New Verification Email');
-        $newFollowUpEmail = $this->createEmail('New Follow-up Email');
+        $newFollowUpEmail     = $this->createEmail('New Follow-up Email');
 
         // Request the edit form
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
@@ -194,11 +194,11 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         // Update the form with new values
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
         $formElement->setValues([
-            'mauticform[doiConfig][enabled]' => '1',
+            'mauticform[doiConfig][enabled]'             => '1',
             'mauticform[doiConfig][verificationEmailId]' => $newVerificationEmail->getId(),
-            'mauticform[doiConfig][followUpEmailId]' => $newFollowUpEmail->getId(),
-            'mauticform[doiConfig][successRedirectUrl]' => 'https://example.com/updated-success',
-            'mauticform[doiConfig][errorRedirectUrl]' => 'https://example.com/updated-error',
+            'mauticform[doiConfig][followUpEmailId]'     => $newFollowUpEmail->getId(),
+            'mauticform[doiConfig][successRedirectUrl]'  => 'https://example.com/updated-success',
+            'mauticform[doiConfig][errorRedirectUrl]'    => 'https://example.com/updated-error',
         ]);
 
         // Submit the updated form
@@ -237,9 +237,9 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
     public function testSaveFormWithDoiActions(): void
     {
-        $form = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
+        $form              = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
         $verificationEmail = $this->createEmail('DOI Verification Email');
-        $sessionId = (string) $form->getId();
+        $sessionId         = (string) $form->getId();
 
         $this->submitNewDoiActionForm($sessionId);
         $this->assertDoiActionInSession($sessionId);
@@ -256,9 +256,9 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Now submit the main form with DOI config, including sessionId
         $formElement->setValues([
-            'mauticform[doiConfig][enabled]' => '1',
+            'mauticform[doiConfig][enabled]'             => '1',
             'mauticform[doiConfig][verificationEmailId]' => $verificationEmail->getId(),
-            'mauticform[sessionId]' => $sessionId,
+            'mauticform[sessionId]'                      => $sessionId,
         ]);
 
         $this->client->submit($formElement);
@@ -266,7 +266,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Verify DOI action is persisted in database
         $doiActionRepository = $this->em->getRepository(FormDoiAction::class);
-        $savedActions = $doiActionRepository->findBy(['form' => $form]);
+        $savedActions        = $doiActionRepository->findBy(['form' => $form]);
         $this->assertCount(1, $savedActions);
 
         $savedAction = $savedActions[0];
@@ -277,9 +277,9 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
     public function testEditFormDoiAction(): void
     {
-        $form = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
+        $form              = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
         $verificationEmail = $this->createEmail('DOI Verification Email');
-        $sessionId = (string) $form->getId();
+        $sessionId         = (string) $form->getId();
 
         // Create initial action
         $this->submitNewDoiActionForm($sessionId);
@@ -297,15 +297,15 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Now submit the main form with DOI config, including sessionId
         $formElement->setValues([
-            'mauticform[doiConfig][enabled]' => '1',
-            'mauticform[doiConfig][verificationEmailId]' => $verificationEmail->getId()
+            'mauticform[doiConfig][enabled]'             => '1',
+            'mauticform[doiConfig][verificationEmailId]' => $verificationEmail->getId(),
         ]);
 
         $this->client->submit($formElement);
         $this->assertTrue($this->client->getResponse()->isOk());
 
         $doiActionRepository = $this->em->getRepository(FormDoiAction::class);
-        $savedActions = $doiActionRepository->findBy(['form' => $form]);
+        $savedActions        = $doiActionRepository->findBy(['form' => $form]);
         $this->assertCount(1, $savedActions);
         $doiAction = $savedActions[0];
 
@@ -325,8 +325,8 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Now submit the main form with DOI config, including sessionId
         $formElement->setValues([
-            'mauticform[doiConfig][enabled]' => '1',
-            'mauticform[doiConfig][verificationEmailId]' => $verificationEmail->getId()
+            'mauticform[doiConfig][enabled]'             => '1',
+            'mauticform[doiConfig][verificationEmailId]' => $verificationEmail->getId(),
         ]);
 
         $this->client->submit($formElement);
@@ -342,9 +342,9 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
     public function testRemoveFormDoiAction(): void
     {
-        $form = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
+        $form              = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
         $verificationEmail = $this->createEmail('DOI Verification Email');
-        $sessionId = (string) $form->getId();
+        $sessionId         = (string) $form->getId();
 
         // Create initial action
         $this->submitNewDoiActionForm($sessionId);
@@ -362,9 +362,9 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Submit the main form with DOI config, including sessionId
         $formElement->setValues([
-            'mauticform[doiConfig][enabled]' => '1',
+            'mauticform[doiConfig][enabled]'             => '1',
             'mauticform[doiConfig][verificationEmailId]' => $verificationEmail->getId(),
-            'mauticform[sessionId]' => $sessionId,
+            'mauticform[sessionId]'                      => $sessionId,
         ]);
 
         $this->client->submit($formElement);
@@ -372,7 +372,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Verify DOI action is persisted in database
         $doiActionRepository = $this->em->getRepository(FormDoiAction::class);
-        $savedActions = $doiActionRepository->findBy(['form' => $form]);
+        $savedActions        = $doiActionRepository->findBy(['form' => $form]);
         $this->assertCount(1, $savedActions);
         $doiAction = $savedActions[0];
 
@@ -397,9 +397,9 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
         $formElement->setValues([
-            'mauticform[doiConfig][enabled]' => '1',
+            'mauticform[doiConfig][enabled]'             => '1',
             'mauticform[doiConfig][verificationEmailId]' => $verificationEmail->getId(),
-            'mauticform[sessionId]' => $sessionId,
+            'mauticform[sessionId]'                      => $sessionId,
         ]);
 
         $this->client->submit($formElement);
@@ -424,17 +424,17 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         );
         $this->assertTrue($this->client->getResponse()->isOk());
 
-        $content = json_decode($this->client->getResponse()->getContent())->newContent;
-        $crawler = new Crawler($content, $this->client->getInternalRequest()->getUri());
+        $content    = json_decode($this->client->getResponse()->getContent())->newContent;
+        $crawler    = new Crawler($content, $this->client->getInternalRequest()->getUri());
         $actionForm = $crawler->filter('form')->form();
 
         $actionForm->setValues([
             'formaction[properties][subject]' => 'Test email subject',
             'formaction[properties][message]' => 'Test email message',
-            'formaction[name]' => 'Test DOI Email Action',
-            'formaction[description]' => 'Test action description',
-            'formaction[type]' => 'form.email',
-            'formaction[formId]' => $sessionId,
+            'formaction[name]'                => 'Test DOI Email Action',
+            'formaction[description]'         => 'Test action description',
+            'formaction[type]'                => 'form.email',
+            'formaction[formId]'              => $sessionId,
         ]);
         $this->client->submit($actionForm, [], $this->createAjaxHeaders());
         $this->assertTrue($this->client->getResponse()->isOk());
@@ -454,17 +454,17 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         );
         $this->assertTrue($this->client->getResponse()->isOk());
 
-        $content = json_decode($this->client->getResponse()->getContent())->newContent;
-        $crawler = new Crawler($content, $this->client->getInternalRequest()->getUri());
+        $content    = json_decode($this->client->getResponse()->getContent())->newContent;
+        $crawler    = new Crawler($content, $this->client->getInternalRequest()->getUri());
         $actionForm = $crawler->filter('form')->form();
 
         $actionForm->setValues([
             'formaction[properties][subject]' => 'Updated email subject',
             'formaction[properties][message]' => 'Updated email message',
-            'formaction[name]' => 'Updated DOI Email Action',
-            'formaction[description]' => 'Updated action description',
-            'formaction[type]' => 'form.email',
-            'formaction[formId]' => $sessionId,
+            'formaction[name]'                => 'Updated DOI Email Action',
+            'formaction[description]'         => 'Updated action description',
+            'formaction[type]'                => 'form.email',
+            'formaction[formId]'              => $sessionId,
         ]);
         $this->client->submit($actionForm, [], $this->createAjaxHeaders());
         $this->assertTrue($this->client->getResponse()->isOk());
@@ -472,14 +472,14 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
     private function assertDoiActionNotInSession(string $sessionId): void
     {
-        $sessionManager = $this->getContainer()->get('MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager');
+        $sessionManager   = $this->getContainer()->get('MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager');
         $actionsInSession = $sessionManager->getActionsFromSession($sessionId);
         $this->assertEmpty($actionsInSession, 'Actions should not be in session');
     }
 
     private function assertDoiActionInSession(string $sessionId): void
     {
-        $sessionManager = $this->getContainer()->get('MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager');
+        $sessionManager   = $this->getContainer()->get('MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager');
         $actionsInSession = $sessionManager->getActionsFromSession($sessionId);
         $this->assertNotEmpty($actionsInSession, 'Actions should be in session');
     }

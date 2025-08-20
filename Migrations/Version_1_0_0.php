@@ -10,7 +10,6 @@ use Mautic\IntegrationsBundle\Migration\AbstractMigration;
 
 class Version_1_0_0 extends AbstractMigration
 {
-
     private string $formDoiActionsTable = 'form_doi_actions';
 
     protected function isApplicable(Schema $schema): bool

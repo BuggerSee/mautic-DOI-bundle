@@ -11,10 +11,12 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 
-class FormTypeExtension extends AbstractTypeExtension {
+class FormTypeExtension extends AbstractTypeExtension
+{
     public function __construct(
         private DoiConfigManager $doiConfigManager
-    ) {}
+    ) {
+    }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
@@ -23,7 +25,7 @@ class FormTypeExtension extends AbstractTypeExtension {
 
     public function onPreSetData(FormEvent $event): void
     {
-        $form = $event->getForm();
+        $form   = $event->getForm();
         $entity = $event->getData();
 
         // Load existing DOI config
@@ -36,15 +38,15 @@ class FormTypeExtension extends AbstractTypeExtension {
         // Convert entities to IDs for the form
         $formData = [
             'verificationEmailId' => $doiConfig->getVerificationEmail()?->getId(),
-            'followUpEmailId' => $doiConfig->getFollowUpEmail()?->getId(),
-            'successRedirectUrl' => $doiConfig->getSuccessRedirectUrl(),
-            'errorRedirectUrl' => $doiConfig->getErrorRedirectUrl(),
-            'enabled' => $doiConfig->isEnabled(),
+            'followUpEmailId'     => $doiConfig->getFollowUpEmail()?->getId(),
+            'successRedirectUrl'  => $doiConfig->getSuccessRedirectUrl(),
+            'errorRedirectUrl'    => $doiConfig->getErrorRedirectUrl(),
+            'enabled'             => $doiConfig->isEnabled(),
         ];
 
         // Add DOI config fields with ID data
         $form->add('doiConfig', FormDoiConfigType::class, [
-            'data' => $formData,
+            'data'   => $formData,
             'mapped' => false,
         ]);
     }

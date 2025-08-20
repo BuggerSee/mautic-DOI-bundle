@@ -23,7 +23,7 @@ class FormBuilderSubscriber implements EventSubscriberInterface
         private FormDoiActionSessionManager $formDoiActionSessionManager,
         private DoiConfigManager $doiConfigManager,
         private RequestStack $requestStack
-    ){
+    ) {
     }
 
     public static function getSubscribedEvents(): array
@@ -35,8 +35,8 @@ class FormBuilderSubscriber implements EventSubscriberInterface
 
     public function onFormPostSave(FormEvent $event): void
     {
-        $form = $event->getForm();
-        $request = $this->requestStack->getCurrentRequest();
+        $form       = $event->getForm();
+        $request    = $this->requestStack->getCurrentRequest();
         $mauticForm = $request->request->all('mauticform');
 
         if (empty($mauticForm)) {

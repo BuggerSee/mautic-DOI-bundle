@@ -3,8 +3,8 @@
 namespace MauticPlugin\MauticDoiBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Mautic\FormBundle\Entity\Form;
 use Mautic\EmailBundle\Entity\Email;
+use Mautic\FormBundle\Entity\Form;
 
 #[ORM\Entity(repositoryClass: FormDoiConfigRepository::class)]
 #[ORM\Table(name: 'form_doi_config')]
@@ -57,6 +57,7 @@ class FormDoiConfig
     public function setForm(Form $form): self
     {
         $this->form = $form;
+
         return $this;
     }
 
@@ -68,6 +69,7 @@ class FormDoiConfig
     public function setVerificationEmail(?Email $email): self
     {
         $this->verificationEmail = $email;
+
         return $this;
     }
 
@@ -79,6 +81,7 @@ class FormDoiConfig
     public function setFollowUpEmail(?Email $email): self
     {
         $this->followUpEmail = $email;
+
         return $this;
     }
 
@@ -90,6 +93,7 @@ class FormDoiConfig
     public function setSuccessRedirectUrl(?string $url): self
     {
         $this->successRedirectUrl = $url;
+
         return $this;
     }
 
@@ -101,6 +105,7 @@ class FormDoiConfig
     public function setErrorRedirectUrl(?string $url): self
     {
         $this->errorRedirectUrl = $url;
+
         return $this;
     }
 
@@ -112,6 +117,7 @@ class FormDoiConfig
     public function setCreatedAt(\DateTime $createdAt): self
     {
         $this->createdAt = $createdAt;
+
         return $this;
     }
 
@@ -123,6 +129,7 @@ class FormDoiConfig
     public function setUpdatedAt(\DateTime $updatedAt): self
     {
         $this->updatedAt = $updatedAt;
+
         return $this;
     }
 
@@ -134,6 +141,7 @@ class FormDoiConfig
     public function setEnabled(bool $enabled): self
     {
         $this->enabled = $enabled;
+
         return $this;
     }
 

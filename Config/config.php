@@ -7,12 +7,12 @@ return [
     'description' => 'Universal email verification for Mautic, including Double Opt-In (DOI)',
     'version'     => '0.0.2',
     'author'      => 'Leuchtfeuer Digital Marketing GmbH',
-    'routes' => [
+    'routes'      => [
         'main' => [
             'mautic_doi_formaction_action' => [
                 'path'       => '/forms-doi/action/{objectAction}/{objectId}',
                 'controller' => 'MauticPlugin\MauticDoiBundle\Controller\DoiActionController::executeAction',
             ],
-        ]
-    ]
+        ],
+    ],
 ];

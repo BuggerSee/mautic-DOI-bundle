@@ -16,72 +16,71 @@ use Symfony\Component\Validator\Constraints\Url;
 
 class FormDoiConfigType extends AbstractType
 {
-
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
             ->add('enabled', YesNoButtonGroupType::class, [
                 'label' => 'mautic.plugin.doi.form.field.enabled',
-                'attr' => [
-                    'class' => 'form-control',
+                'attr'  => [
+                    'class'   => 'form-control',
                     'tooltip' => 'mautic.plugin.doi.form.field.enabled.tooltip',
                 ],
             ])
             ->add('verificationEmailId', EmailListType::class, [
-                'label' => 'mautic.plugin.doi.form.field.verification_email',
+                'label'      => 'mautic.plugin.doi.form.field.verification_email',
                 'label_attr' => ['class' => 'control-label'],
-                'required' => false,
-                'multiple' => false,
-                'model' => 'email',
-                'attr' => [
-                    'class' => 'form-control',
+                'required'   => false,
+                'multiple'   => false,
+                'model'      => 'email',
+                'attr'       => [
+                    'class'   => 'form-control',
                     'tooltip' => 'mautic.plugin.doi.form.field.verification_email.tooltip',
                 ],
                 'constraints' => [
                     new NotBlank([
                         'message' => 'mautic.plugin.doi.form.field.verification_email.required',
-                        'groups' => ['doi_enabled'],
+                        'groups'  => ['doi_enabled'],
                     ]),
                 ],
             ])
             ->add('followUpEmailId', EmailListType::class, [
-                'label' => 'mautic.plugin.doi.form.field.followup_email',
+                'label'      => 'mautic.plugin.doi.form.field.followup_email',
                 'label_attr' => ['class' => 'control-label'],
-                'required' => false,
-                'multiple' => false,
-                'model' => 'email',
-                'attr' => [
-                    'class' => 'form-control',
+                'required'   => false,
+                'multiple'   => false,
+                'model'      => 'email',
+                'attr'       => [
+                    'class'   => 'form-control',
                     'tooltip' => 'mautic.plugin.doi.form.field.followup_email.tooltip',
                 ],
             ])
             ->add('successRedirectUrl', UrlType::class, [
-                'label' => 'mautic.plugin.doi.form.field.success_redirect_url',
+                'label'      => 'mautic.plugin.doi.form.field.success_redirect_url',
                 'label_attr' => ['class' => 'control-label'],
-                'required' => false,
-                'attr' => [
-                    'class' => 'form-control',
+                'required'   => false,
+                'attr'       => [
+                    'class'   => 'form-control',
                     'tooltip' => 'mautic.plugin.doi.form.field.success_redirect_url.tooltip',
                 ],
                 'constraints' => [
                     new Url([
                         'message' => 'mautic.core.value.url.invalid',
-                        'groups' => ['doi_config'],
+                        'groups'  => ['doi_config'],
                     ]),
                 ],
             ])
             ->add('errorRedirectUrl', UrlType::class, [
-                'label' => 'mautic.plugin.doi.form.field.error_redirect_url',
+                'label'      => 'mautic.plugin.doi.form.field.error_redirect_url',
                 'label_attr' => ['class' => 'control-label'],
-                'required' => false,
-                'attr' => [
-                    'class' => 'form-control',
+                'required'   => false,
+                'attr'       => [
+                    'class'   => 'form-control',
                     'tooltip' => 'mautic.plugin.doi.form.field.error_redirect_url.tooltip',
                 ],
                 'constraints' => [
                     new Url([
                         'message' => 'mautic.core.value.url.invalid',
-                        'groups' => ['doi_config'],
+                        'groups'  => ['doi_config'],
                     ]),
                 ],
             ]);
@@ -91,13 +90,13 @@ class FormDoiConfigType extends AbstractType
     {
         $resolver->setDefaults([
             'validation_groups' => function (FormInterface $form) {
-                $data = $form->getData();
+                $data   = $form->getData();
                 $groups = ['doi_config'];
-                
+
                 if (isset($data['enabled']) && $data['enabled']) {
                     $groups[] = 'doi_enabled';
                 }
-                
+
                 return $groups;
             },
             'data_class' => null, // Allow array data

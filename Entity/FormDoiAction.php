@@ -55,6 +55,7 @@ class FormDoiAction
     public function setOrder(int $order): self
     {
         $this->order = $order;
+
         return $this;
     }
 
@@ -69,6 +70,7 @@ class FormDoiAction
     public function setProperties(array $properties): self
     {
         $this->properties = $properties;
+
         return $this;
     }
 
@@ -83,6 +85,7 @@ class FormDoiAction
     public function setForm(Form $form): self
     {
         $this->form = $form;
+
         return $this;
     }
 
@@ -94,6 +97,7 @@ class FormDoiAction
     public function setType(string $type): self
     {
         $this->type = $type;
+
         return $this;
     }
 
@@ -105,6 +109,7 @@ class FormDoiAction
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
         return $this;
     }
 
@@ -116,6 +121,7 @@ class FormDoiAction
     public function setName(string $name): self
     {
         $this->name = $name;
+
         return $this;
     }
 

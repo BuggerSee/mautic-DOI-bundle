@@ -14,7 +14,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class DoiActionController extends AbstractStandardFormController
 {
-
     public function newAction(
         Request $request,
         FormDoiActionSessionManager $formDoiActionSessionManager,
