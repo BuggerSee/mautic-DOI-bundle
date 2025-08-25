@@ -14,5 +14,11 @@ return [
                 'controller' => 'MauticPlugin\MauticDoiBundle\Controller\DoiActionController::executeAction',
             ],
         ],
+        'public' => [
+            'mautic_doi_email_verify_action' => [
+                'path'       => '/email/verify/{hash}',
+                'controller' => 'MauticPlugin\MauticDoiBundle\Controller\PublicController::verifyEmailAction',
+            ],
+        ]
     ],
 ];
