@@ -27,7 +27,7 @@ class Version_0_0_1 extends AbstractMigration
 
     protected function up(): void
     {
-        $formsTable = $this->schema->getTable($this->concatPrefix('forms'));
+        $formsTable        = $this->schema->getTable($this->concatPrefix('forms'));
         $formsIdColumnType = MigrationHelper::getReferencedColumnType($formsTable);
 
         $this->addSql("CREATE TABLE `{$this->concatPrefix($this->table)}`

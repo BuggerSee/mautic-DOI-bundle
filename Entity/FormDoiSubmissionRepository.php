@@ -9,5 +9,4 @@ use Mautic\CoreBundle\Entity\CommonRepository;
  */
 class FormDoiSubmissionRepository extends CommonRepository
 {
-
 }

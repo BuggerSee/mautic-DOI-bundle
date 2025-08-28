@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace MauticPlugin\MauticDoiBundle\Migrations;
 
 use Doctrine\DBAL\Schema\Schema;
-use Doctrine\DBAL\Types\BigIntType;
 use Mautic\CoreBundle\Exception\SchemaException;
 use Mautic\IntegrationsBundle\Migration\AbstractMigration;
 use MauticPlugin\MauticDoiBundle\Helper\MigrationHelper;
@@ -27,12 +26,12 @@ class Version_0_0_3 extends AbstractMigration
 
     protected function up(): void
     {
-        $formsTable = $this->schema->getTable($this->concatPrefix('forms'));
-        $formSubmissionsTable = $this->schema->getTable($this->concatPrefix('form_submissions'));
-        $leadsTable = $this->schema->getTable($this->concatPrefix('leads'));
-        $formsIdColumnType = MigrationHelper::getReferencedColumnType($formsTable);
+        $formsTable                  = $this->schema->getTable($this->concatPrefix('forms'));
+        $formSubmissionsTable        = $this->schema->getTable($this->concatPrefix('form_submissions'));
+        $leadsTable                  = $this->schema->getTable($this->concatPrefix('leads'));
+        $formsIdColumnType           = MigrationHelper::getReferencedColumnType($formsTable);
         $formSubmissionsIdColumnType = MigrationHelper::getReferencedColumnType($formSubmissionsTable);
-        $leadsIdColumnType = MigrationHelper::getReferencedColumnType($leadsTable);
+        $leadsIdColumnType           = MigrationHelper::getReferencedColumnType($leadsTable);
 
         $this->addSql("CREATE TABLE `{$this->concatPrefix($this->formDoiSubmissionsTable)}`
 (

@@ -15,10 +15,10 @@ class MigrationHelper
             throw new \InvalidArgumentException("Table '{$table->getName()}' does not have an '{$columnName}' column");
         }
 
-        $idColumn = $table->getColumn($columnName);
+        $idColumn   = $table->getColumn($columnName);
         $columnType = $idColumn->getType();
         $isUnsigned = $idColumn->getUnsigned();
-        $baseType = $columnType instanceof BigIntType ? 'BIGINT' : 'INT';
+        $baseType   = $columnType instanceof BigIntType ? 'BIGINT' : 'INT';
 
         return $isUnsigned ? "{$baseType} UNSIGNED" : $baseType;
     }

@@ -19,6 +19,6 @@ return [
                 'path'       => '/email/verify/{hash}',
                 'controller' => 'MauticPlugin\MauticDoiBundle\Controller\PublicController::verifyEmailAction',
             ],
-        ]
+        ],
     ],
 ];

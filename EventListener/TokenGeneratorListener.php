@@ -18,8 +18,7 @@ class TokenGeneratorListener implements EventSubscriberInterface
     public function __construct(
         private TranslatorInterface $translator,
         private EmailModel $emailModel,
-    )
-    {
+    ) {
     }
 
     public function onEmailBuild(EmailBuilderEvent $event): void
@@ -56,9 +55,9 @@ class TokenGeneratorListener implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            EmailEvents::EMAIL_ON_BUILD => ['onEmailBuild', 0],
-            EmailEvents::EMAIL_ON_SEND  => ['onEmailGenerate', 0],
-            EmailEvents::EMAIL_ON_DISPLAY => ['onEmailGenerate', 0],
+            EmailEvents::EMAIL_ON_BUILD       => ['onEmailBuild', 0],
+            EmailEvents::EMAIL_ON_SEND        => ['onEmailGenerate', 0],
+            EmailEvents::EMAIL_ON_DISPLAY     => ['onEmailGenerate', 0],
             PageEvents::REDIRECT_DO_NOT_TRACK => ['addNonTrackableToken', 0],
         ];
     }

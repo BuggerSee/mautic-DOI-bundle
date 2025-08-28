@@ -26,7 +26,7 @@ final class TokenGeneratorListenerFunctionalTest extends MauticMysqlTestCase
         $contacts = [];
         for ($i = 0; $i < 2; ++$i) {
             $contact = new Lead();
-            $email = "user{$i}@example.com";
+            $email   = "user{$i}@example.com";
             $contact->setEmail($email);
             $this->em->persist($contact);
 
@@ -72,17 +72,17 @@ final class TokenGeneratorListenerFunctionalTest extends MauticMysqlTestCase
         ];
 
         $doiLinkPattern = '/https?:\/\/[^\/]+\/email\/verify\/([0-9a-z]+)/';
-        $doiHashes = [];
+        $doiHashes      = [];
 
         foreach ($messages as $i => $message) {
             $htmlBody = $message->getHtmlBody();
             Assert::assertStringContainsString("user{$i}@example.com", $message->toString());
             Assert::assertStringContainsString('href="http', $htmlBody, 'DOI link should be present in email body');
-            
+
             preg_match($doiLinkPattern, $htmlBody, $matches);
             Assert::assertNotEmpty($matches, 'DOI link should match expected pattern');
             Assert::assertNotEmpty($matches[1], 'DOI hash should be present');
-            
+
             $doiHashes[] = $matches[1];
         }
 

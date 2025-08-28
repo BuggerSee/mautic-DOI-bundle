@@ -2,7 +2,6 @@
 
 namespace MauticPlugin\MauticDoiBundle\Entity;
 
-use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\Submission;
@@ -38,13 +37,13 @@ class FormDoiSubmission
     private string $hash;
 
     #[ORM\Column(name: 'date_created', type: 'datetime')]
-    private DateTime $dateCreated;
+    private \DateTime $dateCreated;
 
     #[ORM\Column(name: 'date_confirmed', type: 'datetime', nullable: true)]
-    private ?DateTime $dateConfirmed = null;
+    private ?\DateTime $dateConfirmed = null;
 
     #[ORM\Column(name: 'date_expired', type: 'datetime', nullable: true)]
-    private ?DateTime $dateExpired = null;
+    private ?\DateTime $dateExpired = null;
 
     #[ORM\Column(type: 'string', length: 20)]
     private string $status = 'pending';
@@ -114,38 +113,38 @@ class FormDoiSubmission
         return $this->hash;
     }
 
-    public function setDateCreated(DateTime $dateCreated): self
+    public function setDateCreated(\DateTime $dateCreated): self
     {
         $this->dateCreated = $dateCreated;
 
         return $this;
     }
 
-    public function getDateCreated(): DateTime
+    public function getDateCreated(): \DateTime
     {
         return $this->dateCreated;
     }
 
-    public function setDateConfirmed(?DateTime $dateConfirmed): self
+    public function setDateConfirmed(?\DateTime $dateConfirmed): self
     {
         $this->dateConfirmed = $dateConfirmed;
 
         return $this;
     }
 
-    public function getDateConfirmed(): ?DateTime
+    public function getDateConfirmed(): ?\DateTime
     {
         return $this->dateConfirmed;
     }
 
-    public function setDateExpired(?DateTime $dateExpired): self
+    public function setDateExpired(?\DateTime $dateExpired): self
     {
         $this->dateExpired = $dateExpired;
 
         return $this;
     }
 
-    public function getDateExpired(): ?DateTime
+    public function getDateExpired(): ?\DateTime
     {
         return $this->dateExpired;
     }
@@ -164,31 +163,31 @@ class FormDoiSubmission
 
     public function isPending(): bool
     {
-        return $this->status === 'pending';
+        return 'pending' === $this->status;
     }
 
     public function isConfirmed(): bool
     {
-        return $this->status === 'confirmed';
+        return 'confirmed' === $this->status;
     }
 
     public function isExpired(): bool
     {
-        return $this->status === 'expired';
+        return 'expired' === $this->status;
     }
 
     public function confirm(): self
     {
-        $this->status = 'confirmed';
-        $this->dateConfirmed = new DateTime();
+        $this->status        = 'confirmed';
+        $this->dateConfirmed = new \DateTime();
 
         return $this;
     }
 
     public function expire(): self
     {
-        $this->status = 'expired';
-        $this->dateExpired = new DateTime();
+        $this->status      = 'expired';
+        $this->dateExpired = new \DateTime();
 
         return $this;
     }

@@ -10,7 +10,7 @@ class PublicController extends AbstractController
     public function verifyEmailAction(string $hash): Response
     {
         // TODO: Implement email verification logic
-        
+
         return new Response();
     }
 }
