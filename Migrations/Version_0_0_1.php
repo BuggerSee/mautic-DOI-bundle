@@ -7,13 +7,17 @@ namespace MauticPlugin\MauticDoiBundle\Migrations;
 use Doctrine\DBAL\Schema\Schema;
 use Mautic\CoreBundle\Exception\SchemaException;
 use Mautic\IntegrationsBundle\Migration\AbstractMigration;
+use MauticPlugin\MauticDoiBundle\Helper\MigrationHelper;
 
 class Version_0_0_1 extends AbstractMigration
 {
     private string $table = 'form_doi_actions';
+    private Schema $schema;
 
     protected function isApplicable(Schema $schema): bool
     {
+        $this->schema = $schema;
+
         try {
             return !$schema->hasTable($this->concatPrefix($this->table));
         } catch (SchemaException $e) {
@@ -23,10 +27,13 @@ class Version_0_0_1 extends AbstractMigration
 
     protected function up(): void
     {
+        $formsTable = $this->schema->getTable($this->concatPrefix('forms'));
+        $formsIdColumnType = MigrationHelper::getReferencedColumnType($formsTable);
+
         $this->addSql("CREATE TABLE `{$this->concatPrefix($this->table)}`
 (
     id           INT AUTO_INCREMENT NOT NULL,
-    form_id      INT UNSIGNED       NOT NULL,
+    form_id      {$formsIdColumnType}       NOT NULL,
     name         VARCHAR(255)       NOT NULL,
     description  VARCHAR(255) DEFAULT NULL,
     type         VARCHAR(50)        NOT NULL,
@@ -40,6 +47,6 @@ class Version_0_0_1 extends AbstractMigration
   ENGINE = InnoDB
   ROW_FORMAT = DYNAMIC;");
 
-        $this->addSql("ALTER TABLE `{$this->concatPrefix($this->table)}` ADD CONSTRAINT FK_B8EF63BE5FF69B7D FOREIGN KEY (form_id) REFERENCES forms (id) ON DELETE CASCADE;");
+        $this->addSql("ALTER TABLE `{$this->concatPrefix($this->table)}` ADD CONSTRAINT FK_B8EF63BE5FF69B7D FOREIGN KEY (form_id) REFERENCES {$this->concatPrefix('forms')} (id) ON DELETE CASCADE;");
     }
 }
