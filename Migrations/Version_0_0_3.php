@@ -19,7 +19,7 @@ class Version_0_0_3 extends AbstractMigration
         $this->schema = $schema;
         try {
             return !$schema->hasTable($this->concatPrefix($this->formDoiSubmissionsTable));
-        } catch (SchemaException $e) {
+        } catch (SchemaException) {
             return false;
         }
     }

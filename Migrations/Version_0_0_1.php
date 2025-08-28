@@ -20,7 +20,7 @@ class Version_0_0_1 extends AbstractMigration
 
         try {
             return !$schema->hasTable($this->concatPrefix($this->table));
-        } catch (SchemaException $e) {
+        } catch (SchemaException) {
             return false;
         }
     }
