@@ -6,6 +6,7 @@ use Doctrine\Bundle\DoctrineBundle\DependencyInjection\Compiler\ServiceRepositor
 use Mautic\CoreBundle\DependencyInjection\MauticCoreExtension;
 use MauticPlugin\MauticDoiBundle\Model\DoiConfigManager;
 use MauticPlugin\MauticDoiBundle\Model\FormDoiActionManager;
+use MauticPlugin\MauticDoiBundle\Model\FormDoiSubmissionManager;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return function (ContainerConfigurator $configurator): void {
@@ -25,4 +26,5 @@ return function (ContainerConfigurator $configurator): void {
 
     $services->alias('mautic.plugin.doi.model.doi_config_manager', DoiConfigManager::class);
     $services->alias('mautic.plugin.doi.model.doi_action_manager', FormDoiActionManager::class);
+    $services->alias('mautic.plugin.doi.model.doi_submission_manager', FormDoiSubmissionManager::class);
 };

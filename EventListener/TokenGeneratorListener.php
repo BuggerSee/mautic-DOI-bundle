@@ -10,6 +10,7 @@ use Mautic\EmailBundle\Event\EmailSendEvent;
 use Mautic\EmailBundle\Model\EmailModel;
 use Mautic\PageBundle\Event\UntrackableUrlsEvent;
 use Mautic\PageBundle\PageEvents;
+use MauticPlugin\MauticDoiBundle\Service\DoiHashContext;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -18,6 +19,7 @@ class TokenGeneratorListener implements EventSubscriberInterface
     public function __construct(
         private TranslatorInterface $translator,
         private EmailModel $emailModel,
+        private DoiHashContext $doiHashContext,
     ) {
     }
 
@@ -34,7 +36,8 @@ class TokenGeneratorListener implements EventSubscriberInterface
 
     public function onEmailGenerate(EmailSendEvent $event): void
     {
-        $event->addToken('{doi_link}', $this->emailModel->buildUrl('mautic_doi_email_verify_action', ['hash' => uniqid()]));
+        $hash = $this->doiHashContext->getDoiHash();
+        $event->addToken('{doi_link}', $this->emailModel->buildUrl('mautic_doi_email_verify_action', ['hash' => $hash]));
     }
 
     public function addNonTrackableToken(UntrackableUrlsEvent $event): void
