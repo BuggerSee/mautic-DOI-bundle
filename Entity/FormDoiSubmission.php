@@ -27,7 +27,7 @@ class FormDoiSubmission
     private ?Form $form = null;
 
     #[ORM\ManyToOne(targetEntity: Lead::class)]
-    #[ORM\JoinColumn(name: 'lead_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    #[ORM\JoinColumn(name: 'lead_id', referencedColumnName: 'id', nullable: true, onDelete: 'CASCADE')]
     private ?Lead $lead = null;
 
     #[ORM\Column(type: 'string', length: 255)]
@@ -41,9 +41,6 @@ class FormDoiSubmission
 
     #[ORM\Column(name: 'date_confirmed', type: 'datetime', nullable: true)]
     private ?\DateTime $dateConfirmed = null;
-
-    #[ORM\Column(name: 'date_expired', type: 'datetime', nullable: true)]
-    private ?\DateTime $dateExpired = null;
 
     #[ORM\Column(type: 'string', length: 20)]
     private string $status = 'pending';
@@ -137,18 +134,6 @@ class FormDoiSubmission
         return $this->dateConfirmed;
     }
 
-    public function setDateExpired(?\DateTime $dateExpired): self
-    {
-        $this->dateExpired = $dateExpired;
-
-        return $this;
-    }
-
-    public function getDateExpired(): ?\DateTime
-    {
-        return $this->dateExpired;
-    }
-
     public function setStatus(string $status): self
     {
         $this->status = $status;
@@ -171,23 +156,10 @@ class FormDoiSubmission
         return 'confirmed' === $this->status;
     }
 
-    public function isExpired(): bool
-    {
-        return 'expired' === $this->status;
-    }
-
     public function confirm(): self
     {
         $this->status        = 'confirmed';
         $this->dateConfirmed = new \DateTime();
-
-        return $this;
-    }
-
-    public function expire(): self
-    {
-        $this->status      = 'expired';
-        $this->dateExpired = new \DateTime();
 
         return $this;
     }

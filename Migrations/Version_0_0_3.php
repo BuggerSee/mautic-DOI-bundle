@@ -43,7 +43,6 @@ class Version_0_0_3 extends AbstractMigration
     hash               VARCHAR(255)       NOT NULL,
     date_created       DATETIME           NOT NULL,
     date_confirmed     DATETIME        DEFAULT NULL,
-    date_expired       DATETIME        DEFAULT NULL,
     status             VARCHAR(20)        NOT NULL,
     UNIQUE INDEX UNIQ_E6D188B1D1B862B8 (hash),
     INDEX IDX_E6D188B1422B0E0C (form_submission_id),
@@ -59,6 +58,6 @@ class Version_0_0_3 extends AbstractMigration
 
         $this->addSql("ALTER TABLE `{$this->concatPrefix($this->formDoiSubmissionsTable)}` ADD CONSTRAINT FK_E6D188B1422B0E0C FOREIGN KEY (form_submission_id) REFERENCES `{$this->concatPrefix('form_submissions')}` (id) ON DELETE CASCADE");
         $this->addSql("ALTER TABLE `{$this->concatPrefix($this->formDoiSubmissionsTable)}` ADD CONSTRAINT FK_E6D188B15FF69B7D FOREIGN KEY (form_id) REFERENCES `{$this->concatPrefix('forms')}` (id) ON DELETE CASCADE");
-        $this->addSql("ALTER TABLE `{$this->concatPrefix($this->formDoiSubmissionsTable)}` ADD CONSTRAINT FK_E6D188B155458D FOREIGN KEY (lead_id) REFERENCES `{$this->concatPrefix('leads')}` (id) ON DELETE SET NULL");
+        $this->addSql("ALTER TABLE `{$this->concatPrefix($this->formDoiSubmissionsTable)}` ADD CONSTRAINT FK_E6D188B155458D FOREIGN KEY (lead_id) REFERENCES `{$this->concatPrefix('leads')}` (id) ON DELETE CASCADE");
     }
 }
