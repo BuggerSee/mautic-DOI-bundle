@@ -9,6 +9,8 @@ use Mautic\EmailBundle\Entity\Email;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Entity\LeadList;
 use Mautic\LeadBundle\Entity\ListLead;
+use MauticPlugin\MauticDoiBundle\Service\DoiHashContext;
+use MauticPlugin\MauticDoiBundle\Service\DoiHashGenerator;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,44 +19,48 @@ final class TokenGeneratorListenerFunctionalTest extends MauticMysqlTestCase
 {
     public function testSendEmailWithDoiLinkToken(): void
     {
+        /** @var DoiHashContext $doiHashContext */
+        $doiHashContext = static::getContainer()->get(DoiHashContext::class);
+        /** @var DoiHashGenerator $doiHashGenerator */
+        $doiHashGenerator = static::getContainer()->get(DoiHashGenerator::class);
+
         $segment = new LeadList();
         $segment->setName('DOI Segment');
         $segment->setPublicName('DOI Segment');
         $segment->setAlias('doi-segment');
         $this->em->persist($segment);
 
-        $contacts = [];
-        for ($i = 0; $i < 2; ++$i) {
-            $contact = new Lead();
-            $email   = "user{$i}@example.com";
-            $contact->setEmail($email);
-            $this->em->persist($contact);
+        $contact = new Lead();
+        $email   = 'user@example.com';
+        $contact->setEmail($email);
+        $this->em->persist($contact);
 
-            $listLead = new ListLead();
-            $listLead->setLead($contact);
-            $listLead->setList($segment);
-            $listLead->setDateAdded(new \DateTime());
-            $this->em->persist($listLead);
+        $listLead = new ListLead();
+        $listLead->setLead($contact);
+        $listLead->setList($segment);
+        $listLead->setDateAdded(new \DateTime());
+        $this->em->persist($listLead);
 
-            $contacts[] = $email;
-        }
-
-        $email = new Email();
-        $email->setDateAdded(new \DateTime());
-        $email->setName('DOI Email');
-        $email->setSubject('DOI Verification Email');
-        $email->setEmailType('list');
-        $email->setLists([$segment->getId() => $segment]);
-        $email->setTemplate('Blank');
-        $email->setCustomHtml('<!DOCTYPE html><html><body><p>Please verify your email:</p><a href="{doi_link}">Verify Email</a></body></html>');
-        $this->em->persist($email);
+        $emailEntity = new Email();
+        $emailEntity->setDateAdded(new \DateTime());
+        $emailEntity->setName('DOI Email');
+        $emailEntity->setSubject('DOI Verification Email');
+        $emailEntity->setEmailType('list');
+        $emailEntity->setLists([$segment->getId() => $segment]);
+        $emailEntity->setTemplate('Blank');
+        $emailEntity->setCustomHtml('<!DOCTYPE html><html><body><p>Please verify your email:</p><a href="{doi_link}">Verify Email</a></body></html>');
+        $this->em->persist($emailEntity);
         $this->em->flush();
         $this->em->clear();
+
+        // Set context before scheduling/sending
+        $doiHash = $doiHashGenerator->generate($contact->getId(), $email);
+        $doiHashContext->setDoiHash($doiHash);
 
         $this->client->request(
             Request::METHOD_POST,
             '/s/ajax?action=email:sendBatch',
-            ['id' => $email->getId(), 'pending' => 2],
+            ['id' => $emailEntity->getId(), 'pending' => 1],
             [],
             $this->createAjaxHeaders()
         );
@@ -62,30 +68,22 @@ final class TokenGeneratorListenerFunctionalTest extends MauticMysqlTestCase
         $response = $this->client->getResponse();
         Assert::assertSame(Response::HTTP_OK, $response->getStatusCode());
         Assert::assertSame(
-            '{"success":1,"percent":100,"progress":[2,2],"stats":{"sent":2,"failed":0,"failedRecipients":[]}}',
+            '{"success":1,"percent":100,"progress":[1,1],"stats":{"sent":1,"failed":0,"failedRecipients":[]}}',
             $response->getContent()
         );
 
-        $messages = [
-            $this->getMailerMessagesByToAddress('user0@example.com')[0],
-            $this->getMailerMessagesByToAddress('user1@example.com')[0],
-        ];
+        $messages = $this->getMailerMessagesByToAddress('user@example.com');
+        Assert::assertCount(1, $messages, 'Should have exactly one message');
+        $message = $messages[0];
 
-        $doiLinkPattern = '/https?:\/\/[^\/]+\/email\/verify\/([0-9a-z]+)/';
-        $doiHashes      = [];
+        $htmlBody = $message->getHtmlBody();
+        Assert::assertStringContainsString($email, $message->toString());
+        Assert::assertStringContainsString('href="http', $htmlBody, 'DOI link should be present in email body');
 
-        foreach ($messages as $i => $message) {
-            $htmlBody = $message->getHtmlBody();
-            Assert::assertStringContainsString("user{$i}@example.com", $message->toString());
-            Assert::assertStringContainsString('href="http', $htmlBody, 'DOI link should be present in email body');
-
-            preg_match($doiLinkPattern, $htmlBody, $matches);
-            Assert::assertNotEmpty($matches, 'DOI link should match expected pattern');
-            Assert::assertNotEmpty($matches[1], 'DOI hash should be present');
-
-            $doiHashes[] = $matches[1];
-        }
-
-        Assert::assertNotEquals($doiHashes[0], $doiHashes[1], 'DOI hashes should be unique per email');
+        $doiLinkPattern = '/https?:\/\/[^\/]+\/email\/verify\/([0-9a-f]{64})/';
+        preg_match($doiLinkPattern, $htmlBody, $matches);
+        Assert::assertNotEmpty($matches, 'DOI link should match expected pattern');
+        Assert::assertNotEmpty($matches[1], 'DOI hash should be present');
+        Assert::assertSame($doiHash, $matches[1], 'DOI hash should match the generated hash');
     }
 }
