@@ -12,6 +12,7 @@ use MauticPlugin\MauticDoiBundle\Service\DoiTokenParser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class PublicController extends AbstractController
 {
@@ -21,6 +22,7 @@ class PublicController extends AbstractController
         private FormDoiConfigRepository $configRepository,
         private FormDoiSubmissionManager $submissionManager,
         private DoiTokenParser $doiTokenParser,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -67,7 +69,7 @@ class PublicController extends AbstractController
             return new RedirectResponse($config->getSuccessRedirectUrl());
         }
 
-        return new Response('Email verified successfully', Response::HTTP_OK);
+        return new Response($this->translator->trans('mautic.plugin.doi.verification.success'), Response::HTTP_OK);
     }
 
     private function createErrorResponse(?Form $form = null): Response
@@ -78,6 +80,6 @@ class PublicController extends AbstractController
                 return new RedirectResponse($config->getErrorRedirectUrl());
             }
         }
-        return new Response('Something went wrong! Email verification unsuccessful.', Response::HTTP_BAD_REQUEST);
+        return new Response($this->translator->trans('mautic.plugin.doi.verification.error'), Response::HTTP_BAD_REQUEST);
     }
 }
