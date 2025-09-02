@@ -9,6 +9,7 @@ final class DoiTokenParser
     public function encode(int $formId, string $hash): string
     {
         $tokenData    = "{$formId}:{$hash}";
+
         return base64_encode($tokenData);
     }
 

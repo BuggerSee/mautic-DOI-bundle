@@ -75,7 +75,7 @@ class PublicControllerFunctionalTest extends MauticMysqlTestCase
         $this->createDoiConfig($form, 'https://example.com/success', 'https://example.com/error');
 
         // Create an invalid token with valid form ID but invalid hash
-        $invalidToken = base64_encode($form->getId() . ':invalid_hash');
+        $invalidToken = base64_encode($form->getId().':invalid_hash');
 
         // Call the verification endpoint with invalid token
         $verificationResponse = $this->client->request(Request::METHOD_GET, "/email/verify/{$invalidToken}");
