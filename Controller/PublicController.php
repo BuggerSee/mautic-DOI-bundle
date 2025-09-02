@@ -9,6 +9,7 @@ use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmissionRepository;
 use MauticPlugin\MauticDoiBundle\Model\FormDoiSubmissionManager;
 use MauticPlugin\MauticDoiBundle\Service\DoiTokenParser;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,6 +24,7 @@ class PublicController extends AbstractController
         private FormDoiSubmissionManager $submissionManager,
         private DoiTokenParser $doiTokenParser,
         private TranslatorInterface $translator,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -31,19 +33,25 @@ class PublicController extends AbstractController
         $decodedData = $this->doiTokenParser->decode($token);
 
         if (!$decodedData) {
+            $this->logger->error('Failed to decode DOI token', ['token' => $token]);
+
             return $this->createErrorResponse();
         }
 
         [$formId, $hash] = $decodedData;
 
-        $form = $this->formRepository->find($formId);
+        $form       = $this->formRepository->find($formId);
         $submission = $this->submissionRepository->findOneBy(['hash' => $hash]);
 
         if (!$form instanceof Form) {
+            $this->logger->error('Form not found for DOI verification', ['formId' => $formId]);
+
             return $this->createErrorResponse();
         }
 
         if (!$submission instanceof FormDoiSubmission) {
+            $this->logger->error('DOI submission not found', ['hash' => $hash, 'formId' => $formId]);
+
             return $this->createErrorResponse($form);
         }
 
@@ -52,6 +60,8 @@ class PublicController extends AbstractController
         }
 
         if (!$submission->isPending()) {
+            $this->logger->error('DOI submission is not pending', ['hash' => $hash, 'formId' => $formId, 'status' => $submission->getStatus()]);
+
             return $this->createErrorResponse($form);
         }
 
@@ -80,6 +90,7 @@ class PublicController extends AbstractController
                 return new RedirectResponse($config->getErrorRedirectUrl());
             }
         }
+
         return new Response($this->translator->trans('mautic.plugin.doi.verification.error'), Response::HTTP_BAD_REQUEST);
     }
 }
