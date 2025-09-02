@@ -2,10 +2,13 @@
 
 namespace MauticPlugin\MauticDoiBundle\Controller;
 
+use Mautic\FormBundle\Entity\Form;
+use Mautic\FormBundle\Entity\FormRepository;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfigRepository;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmissionRepository;
 use MauticPlugin\MauticDoiBundle\Model\FormDoiSubmissionManager;
+use MauticPlugin\MauticDoiBundle\Service\DoiTokenParser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,15 +16,17 @@ use Symfony\Component\HttpFoundation\Response;
 class PublicController extends AbstractController
 {
     public function __construct(
+        private FormRepository $formRepository,
         private FormDoiSubmissionRepository $submissionRepository,
         private FormDoiConfigRepository $configRepository,
-        private FormDoiSubmissionManager $submissionManager
+        private FormDoiSubmissionManager $submissionManager,
+        private DoiTokenParser $doiTokenParser,
     ) {
     }
 
     public function verifyEmailAction(string $token): Response
     {
-        $decodedData = $this->parseToken($token);
+        $decodedData = $this->doiTokenParser->decode($token);
 
         if (!$decodedData) {
             return $this->createErrorResponse();
@@ -29,10 +34,15 @@ class PublicController extends AbstractController
 
         [$formId, $hash] = $decodedData;
 
+        $form = $this->formRepository->find($formId);
         $submission = $this->submissionRepository->findOneBy(['hash' => $hash]);
 
-        if (!$submission instanceof FormDoiSubmission) {
+        if (!$form instanceof Form) {
             return $this->createErrorResponse();
+        }
+
+        if (!$submission instanceof FormDoiSubmission) {
+            return $this->createErrorResponse($form);
         }
 
         if ($submission->isConfirmed()) {
@@ -40,7 +50,7 @@ class PublicController extends AbstractController
         }
 
         if (!$submission->isPending()) {
-            return $this->createErrorResponse();
+            return $this->createErrorResponse($form);
         }
 
         $submission->confirm();
@@ -60,26 +70,14 @@ class PublicController extends AbstractController
         return new Response('Email verified successfully', Response::HTTP_OK);
     }
 
-    private function createErrorResponse(): Response
+    private function createErrorResponse(?Form $form = null): Response
     {
+        if ($form) {
+            $config = $this->configRepository->findOneBy(['form' => $form]);
+            if ($config && $config->getErrorRedirectUrl()) {
+                return new RedirectResponse($config->getErrorRedirectUrl());
+            }
+        }
         return new Response('Something went wrong! Email verification unsuccessful.', Response::HTTP_BAD_REQUEST);
-    }
-
-    /**
-     * @return array<int,string>|null
-     */
-    private function parseToken(string $token): ?array
-    {
-        $decoded = base64_decode($token, true);
-        if (!$decoded) {
-            return null;
-        }
-
-        $parts = explode(':', $decoded);
-        if (2 !== count($parts)) {
-            return null;
-        }
-
-        return [(int) $parts[0], $parts[1]];
     }
 }
