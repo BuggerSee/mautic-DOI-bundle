@@ -26,11 +26,11 @@ class PublicControllerFunctionalTest extends MauticMysqlTestCase
         // Submit the form:
         $crawler     = $this->client->request(Request::METHOD_GET, "/form/{$form->getId()}");
         $formCrawler = $crawler->filter('form[id=mauticform_testdoiform]');
-        $form        = $formCrawler->form();
-        $form->setValues([
+        $formElement = $formCrawler->form();
+        $formElement->setValues([
             'mauticform[email]' => 'lead@example.com',
         ]);
-        $this->client->submit($form);
+        $this->client->submit($formElement);
         $this->assertTrue($this->client->getResponse()->isOk());
 
         // Ensure the submission was created properly.
@@ -48,8 +48,14 @@ class PublicControllerFunctionalTest extends MauticMysqlTestCase
         Assert::assertSame('pending', $doiSubmission->getStatus());
         Assert::assertSame('lead@example.com', $doiSubmission->getEmail());
 
-        // Call the verification endpoint with the DOI hash
-        $verificationResponse = $this->client->request(Request::METHOD_GET, "/email/verify/{$doiSubmission->getHash()}");
+        // Create the token: base64("{formId}:{hash}")
+        $formId    = $form->getId();
+        $hash      = $doiSubmission->getHash();
+        $tokenData = "{$formId}:{$hash}";
+        $token     = base64_encode($tokenData);
+
+        // Call the verification endpoint with the encoded token
+        $verificationResponse = $this->client->request(Request::METHOD_GET, "/email/verify/{$token}");
 
         // Verify redirect to success URL
         $this->assertSame('https://example.com/success', $verificationResponse->getUri());

@@ -57,6 +57,9 @@ final class TokenGeneratorListenerFunctionalTest extends MauticMysqlTestCase
         $doiHash = $doiHashGenerator->generate($contact->getId(), $email);
         $doiHashContext->setDoiHash($doiHash);
 
+        $expectedFormId = 1;
+        $doiHashContext->setFormId($expectedFormId);
+
         $this->client->request(
             Request::METHOD_POST,
             '/s/ajax?action=email:sendBatch',
@@ -74,16 +77,26 @@ final class TokenGeneratorListenerFunctionalTest extends MauticMysqlTestCase
 
         $messages = $this->getMailerMessagesByToAddress('user@example.com');
         Assert::assertCount(1, $messages, 'Should have exactly one message');
-        $message = $messages[0];
-
+        $message  = $messages[0];
         $htmlBody = $message->getHtmlBody();
         Assert::assertStringContainsString($email, $message->toString());
         Assert::assertStringContainsString('href="http', $htmlBody, 'DOI link should be present in email body');
 
-        $doiLinkPattern = '/https?:\/\/[^\/]+\/email\/verify\/([0-9a-f]{64})/';
+        $doiLinkPattern = '/https?:\/\/[^\/]+\/email\/verify\/([A-Za-z0-9+\/=]+)/';
         preg_match($doiLinkPattern, $htmlBody, $matches);
         Assert::assertNotEmpty($matches, 'DOI link should match expected pattern');
-        Assert::assertNotEmpty($matches[1], 'DOI hash should be present');
-        Assert::assertSame($doiHash, $matches[1], 'DOI hash should match the generated hash');
+        Assert::assertNotEmpty($matches[1], 'DOI token should be present');
+
+        // Decode and verify the token contains the expected formId and hash
+        $token   = $matches[1];
+        $decoded = base64_decode($token, true);
+        Assert::assertNotFalse($decoded, 'DOI token should be valid base64');
+
+        $parts = explode(':', $decoded);
+        Assert::assertCount(2, $parts, 'DOI token should contain formId and hash separated by colon');
+
+        [$tokenFormId, $tokenHash] = $parts;
+        Assert::assertSame((string) $expectedFormId, $tokenFormId, 'Form ID in token should match expected');
+        Assert::assertSame($doiHash, $tokenHash, 'DOI hash in token should match the generated hash');
     }
 }

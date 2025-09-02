@@ -19,8 +19,16 @@ class PublicController extends AbstractController
     ) {
     }
 
-    public function verifyEmailAction(string $hash): Response
+    public function verifyEmailAction(string $token): Response
     {
+        $decodedData = $this->parseToken($token);
+
+        if (!$decodedData) {
+            return $this->createErrorResponse();
+        }
+
+        [$formId, $hash] = $decodedData;
+
         $submission = $this->submissionRepository->findOneBy(['hash' => $hash]);
 
         if (!$submission instanceof FormDoiSubmission) {
@@ -55,5 +63,23 @@ class PublicController extends AbstractController
     private function createErrorResponse(): Response
     {
         return new Response('Something went wrong! Email verification unsuccessful.', Response::HTTP_BAD_REQUEST);
+    }
+
+    /**
+     * @return array<int,string>|null
+     */
+    private function parseToken(string $token): ?array
+    {
+        $decoded = base64_decode($token, true);
+        if (!$decoded) {
+            return null;
+        }
+
+        $parts = explode(':', $decoded);
+        if (2 !== count($parts)) {
+            return null;
+        }
+
+        return [(int) $parts[0], $parts[1]];
     }
 }

@@ -42,7 +42,9 @@ class FormSubmissionSubscriber implements EventSubscriberInterface
 
         $doiSubmission = $this->createDoiSubmission($event, $form, $contact);
         $this->doiSubmissionManager->save($doiSubmission);
-        $this->doiHashContext->setDoiHash($doiSubmission->getHash());
+        $this->doiHashContext
+            ->setDoiHash($doiSubmission->getHash())
+            ->setFormId($form->getId());
         $this->sendVerificationEmail($event, $form, $contact, $doiConfig);
     }
 

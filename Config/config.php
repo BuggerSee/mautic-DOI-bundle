@@ -16,7 +16,7 @@ return [
         ],
         'public' => [
             'mautic_doi_email_verify_action' => [
-                'path'       => '/email/verify/{hash}',
+                'path'       => '/email/verify/{token}',
                 'controller' => 'MauticPlugin\MauticDoiBundle\Controller\PublicController::verifyEmailAction',
             ],
         ],

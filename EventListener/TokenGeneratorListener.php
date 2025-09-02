@@ -36,8 +36,13 @@ class TokenGeneratorListener implements EventSubscriberInterface
 
     public function onEmailGenerate(EmailSendEvent $event): void
     {
-        $hash = $this->doiHashContext->getDoiHash();
-        $event->addToken('{doi_link}', $this->emailModel->buildUrl('mautic_doi_email_verify_action', ['hash' => $hash]));
+        $hash         = $this->doiHashContext->getDoiHash();
+        $formId       = $this->doiHashContext->getFormId();
+        $tokenData    = "{$formId}:{$hash}";
+        $encodedToken = base64_encode($tokenData);
+        $event->addToken('{doi_link}', $this->emailModel->buildUrl('mautic_doi_email_verify_action', [
+            'token' => $encodedToken,
+        ]));
     }
 
     public function addNonTrackableToken(UntrackableUrlsEvent $event): void
