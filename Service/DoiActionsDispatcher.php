@@ -18,18 +18,19 @@ class DoiActionsDispatcher
         private FormDoiActionRepository $formDoiActionRepository,
         private FormDoiActionMapper $formDoiActionMapper,
         private SubmissionRepository $submissionRepository,
-    ) {}
+    ) {
+    }
 
     public function executePostEmailVerificationActions(FormDoiSubmission $doiSubmission): void
     {
-        $form = $doiSubmission->getForm();
+        $form             = $doiSubmission->getForm();
         $formSubmissionId = $doiSubmission->getFormSubmission()->getId();
-        $formSubmission = $this->submissionRepository->getEntity($formSubmissionId); // loads entity with results
-        $doiActions = $this->formDoiActionRepository->findBy(['form' => $form]);
+        $formSubmission   = $this->submissionRepository->getEntity($formSubmissionId); // loads entity with results
+        $doiActions       = $this->formDoiActionRepository->findBy(['form' => $form]);
 
         // Recreate the submission context as much as possible
         $results = $formSubmission->getResults() ?: [];
-        $post = $results; // Use the stored results as POST data
+        $post    = $results; // Use the stored results as POST data
 
         // Recreate server array with available information
         $server = [
