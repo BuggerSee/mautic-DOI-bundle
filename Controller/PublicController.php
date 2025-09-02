@@ -4,10 +4,12 @@ namespace MauticPlugin\MauticDoiBundle\Controller;
 
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\FormRepository;
+use Mautic\LeadBundle\Tracker\ContactTracker;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfigRepository;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmissionRepository;
 use MauticPlugin\MauticDoiBundle\Model\FormDoiSubmissionManager;
+use MauticPlugin\MauticDoiBundle\Service\DoiActionsDispatcher;
 use MauticPlugin\MauticDoiBundle\Service\DoiTokenParser;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,6 +27,8 @@ class PublicController extends AbstractController
         private DoiTokenParser $doiTokenParser,
         private TranslatorInterface $translator,
         private LoggerInterface $logger,
+        private DoiActionsDispatcher $doiActionsDispatcher,
+        private ContactTracker $contactTracker
     ) {
     }
 
@@ -55,6 +59,8 @@ class PublicController extends AbstractController
             return $this->createErrorResponse($form);
         }
 
+        $this->contactTracker->setTrackedContact($submission->getLead());
+
         if ($submission->isConfirmed()) {
             return $this->createSuccessResponse($submission);
         }
@@ -67,6 +73,7 @@ class PublicController extends AbstractController
 
         $submission->confirm();
         $this->submissionManager->save($submission);
+        $this->doiActionsDispatcher->executePostEmailVerificationActions($submission);
 
         return $this->createSuccessResponse($submission);
     }
