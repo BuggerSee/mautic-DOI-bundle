@@ -20,61 +20,24 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
 
     public function testLeadPointsChangeActionExecutesAfterDoiVerification(): void
     {
-        $form = $this->createForm('DOI Points Test Form');
-        $this->createDoiConfig($form);
-        $this->createDoiAction($form, 'Test Points Change Action', 'lead.pointschange', [
+        $form = $this->createFormWithDoiAction('DOI Points Test Form', 'Test Points Change Action', 'lead.pointschange', [
             'operator' => 'plus',
             'points'   => 10,
         ]);
 
-        // Submit the form to create initial submission and DOI entry
-        $crawler     = $this->client->request(Request::METHOD_GET, "/form/{$form->getId()}");
-        $formCrawler = $crawler->filter('form[id=mauticform_doipointstestform]');
-        $formElement = $formCrawler->form();
-        $formElement->setValues([
-            'mauticform[email]' => 'test@example.com',
-        ]);
-        $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk());
-
-        // Verify submission was created
-        $submissions = $this->em->getRepository(Submission::class)->findAll();
-        Assert::assertCount(1, $submissions);
-        $submission = $submissions[0];
-
-        // Verify DOI submission was created
-        $doiSubmissions = $this->em->getRepository(FormDoiSubmission::class)->findAll();
-        Assert::assertCount(1, $doiSubmissions);
-        $doiSubmission = $doiSubmissions[0];
-        Assert::assertSame('pending', $doiSubmission->getStatus());
-
-        // Get the contact that was created
-        $contact = $submission->getLead();
-        Assert::assertNotNull($contact);
+        $submission    = $this->submitForm($form, ['mauticform[email]' => 'test@example.com']);
+        $doiSubmission = $this->assertDoiSubmissionCreated();
+        $contact       = $submission->getLead();
         $initialPoints = $contact->getPoints();
 
-        // Simulate DOI verification click
-        $formId    = $form->getId();
-        $hash      = $doiSubmission->getHash();
-        $tokenData = "{$formId}:{$hash}";
-        $token     = base64_encode($tokenData);
+        $this->verifyDoiToken($form, $doiSubmission);
 
-        $this->client->request(Request::METHOD_GET, "/email/verify/{$token}");  // This still returns the Crawler for content parsing
-        $response = $this->client->getResponse();
-        $this->assertSame(Response::HTTP_OK, $response->getStatusCode());
-
-        // Refresh entities to get updated data
         $this->em->refresh($doiSubmission);
         $this->em->refresh($contact);
 
-        // Verify DOI submission is now confirmed
         Assert::assertSame('confirmed', $doiSubmission->getStatus());
+        Assert::assertSame($initialPoints + 10, $contact->getPoints());
 
-        // Verify points were added to the contact
-        $finalPoints = $contact->getPoints();
-        Assert::assertSame($initialPoints + 10, $finalPoints);
-
-        // Verify points change log was created
         $pointsChangeLogs = $this->em->getRepository(PointsChangeLog::class)->findBy(['lead' => $contact]);
         Assert::assertCount(1, $pointsChangeLogs);
 
@@ -86,57 +49,24 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
 
     public function testLeadScoreContactsCompaniesActionExecutesAfterDoiVerification(): void
     {
-        $form = $this->createForm('DOI Score Companies Test Form');
-        $this->createDoiConfig($form);
-        $this->createDoiAction($form, 'Test Score Companies Action', 'lead.scorecontactscompanies', [
+        $form = $this->createFormWithDoiAction('DOI Score Companies Test Form', 'Test Score Companies Action', 'lead.scorecontactscompanies', [
             'score' => 25,
         ]);
 
         $company = $this->createCompany('Test Company', 10);
 
-        // Submit the form to create initial submission and DOI entry
-        $crawler     = $this->client->request(Request::METHOD_GET, "/form/{$form->getId()}");
-        $formCrawler = $crawler->filter('form[id=mauticform_doiscorecompaniestestform]');
-        $formElement = $formCrawler->form();
-        $formElement->setValues([
+        $this->submitForm($form, [
             'mauticform[email]'   => 'test@example.com',
             'mauticform[company]' => 'Test Company',
         ]);
-        $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $doiSubmission = $this->assertDoiSubmissionCreated();
 
-        // Verify submission was created
-        $submissions = $this->em->getRepository(Submission::class)->findAll();
-        Assert::assertCount(1, $submissions);
-        $submission = $submissions[0];
+        $this->verifyDoiToken($form, $doiSubmission);
 
-        // Verify DOI submission was created
-        $doiSubmissions = $this->em->getRepository(FormDoiSubmission::class)->findAll();
-        Assert::assertCount(1, $doiSubmissions);
-        $doiSubmission = $doiSubmissions[0];
-        Assert::assertSame('pending', $doiSubmission->getStatus());
-
-        // Get the contact that was created
-        $contact = $submission->getLead();
-        Assert::assertNotNull($contact);
-
-        // Simulate DOI verification click
-        $formId    = $form->getId();
-        $hash      = $doiSubmission->getHash();
-        $tokenData = "{$formId}:{$hash}";
-        $token     = base64_encode($tokenData);
-
-        $this->client->request(Request::METHOD_GET, "/email/verify/{$token}");
-        $response = $this->client->getResponse();
-        $this->assertSame(Response::HTTP_OK, $response->getStatusCode());
-
-        // Refresh entities to get updated data
         $this->em->refresh($doiSubmission);
         $this->em->refresh($company);
 
-        // Verify DOI submission is now confirmed
         Assert::assertSame('confirmed', $doiSubmission->getStatus());
-
         Assert::assertSame(35, $company->getScore());
     }
 
@@ -220,5 +150,59 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
 
         return $company;
+    }
+
+    /**
+     * @param array<string,mixed> $properties
+     */
+    private function createFormWithDoiAction(string $formName, string $actionName, string $actionType, array $properties): Form
+    {
+        $form = $this->createForm($formName);
+        $this->createDoiConfig($form);
+        $this->createDoiAction($form, $actionName, $actionType, $properties);
+
+        return $form;
+    }
+
+    /**
+     * @param array<string,string> $formData
+     */
+    private function submitForm(Form $form, array $formData): Submission
+    {
+        $formNameForId = strtolower(str_replace(' ', '', $form->getName()));
+
+        $crawler     = $this->client->request(Request::METHOD_GET, "/form/{$form->getId()}");
+        $formCrawler = $crawler->filter("form[id=mauticform_{$formNameForId}]");
+        $formElement = $formCrawler->form();
+        $formElement->setValues($formData);
+        $this->client->submit($formElement);
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        $submissions = $this->em->getRepository(Submission::class)->findAll();
+        Assert::assertCount(1, $submissions);
+
+        return $submissions[0];
+    }
+
+    private function assertDoiSubmissionCreated(): FormDoiSubmission
+    {
+        $doiSubmissions = $this->em->getRepository(FormDoiSubmission::class)->findAll();
+        Assert::assertCount(1, $doiSubmissions);
+        $doiSubmission = $doiSubmissions[0];
+        Assert::assertSame('pending', $doiSubmission->getStatus());
+
+        return $doiSubmission;
+    }
+
+    private function verifyDoiToken(Form $form, FormDoiSubmission $doiSubmission): void
+    {
+        $formId    = $form->getId();
+        $hash      = $doiSubmission->getHash();
+        $tokenData = "{$formId}:{$hash}";
+        $token     = base64_encode($tokenData);
+
+        $this->client->request(Request::METHOD_GET, "/email/verify/{$token}");
+        $response = $this->client->getResponse();
+        $this->assertSame(Response::HTTP_OK, $response->getStatusCode());
     }
 }
