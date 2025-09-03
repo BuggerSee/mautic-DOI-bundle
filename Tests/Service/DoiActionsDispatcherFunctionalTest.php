@@ -5,6 +5,7 @@ namespace MauticPlugin\MauticDoiBundle\Tests\Service;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\Submission;
+use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\PointsChangeLog;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
@@ -83,6 +84,62 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
         Assert::assertStringContainsString($form->getName(), $pointsChangeLog->getEventName());
     }
 
+    public function testLeadScoreContactsCompaniesActionExecutesAfterDoiVerification(): void
+    {
+        $form = $this->createForm('DOI Score Companies Test Form');
+        $this->createDoiConfig($form);
+        $this->createDoiAction($form, 'Test Score Companies Action', 'lead.scorecontactscompanies', [
+            'score' => 25,
+        ]);
+
+        $company = $this->createCompany('Test Company', 10);
+
+        // Submit the form to create initial submission and DOI entry
+        $crawler     = $this->client->request(Request::METHOD_GET, "/form/{$form->getId()}");
+        $formCrawler = $crawler->filter('form[id=mauticform_doiscorecompaniestestform]');
+        $formElement = $formCrawler->form();
+        $formElement->setValues([
+            'mauticform[email]'   => 'test@example.com',
+            'mauticform[company]' => 'Test Company',
+        ]);
+        $this->client->submit($formElement);
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        // Verify submission was created
+        $submissions = $this->em->getRepository(Submission::class)->findAll();
+        Assert::assertCount(1, $submissions);
+        $submission = $submissions[0];
+
+        // Verify DOI submission was created
+        $doiSubmissions = $this->em->getRepository(FormDoiSubmission::class)->findAll();
+        Assert::assertCount(1, $doiSubmissions);
+        $doiSubmission = $doiSubmissions[0];
+        Assert::assertSame('pending', $doiSubmission->getStatus());
+
+        // Get the contact that was created
+        $contact = $submission->getLead();
+        Assert::assertNotNull($contact);
+
+        // Simulate DOI verification click
+        $formId    = $form->getId();
+        $hash      = $doiSubmission->getHash();
+        $tokenData = "{$formId}:{$hash}";
+        $token     = base64_encode($tokenData);
+
+        $this->client->request(Request::METHOD_GET, "/email/verify/{$token}");
+        $response = $this->client->getResponse();
+        $this->assertSame(Response::HTTP_OK, $response->getStatusCode());
+
+        // Refresh entities to get updated data
+        $this->em->refresh($doiSubmission);
+        $this->em->refresh($company);
+
+        // Verify DOI submission is now confirmed
+        Assert::assertSame('confirmed', $doiSubmission->getStatus());
+
+        Assert::assertSame(35, $company->getScore());
+    }
+
     private function createForm(string $name): Form
     {
         $formPayload = [
@@ -98,6 +155,14 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
                     'leadField'    => 'email',
                     'mappedField'  => 'email',
                     'mappedObject' => 'contact',
+                ],
+                [
+                    'label'        => 'Company',
+                    'type'         => 'text',
+                    'alias'        => 'company',
+                    'leadField'    => 'companyname',
+                    'mappedField'  => 'companyname',
+                    'mappedObject' => 'company',
                 ],
                 [
                     'label' => 'Submit',
@@ -143,5 +208,17 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
 
         return $action;
+    }
+
+    private function createCompany(string $name, int $initialScore = 0): Company
+    {
+        $company = new Company();
+        $company->setName($name);
+        $company->setScore($initialScore);
+
+        $this->em->persist($company);
+        $this->em->flush();
+
+        return $company;
     }
 }
