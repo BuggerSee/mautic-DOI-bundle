@@ -6,6 +6,8 @@ use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\Submission;
 use Mautic\LeadBundle\Entity\Company;
+use Mautic\LeadBundle\Entity\LeadList;
+use Mautic\LeadBundle\Entity\ListLead;
 use Mautic\LeadBundle\Entity\PointsChangeLog;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
@@ -68,6 +70,51 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
 
         Assert::assertSame('confirmed', $doiSubmission->getStatus());
         Assert::assertSame(35, $company->getScore());
+    }
+
+    public function testLeadChangeListActionExecutesAfterDoiVerification(): void
+    {
+        $addToSegment      = $this->createSegment('Add To Segment', 'add-to-segment');
+        $removeFromSegment = $this->createSegment('Remove From Segment', 'remove-from-segment');
+
+        $form = $this->createFormWithDoiAction('DOI Change List Test Form', 'Test Change List Action', 'lead.changelist', [
+            'addToLists'      => [$addToSegment->getId()],
+            'removeFromLists' => [$removeFromSegment->getId()],
+        ]);
+
+        $submission    = $this->submitForm($form, ['mauticform[email]' => 'test@example.com']);
+        $doiSubmission = $this->assertDoiSubmissionCreated();
+        $contact       = $submission->getLead();
+
+        // Add contact to the "remove from" segment initially
+        $listLead = new ListLead();
+        $listLead->setLead($contact);
+        $listLead->setList($removeFromSegment);
+        $listLead->setDateAdded(new \DateTime());
+        $this->em->persist($listLead);
+        $this->em->flush();
+
+        $this->verifyDoiToken($form, $doiSubmission);
+
+        $this->em->refresh($doiSubmission);
+        $this->em->refresh($contact);
+
+        Assert::assertSame('confirmed', $doiSubmission->getStatus());
+
+        // Check that contact was added to the "add to" segment
+        $addToListLeads = $this->em->getRepository(ListLead::class)->findBy([
+            'lead' => $contact,
+            'list' => $addToSegment,
+        ]);
+        Assert::assertCount(1, $addToListLeads);
+
+        // Check that contact was removed from the "remove from" segment
+        $removeFromListLeads = $this->em->getRepository(ListLead::class)->findBy([
+            'lead' => $contact,
+            'list' => $removeFromSegment,
+        ]);
+        Assert::assertCount(1, $removeFromListLeads);
+        Assert::assertTrue($removeFromListLeads[0]->getManuallyRemoved());
     }
 
     private function createForm(string $name): Form
@@ -150,6 +197,18 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
 
         return $company;
+    }
+
+    private function createSegment(string $name, string $alias): LeadList
+    {
+        $segment = new LeadList();
+        $segment->setName($name);
+        $segment->setAlias($alias);
+        $segment->setPublicName($name);
+        $this->em->persist($segment);
+        $this->em->flush();
+
+        return $segment;
     }
 
     /**
