@@ -24,14 +24,14 @@ final class ConfigType extends AbstractType
                 'data'  => $options['data']['doi_followup_wait_time'] ?? 24,
                 'attr'  => [
                     'tooltip' => 'mautic.doi.config.doi_followup_wait_time_tooltip',
-                    'class' => 'form-control'
+                    'class'   => 'form-control',
                 ],
                 'constraints' => [
                     new GreaterThan([
-                        'value' => 0,
-                        'message' => 'mautic.doi.config.doi_followup_wait_time.positive'
-                    ])
-                ]
+                        'value'   => 0,
+                        'message' => 'mautic.doi.config.doi_followup_wait_time.positive',
+                    ]),
+                ],
             ]
         );
     }
