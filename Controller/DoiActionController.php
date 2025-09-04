@@ -6,6 +6,7 @@ use Mautic\CoreBundle\Controller\AbstractStandardFormController;
 use Mautic\FormBundle\Form\Type\ActionType;
 use Mautic\FormBundle\Model\FormModel;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
+use MauticPlugin\MauticDoiBundle\Model\FormDoiActionManager;
 use MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,11 +22,12 @@ class DoiActionController extends AbstractStandardFormController
     {
         $valid   = $cancelled   = false;
         $method  = $request->getMethod();
+        $keyId   = null;
 
-        if ('POST' == $method) {
+        if (Request::METHOD_POST === $method) {
             $formAction = $request->request->all()['formaction'] ?? [];
-            $actionType = $formAction['type'];
-            $formId     = $formAction['formId'];
+            $actionType = $formAction['type'] ?? null;
+            $formId     = $formAction['formId'] ?? null;
         } else {
             $actionType = $request->query->get('type');
             $formId     = $request->query->get('formId');
@@ -54,7 +56,7 @@ class DoiActionController extends AbstractStandardFormController
         $formAction['settings'] = $customComponents['actions'][$actionType];
 
         // Check for a submitted form and process it
-        if ('POST' == $method) {
+        if (Request::METHOD_POST === $method) {
             if (!$cancelled = $this->isFormCancelled($form)) {
                 if ($valid = $this->isFormValid($form)) {
                     // form is valid so process the data
@@ -63,7 +65,7 @@ class DoiActionController extends AbstractStandardFormController
                     $formData         = $form->getData();
                     $formAction       = array_merge($formAction, $formData);
                     $formAction['id'] = $keyId;
-                    if (empty($formAction['name'])) {
+                    if (!isset($formAction['name']) || '' === $formAction['name']) {
                         // set it to the event default
                         $formAction['name'] = $this->translator->trans($formAction['settings']['label']);
                     }
@@ -81,14 +83,13 @@ class DoiActionController extends AbstractStandardFormController
             'route'         => false,
         ];
 
-        if (!empty($keyId)) {
+        if (!is_null($keyId)) {
             // prevent undefined errors
             $entity     = new FormDoiAction();
             $blank      = $entity->convertToArray();
             $formAction = array_merge($blank, $formAction);
 
-            $template = (!empty($formAction['settings']['template'])) ? $formAction['settings']['template'] :
-                '@MauticDoi/Action/_generic.html.twig';
+            $template                      = $formAction['settings']['template'] ?? '@MauticDoi/Action/_generic.html.twig';
             $passthroughVars['actionId']   = $keyId;
             $passthroughVars['actionHtml'] = $this->renderView($template, [
                 'inForm' => true,
@@ -120,10 +121,11 @@ class DoiActionController extends AbstractStandardFormController
     {
         $method     = $request->getMethod();
         $formaction = $request->request->get('formaction') ?? [];
-        $formId     = 'POST' === $method ? ($formaction['formId'] ?? '') : $request->query->get('formId');
+        $formId     = Request::METHOD_POST === $method ? ($formaction['formId'] ?? '') : $request->query->get('formId');
         $actions    = $formDoiActionSessionManager->getActionsFromSession($formId);
         $valid      = $cancelled      = false;
         $formAction = array_key_exists($objectId, $actions) ? $actions[$objectId] : null;
+        $keyId      = null;
 
         if (null === $formAction) {
             return new JsonResponse(null, Response::HTTP_NOT_FOUND);
@@ -149,14 +151,14 @@ class DoiActionController extends AbstractStandardFormController
         $form->get('formId')->setData($formId);
 
         // Check for a submitted form and process it
-        if ('POST' == $method) {
+        if (Request::METHOD_POST === $method) {
             if (!$cancelled = $this->isFormCancelled($form)) {
                 if ($valid = $this->isFormValid($form)) {
                     // form is valid so process the data
                     $formData = $form->getData();
                     // overwrite with updated data
                     $formAction = array_merge($actions[$objectId], $formData);
-                    if (empty($formAction['name'])) {
+                    if (!isset($formAction['name']) || '' === $formAction['name']) {
                         // set it to the event default
                         $formAction['name'] = $this->translator->trans($formAction['settings']['label']);
                     }
@@ -166,13 +168,13 @@ class DoiActionController extends AbstractStandardFormController
                     $keyId = $objectId;
 
                     // take note if this is a submit button or not
-                    if ('button' == $actionType) {
+                    if ('button' === $actionType) {
                         $submits = $request->getSession()->get('mautic.formactions.submits', []);
-                        if ('submit' == $formAction['properties']['type'] && !in_array($keyId, $submits)) {
+                        if ('submit' === $formAction['properties']['type'] && !in_array($keyId, $submits, true)) {
                             // button type updated to submit
                             $submits[] = $keyId;
                             $request->getSession()->set('mautic.formactions.submits', $submits);
-                        } elseif ('submit' != $formAction['properties']['type'] && in_array($keyId, $submits)) {
+                        } elseif ('submit' !== $formAction['properties']['type'] && in_array($keyId, $submits, true)) {
                             // button type updated to something other than submit
                             $key = array_search($keyId, $submits);
                             unset($submits[$key]);
@@ -192,7 +194,7 @@ class DoiActionController extends AbstractStandardFormController
             'route'         => false,
         ];
 
-        if (!empty($keyId)) {
+        if (!is_null($keyId)) {
             $passthroughVars['actionId'] = $keyId;
 
             // prevent undefined errors
@@ -237,15 +239,15 @@ class DoiActionController extends AbstractStandardFormController
         }
 
         $formAction = (array_key_exists($objectId, $actions)) ? $actions[$objectId] : null;
-        if ('POST' == $request->getMethod() && null !== $formAction) {
+        if (Request::METHOD_POST === $request->getMethod() && null !== $formAction) {
             // Remove the action from the session
             $formDoiActionSessionManager->removeActionFromSession($formId, $objectId);
 
             // take note if this is a submit button or not
-            if ('button' == $formAction['type']) {
+            if ('button' === $formAction['type']) {
                 $submits    = $request->getSession()->get('mautic.formactions.submits', []);
                 $properties = $formAction['properties'];
-                if ('submit' == $properties['type'] && in_array($objectId, $submits)) {
+                if ('submit' === $properties['type'] && in_array($objectId, $submits, true)) {
                     $key = array_search($objectId, $submits);
                     unset($submits[$key]);
                     $request->getSession()->set('mautic.formactions.submits', $submits);
@@ -263,7 +265,7 @@ class DoiActionController extends AbstractStandardFormController
 
     protected function getModelName(): string
     {
-        return 'mautic.plugin.doi.doi_action_manager';
+        return FormDoiActionManager::class;
     }
 
     /**
