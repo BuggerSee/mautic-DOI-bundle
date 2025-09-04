@@ -3,6 +3,7 @@
 namespace MauticPlugin\MauticDoiBundle\Tests\Service;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
+use Mautic\EmailBundle\Entity\Email;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\Submission;
 use Mautic\LeadBundle\Entity\Company;
@@ -117,6 +118,28 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
         Assert::assertTrue($removeFromListLeads[0]->getManuallyRemoved());
     }
 
+    public function testEmailSendLeadActionExecutesAfterDoiVerification(): void
+    {
+        $email = $this->createEmail('Test Email for Lead', 'Test email content for lead');
+
+        $form = $this->createFormWithDoiAction('DOI Email Send Lead Test Form', 'Test Email Send Lead Action', 'email.send.lead', [
+            'email' => $email->getId(),
+        ]);
+
+        $this->submitForm($form, ['mauticform[email]' => 'test@example.com']);
+        $doiSubmission = $this->assertDoiSubmissionCreated();
+
+        $this->verifyDoiToken($form, $doiSubmission);
+
+        $this->em->refresh($doiSubmission);
+
+        Assert::assertSame('confirmed', $doiSubmission->getStatus());
+
+        $messages = $this->getMailerMessagesByToAddress('test@example.com');
+        Assert::assertCount(1, $messages);
+        Assert::assertStringContainsString('Test Email for Lead', $messages[0]->getSubject());
+    }
+
     private function createForm(string $name): Form
     {
         $formPayload = [
@@ -209,6 +232,20 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
 
         return $segment;
+    }
+
+    private function createEmail(string $name, string $content): Email
+    {
+        $email = new Email();
+        $email->setName($name);
+        $email->setSubject($name);
+        $email->setCustomHtml($content);
+        $email->setEmailType('template');
+        $email->setIsPublished(true);
+        $this->em->persist($email);
+        $this->em->flush();
+
+        return $email;
     }
 
     /**

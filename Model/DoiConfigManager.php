@@ -33,7 +33,7 @@ class DoiConfigManager
         $doiConfig = $this->getFormDoiConfig($form) ?? new FormDoiConfig();
 
         // Convert IDs back to entities
-        if (!empty($formData['verificationEmailId'])) {
+        if (isset($formData['verificationEmailId']) && $formData['verificationEmailId']) {
             $verificationEmail = $this->emailRepository->find($formData['verificationEmailId']);
             if ($verificationEmail) {
                 $doiConfig->setVerificationEmail($verificationEmail);
@@ -42,7 +42,7 @@ class DoiConfigManager
             $doiConfig->setVerificationEmail(null);
         }
 
-        if (!empty($formData['followUpEmailId'])) {
+        if (isset($formData['followUpEmailId']) && $formData['followUpEmailId']) {
             $followUpEmail = $this->emailRepository->find($formData['followUpEmailId']);
             $doiConfig->setFollowUpEmail($followUpEmail);
         } else {
