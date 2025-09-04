@@ -19,7 +19,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->doiConfigManager = $this->getContainer()->get('mautic.plugin.doi.model.doi_config_manager');
+        $this->doiConfigManager = $this->getContainer()->get(DoiConfigManager::class);
     }
 
     /**
