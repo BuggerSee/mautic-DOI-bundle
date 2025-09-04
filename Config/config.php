@@ -21,4 +21,7 @@ return [
             ],
         ],
     ],
+    'parameters' => [
+        'followup_wait_time' => 24,
+    ],
 ];
