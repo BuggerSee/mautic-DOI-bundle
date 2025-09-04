@@ -1,0 +1,15 @@
+{# plugins/MauticDoiBundle/Resources/views/FormTheme/Config/_config_doi_config_widget.html.twig #}
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h3 class="panel-title">{{ 'mautic.config.tab.doi_config'|trans }}</h3>
+    </div>
+    <div class="panel-body">
+        {% for field in form.children %}
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form_row(field) }}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
