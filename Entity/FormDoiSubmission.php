@@ -42,6 +42,9 @@ class FormDoiSubmission
     #[ORM\Column(name: 'date_confirmed', type: 'datetime', nullable: true)]
     private ?\DateTime $dateConfirmed = null;
 
+    #[ORM\Column(name: 'date_followup_sent', type: 'datetime', nullable: true)]
+    private ?\DateTime $dateFollowupSent = null;
+
     #[ORM\Column(type: 'string', length: 20)]
     private string $status = 'pending';
 
@@ -126,6 +129,28 @@ class FormDoiSubmission
     {
         $this->dateConfirmed = $dateConfirmed;
 
+        return $this;
+    }
+
+    public function setDateFollowupSent(?\DateTime $dateFollowupSent): self
+    {
+        $this->dateFollowupSent = $dateFollowupSent;
+        return $this;
+    }
+
+    public function getDateFollowupSent(): ?\DateTime
+    {
+        return $this->dateFollowupSent;
+    }
+
+    public function hasFollowupSent(): bool
+    {
+        return $this->dateFollowupSent !== null;
+    }
+
+    public function markFollowupSent(): self
+    {
+        $this->dateFollowupSent = new \DateTime();
         return $this;
     }
 
