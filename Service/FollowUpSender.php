@@ -18,10 +18,10 @@ class FollowUpSender
     public function __construct(
         private EmailModel $emailModel,
         private DoiConfigManager $doiConfigManager,
-        private DoiHashContext $doiHashContext,
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
         private LeadRepository $leadRepository,
+        private DoiTokenParser $doiTokenParser
     ) {
     }
 
@@ -48,10 +48,11 @@ class FollowUpSender
             return false;
         }
 
-        // Ensure DOI tokens resolve to this submission + form
-        $this->doiHashContext
-            ->setDoiHash($submission->getHash())
-            ->setFormId($form->getId());
+        $encodedToken = $this->doiTokenParser->encode($form->getId(), $submission->getHash());
+        $doiLink      = $this->emailModel->buildUrl('mautic_doi_email_verify_action', [
+            'token' => $encodedToken,
+        ]);
+        $tokens = ['{doi_link}' => $doiLink];
 
         $fields = $lead->getFields();
         if (empty($fields)) {
@@ -61,7 +62,7 @@ class FollowUpSender
 
         $result = $this->emailModel->sendEmail($emailEntity, $contactFields, [
             'source'        => ['form', $form->getId()],
-            'tokens'        => [],
+            'tokens'        => $tokens,
             'return_errors' => true,
             'ignoreDNC'     => true,
             'email_type'    => MailHelper::EMAIL_TYPE_TRANSACTIONAL,
