@@ -26,7 +26,7 @@ class SendFollowUpCommand extends Command
 
     protected function configure(): void
     {
-        $this->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Max submissions to process', 100);
+        $this->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Max submissions to process', 500);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
