@@ -34,7 +34,7 @@ class SendFollowUpCommand extends Command
         $limit  = (int) $input->getOption('limit');
 
         $waitHours = (int) $this->parameters->get('doi_followup_wait_time', 24);
-        $threshold = new \DateTimeImmutable(sprintf('-%d hours', $waitHours));
+        $threshold = new \DateTimeImmutable(sprintf('-%d hours', $waitHours), new \DateTimeZone('UTC'));
 
         $submissions = $this->submissionRepo->findPendingDueForFollowup($threshold, $limit);
 
