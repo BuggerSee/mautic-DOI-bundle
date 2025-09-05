@@ -1,0 +1,23 @@
+{
+  "name": "leuchtfeuer/mautic-doi-bundle",
+  "description": "Universal email verification for Mautic, including Double Opt-In (DOI)",
+  "type": "mautic-plugin",
+  "authors": [
+    {
+      "name": "Leuchtfeuer Digital Marketing GmbH",
+      "email": "mautic-plugins@Leuchtfeuer.com",
+      "homepage": "https://Leuchtfeuer.com/mautic/",
+      "role": "Developer"
+    }
+  ],
+  "license": "GPL-3.0-or-later",
+  "keywords": ["mautic","plugin","integration","double","opt-in","optin","doi"],
+  "require": {
+    "php": ">=8.0.0",
+    "mautic/core-lib": "^5.2"
+  },
+  "extra": {
+    "install-directory-name": "MauticDoiBundle"
+  },
+  "minimum-stability": "dev"
+}

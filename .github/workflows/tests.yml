@@ -39,6 +39,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
+
     steps:
       - name: Checkout Mautic
         uses: actions/checkout@v4
@@ -65,11 +66,13 @@ jobs:
           mysqldump --print-defaults
           cp .github/ci-files/.my.cnf ~/.my.cnf
           mysqldump --print-defaults
+
       - name: Set SYMFONY_ENV to test
         run: |
           echo "SYMFONY_ENV=test" >> $GITHUB_ENV
           echo "MAUTIC_ENV=test" >> $GITHUB_ENV
           echo "MAUTIC_TABLE_PREFIX=mautic_" >> $GITHUB_ENV
+
       - name: Get composer cache directory
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
@@ -90,6 +93,7 @@ jobs:
         run: |
           cp ./.github/ci-files/local.php ./config/local.php
           php bin/console mautic:install --force http://localhost
+
       - name: Install Plugins
         env:
           DB_PORT: ${{ job.services.database.ports[3306] }}

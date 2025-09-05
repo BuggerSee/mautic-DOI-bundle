@@ -1,0 +1,9 @@
+#mauticforms-doi-verified-actions .mauticform-row .action-label {
+    font-size: 1.1em;
+    font-weight: bold;
+    display: block;
+}
+#mauticforms-doi-verified-actions .mauticform-row .action-descr {
+    font-size: 0.9em;
+    display: block;
+}
