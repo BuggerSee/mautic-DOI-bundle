@@ -135,6 +135,7 @@ class FormDoiSubmission
     public function setDateFollowupSent(?\DateTime $dateFollowupSent): self
     {
         $this->dateFollowupSent = $dateFollowupSent;
+
         return $this;
     }
 
@@ -145,12 +146,13 @@ class FormDoiSubmission
 
     public function hasFollowupSent(): bool
     {
-        return $this->dateFollowupSent !== null;
+        return null !== $this->dateFollowupSent;
     }
 
     public function markFollowupSent(): self
     {
         $this->dateFollowupSent = new \DateTime();
+
         return $this;
     }
 

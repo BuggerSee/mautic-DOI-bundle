@@ -11,12 +11,9 @@ use Mautic\IntegrationsBundle\Migration\AbstractMigration;
 class Version_0_0_4 extends AbstractMigration
 {
     private string $formDoiSubmissionsTable = 'form_doi_submissions';
-    private Schema $schema;
 
     protected function isApplicable(Schema $schema): bool
     {
-        $this->schema = $schema;
-
         try {
             $tableName = $this->concatPrefix($this->formDoiSubmissionsTable);
 

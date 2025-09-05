@@ -22,7 +22,8 @@ class FollowUpSender
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
         private LeadRepository $leadRepository,
-    ) {}
+    ) {
+    }
 
     public function send(FormDoiSubmission $submission): bool
     {
@@ -30,7 +31,7 @@ class FollowUpSender
             return false;
         }
 
-        $form = $submission->getForm();
+        $form   = $submission->getForm();
         $config = $this->doiConfigManager->getFormDoiConfig($form);
 
         if (!$config || !$config->isEnabled()) {
@@ -66,7 +67,7 @@ class FollowUpSender
             'email_type'    => MailHelper::EMAIL_TYPE_TRANSACTIONAL,
         ]);
 
-        if ($result !== true) {
+        if (true !== $result) {
             $this->logger->error('DOI follow-up send failed', [
                 'submission_id' => $submission->getId(),
                 'email'         => $submission->getEmail(),

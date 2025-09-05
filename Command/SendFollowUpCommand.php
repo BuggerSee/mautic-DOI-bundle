@@ -18,8 +18,8 @@ class SendFollowUpCommand extends Command
 {
     public function __construct(
         private FormDoiSubmissionRepository $submissionRepo,
-        private FollowUpSender              $followUpSender,
-        private CoreParametersHelper        $parameters
+        private FollowUpSender $followUpSender,
+        private CoreParametersHelper $parameters
     ) {
         parent::__construct();
     }
@@ -33,13 +33,13 @@ class SendFollowUpCommand extends Command
     {
         $limit  = (int) $input->getOption('limit');
 
-        $waitHours = (int) ($this->parameters->get('doi_followup_wait_time', 24));
+        $waitHours = (int) $this->parameters->get('doi_followup_wait_time', 24);
         $threshold = new \DateTimeImmutable(sprintf('-%d hours', $waitHours));
 
         $submissions = $this->submissionRepo->findPendingDueForFollowup($threshold, $limit);
 
         $processed = 0;
-        $sent = 0;
+        $sent      = 0;
 
         foreach ($submissions as $submission) {
             ++$processed;
