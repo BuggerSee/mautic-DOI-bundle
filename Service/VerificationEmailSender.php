@@ -9,6 +9,7 @@ use Mautic\EmailBundle\Model\EmailModel;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Event\SubmissionEvent;
 use Mautic\LeadBundle\Entity\Lead;
+use MauticPlugin\MauticDoiBundle\DTO\DoiTokenData;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\MauticDoiBundle\Model\DoiConfigManager;
 use MauticPlugin\MauticDoiBundle\Model\FormDoiSubmissionManager;
@@ -33,17 +34,18 @@ class VerificationEmailSender
         $doiConfig      = $this->doiConfigManager->getFormDoiConfig($form);
         $contact        = $event->getLead();
 
-        if (!$contact || !$contact->getEmail()) {
+        if (null === $contact || !$contact->getEmail()) {
             return false;
         }
 
-        if (!$doiConfig || !$doiConfig->isEnabled()) {
+        if (null === $doiConfig || !$doiConfig->isEnabled()) {
             return false;
         }
 
         $doiSubmission = $this->createDoiSubmission($event, $form, $contact);
         $this->doiSubmissionManager->save($doiSubmission);
-        $encodedToken = $this->doiTokenParser->encode($form->getId(), $doiSubmission->getHash());
+        $tokenData    = new DoiTokenData($form->getId(), $doiSubmission->getHash());
+        $encodedToken = $this->doiTokenParser->encode($tokenData);
         $doiLink      = $this->emailModel->buildUrl('mautic_doi_email_verify_action', [
             'token' => $encodedToken,
         ]);
@@ -53,7 +55,7 @@ class VerificationEmailSender
 
         $verificationEmail = $doiConfig->getVerificationEmail();
 
-        if (!$verificationEmail || !$verificationEmail->isPublished()) {
+        if (null === $verificationEmail || !$verificationEmail->isPublished()) {
             return false;
         }
 

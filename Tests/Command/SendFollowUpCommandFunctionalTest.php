@@ -7,6 +7,7 @@ use Mautic\EmailBundle\Entity\Email;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\Submission;
 use Mautic\LeadBundle\Entity\Lead;
+use MauticPlugin\MauticDoiBundle\DTO\DoiTokenData;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\MauticDoiBundle\Service\DoiTokenParser;
@@ -60,9 +61,10 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         $token       = $matches[1];
         $decodedData = $tokenParser->decode($token);
 
-        Assert::assertNotNull($decodedData, 'DOI token should be decodable');
-        [$tokenFormId, $tokenHash] = $decodedData;
-        Assert::assertSame($form->getId(), (int) $tokenFormId, 'Form ID in token should match expected');
+        Assert::assertInstanceOf(DoiTokenData::class, $decodedData, 'DOI token should be decodable');
+        $tokenFormId = $decodedData->formId;
+        $tokenHash   = $decodedData->hash;
+        Assert::assertSame($form->getId(), $tokenFormId, 'Form ID in token should match expected');
         Assert::assertSame($oldSubmission->getHash(), $tokenHash, 'DOI hash in token should match submission hash');
     }
 
@@ -112,14 +114,17 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         $tokenParser = static::getContainer()->get(DoiTokenParser::class);
 
         $decodedData1 = $tokenParser->decode($token1);
-        Assert::assertNotNull($decodedData1, 'Contact 1 DOI token should be decodable');
-        [$tokenFormId1, $tokenHash1] = $decodedData1;
-        Assert::assertSame($form->getId(), (int) $tokenFormId1, 'Form ID in token 1 should match expected');
+        Assert::assertInstanceOf(DoiTokenData::class, $decodedData1, 'Contact 1 DOI token should be decodable');
+        $tokenFormId1 = $decodedData1->formId;
+        $tokenHash1   = $decodedData1->hash;
+
+        Assert::assertSame($form->getId(), $tokenFormId1, 'Form ID in token 1 should match expected');
         Assert::assertSame($submission1->getHash(), $tokenHash1, 'DOI hash in token 1 should match submission 1 hash');
 
         $decodedData2 = $tokenParser->decode($token2);
-        Assert::assertNotNull($decodedData2, 'Contact 2 DOI token should be decodable');
-        [$tokenFormId2, $tokenHash2] = $decodedData2;
+        Assert::assertInstanceOf(DoiTokenData::class, $decodedData2, 'Contact 2 DOI token should be decodable');
+        $tokenFormId2 = $decodedData2->formId;
+        $tokenHash2   = $decodedData2->hash;
         Assert::assertSame($form->getId(), $tokenFormId2, 'Form ID in token 2 should match expected');
         Assert::assertSame($submission2->getHash(), $tokenHash2, 'DOI hash in token 2 should match submission 2 hash');
 

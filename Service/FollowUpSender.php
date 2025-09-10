@@ -9,6 +9,7 @@ use Mautic\EmailBundle\Helper\MailHelper;
 use Mautic\EmailBundle\Model\EmailModel;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Entity\LeadRepository;
+use MauticPlugin\MauticDoiBundle\DTO\DoiTokenData;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\MauticDoiBundle\Model\DoiConfigManager;
 use Psr\Log\LoggerInterface;
@@ -34,28 +35,29 @@ class FollowUpSender
         $form   = $submission->getForm();
         $config = $this->doiConfigManager->getFormDoiConfig($form);
 
-        if (!$config || !$config->isEnabled()) {
+        if (null === $config || !$config->isEnabled()) {
             return false;
         }
 
         $emailEntity = $config->getFollowUpEmail();
-        if (!$emailEntity || !$emailEntity->isPublished()) {
+        if (null === $emailEntity || !$emailEntity->isPublished()) {
             return false;
         }
 
         $lead = $submission->getLead();
-        if (!$lead || !$lead->getEmail()) {
+        if (null === $lead || !$lead->getEmail()) {
             return false;
         }
 
-        $encodedToken = $this->doiTokenParser->encode($form->getId(), $submission->getHash());
+        $tokenData    = new DoiTokenData($form->getId(), $submission->getHash());
+        $encodedToken = $this->doiTokenParser->encode($tokenData);
         $doiLink      = $this->emailModel->buildUrl('mautic_doi_email_verify_action', [
             'token' => $encodedToken,
         ]);
         $tokens = ['{doi_link}' => $doiLink];
 
         $fields = $lead->getFields();
-        if (empty($fields)) {
+        if ([] === $fields) {
             $this->hydrateCustomFieldData($lead);
         }
         $contactFields = $lead->getProfileFields();
