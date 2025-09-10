@@ -22,10 +22,20 @@ class TokenGeneratorListener implements EventSubscriberInterface
     {
         $tokens = $this->getCustomTokens();
 
-        if ($event->tokensRequested(array_keys($tokens))) {
-            $event->addTokens(
-                $event->filterTokens($tokens)
-            );
+        if ([] === $tokens) {
+            return;
+        }
+
+        $tokenKeys = array_keys($tokens);
+
+        // Check if any of our tokens are actually requested
+        if (!$event->tokensRequested($tokenKeys)) {
+            return;
+        }
+
+        $filteredTokens = $event->filterTokens($tokens);
+        if ([] !== $filteredTokens) {
+            $event->addTokens($filteredTokens);
         }
     }
 
