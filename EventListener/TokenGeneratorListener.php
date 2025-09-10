@@ -10,6 +10,7 @@ use Mautic\EmailBundle\Event\EmailSendEvent;
 use Mautic\EmailBundle\Model\EmailModel;
 use Mautic\PageBundle\Event\UntrackableUrlsEvent;
 use Mautic\PageBundle\PageEvents;
+use MauticPlugin\MauticDoiBundle\DTO\DoiTokenData;
 use MauticPlugin\MauticDoiBundle\Service\DoiHashContext;
 use MauticPlugin\MauticDoiBundle\Service\DoiTokenParser;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -29,10 +30,20 @@ class TokenGeneratorListener implements EventSubscriberInterface
     {
         $tokens = $this->getCustomTokens();
 
-        if ($event->tokensRequested(array_keys($tokens))) {
-            $event->addTokens(
-                $event->filterTokens($tokens)
-            );
+        if ([] === $tokens) {
+            return;
+        }
+
+        $tokenKeys = array_keys($tokens);
+
+        // Check if any of our tokens are actually requested
+        if (!$event->tokensRequested($tokenKeys)) {
+            return;
+        }
+
+        $filteredTokens = $event->filterTokens($tokens);
+        if ([] !== $filteredTokens) {
+            $event->addTokens($filteredTokens);
         }
     }
 
@@ -40,7 +51,8 @@ class TokenGeneratorListener implements EventSubscriberInterface
     {
         $hash         = $this->doiHashContext->getDoiHash();
         $formId       = $this->doiHashContext->getFormId();
-        $encodedToken = $this->doiTokenParser->encode($formId, $hash);
+        $tokenData    = new DoiTokenData($formId, $hash);
+        $encodedToken = $this->doiTokenParser->encode($tokenData);
         $event->addToken('{doi_link}', $this->emailModel->buildUrl('mautic_doi_email_verify_action', [
             'token' => $encodedToken,
         ]));

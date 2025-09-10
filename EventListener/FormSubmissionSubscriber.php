@@ -36,7 +36,7 @@ class FormSubmissionSubscriber implements EventSubscriberInterface
         $doiConfig      = $this->doiConfigManager->getFormDoiConfig($form);
         $contact        = $event->getLead();
 
-        if (!$contact || !$doiConfig || !$doiConfig->isEnabled()) {
+        if (null === $contact || null === $doiConfig || !$doiConfig->isEnabled()) {
             return;
         }
 
@@ -69,7 +69,7 @@ class FormSubmissionSubscriber implements EventSubscriberInterface
     {
         $verificationEmail = $doiConfig->getVerificationEmail();
 
-        if (!$verificationEmail || !$verificationEmail->isPublished()) {
+        if (null === $verificationEmail || !$verificationEmail->isPublished()) {
             return;
         }
 

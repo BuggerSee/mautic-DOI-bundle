@@ -34,15 +34,16 @@ class PublicController extends AbstractController
 
     public function verifyEmailAction(string $token): Response
     {
-        $decodedData = $this->doiTokenParser->decode($token);
+        $tokenData = $this->doiTokenParser->decode($token);
 
-        if (!$decodedData) {
+        if (null === $tokenData) {
             $this->logger->error('Failed to decode DOI token', ['token' => $token]);
 
             return $this->createErrorResponse();
         }
 
-        [$formId, $hash] = $decodedData;
+        $formId = $tokenData->formId;
+        $hash   = $tokenData->hash;
 
         $form       = $this->formRepository->find($formId);
         $submission = $this->submissionRepository->findOneBy(['hash' => $hash]);
