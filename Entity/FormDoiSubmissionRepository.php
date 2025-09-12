@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MauticPlugin\MauticDoiBundle\Entity;
 
+use Doctrine\Common\Collections\Criteria;
 use Mautic\CoreBundle\Entity\CommonRepository;
 
 /**
@@ -12,7 +13,7 @@ use Mautic\CoreBundle\Entity\CommonRepository;
 class FormDoiSubmissionRepository extends CommonRepository
 {
     /**
-     * @return FormDoiSubmission[]
+     * @return list<FormDoiSubmission>
      */
     public function findPendingDueForFollowup(
         \DateTimeInterface $threshold,
@@ -26,9 +27,9 @@ class FormDoiSubmissionRepository extends CommonRepository
             ->andWhere('s.dateCreated <= :threshold')
             ->andWhere('s.dateFollowupSent IS NULL')
             ->andWhere('dc.followUpEmail IS NOT NULL')
-            ->setParameter('pending', 'pending')
+            ->setParameter('pending', FormDoiSubmission::STATUS_PENDING)
             ->setParameter('threshold', $threshold)
-            ->orderBy('s.id', 'DESC')
+            ->orderBy('s.id', Criteria::DESC)
             ->setMaxResults($limit);
 
         return $qb->getQuery()->getResult();

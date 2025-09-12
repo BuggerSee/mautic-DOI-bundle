@@ -13,6 +13,9 @@ use Mautic\LeadBundle\Entity\Lead;
 #[ORM\Index(columns: ['status'], name: 'form_doi_submission_status_search')]
 class FormDoiSubmission
 {
+    public const STATUS_PENDING   = 'pending';
+    public const STATUS_CONFIRMED = 'confirmed';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -46,7 +49,7 @@ class FormDoiSubmission
     private ?\DateTime $dateFollowupSent = null;
 
     #[ORM\Column(type: 'string', length: 20)]
-    private string $status = 'pending';
+    private string $status = self::STATUS_PENDING;
 
     public function getId(): ?int
     {
@@ -132,13 +135,6 @@ class FormDoiSubmission
         return $this;
     }
 
-    public function setDateFollowupSent(?\DateTime $dateFollowupSent): self
-    {
-        $this->dateFollowupSent = $dateFollowupSent;
-
-        return $this;
-    }
-
     public function getDateFollowupSent(): ?\DateTime
     {
         return $this->dateFollowupSent;
@@ -175,17 +171,17 @@ class FormDoiSubmission
 
     public function isPending(): bool
     {
-        return 'pending' === $this->status;
+        return self::STATUS_PENDING === $this->status;
     }
 
     public function isConfirmed(): bool
     {
-        return 'confirmed' === $this->status;
+        return self::STATUS_CONFIRMED === $this->status;
     }
 
     public function confirm(): self
     {
-        $this->status        = 'confirmed';
+        $this->status        = self::STATUS_CONFIRMED;
         $this->dateConfirmed = new \DateTime();
 
         return $this;

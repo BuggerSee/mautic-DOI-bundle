@@ -38,7 +38,7 @@ final class ConfigSubscriber implements EventSubscriberInterface
         $values = $event->getConfig();
 
         $value = $values['doi_config']['doi_followup_wait_time'] ?? null;
-        if ('' !== $value && is_numeric($value)) {
+        if (is_numeric($value)) {
             $followupWaitTime = (int) $value;
             if ($followupWaitTime < 1) {
                 $followupWaitTime = 24; // Default fallback
