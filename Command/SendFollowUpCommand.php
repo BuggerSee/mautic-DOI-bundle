@@ -26,12 +26,13 @@ class SendFollowUpCommand extends Command
 
     protected function configure(): void
     {
-        $this->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Max submissions to process', 500);
+        $this->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Max submissions to process (no limit if not specified)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $limit  = (int) $input->getOption('limit');
+        $limitOption = $input->getOption('limit');
+        $limit       = null !== $limitOption ? (int) $limitOption : null;
 
         $waitHours = (int) $this->parameters->get('doi_followup_wait_time', 24);
         $threshold = new \DateTimeImmutable(sprintf('-%d hours', $waitHours), new \DateTimeZone('UTC'));

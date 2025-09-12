@@ -17,7 +17,7 @@ class FormDoiSubmissionRepository extends CommonRepository
      */
     public function findPendingDueForFollowup(
         \DateTimeInterface $threshold,
-        int $limit = 500
+        ?int $limit = null
     ): array {
         $qb = $this->createQueryBuilder('s')
             ->innerJoin('s.form', 'f')
@@ -29,8 +29,11 @@ class FormDoiSubmissionRepository extends CommonRepository
             ->andWhere('dc.followUpEmail IS NOT NULL')
             ->setParameter('pending', FormDoiSubmission::STATUS_PENDING)
             ->setParameter('threshold', $threshold)
-            ->orderBy('s.id', Criteria::DESC)
-            ->setMaxResults($limit);
+            ->orderBy('s.id', Criteria::DESC);
+
+        if (null !== $limit) {
+            $qb->setMaxResults($limit);
+        }
 
         return $qb->getQuery()->getResult();
     }

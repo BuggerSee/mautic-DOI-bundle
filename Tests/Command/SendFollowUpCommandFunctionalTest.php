@@ -24,7 +24,7 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         parent::setUp();
     }
 
-    public function testCommandWithDefaultLimit(): void
+    public function testCommandWithoutLimit(): void
     {
         $form = $this->createForm('Test DOI Form');
         $this->createDoiConfig($form);
