@@ -56,8 +56,8 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         Assert::assertNotEmpty($matches[1], 'DOI token should be present');
 
         // Use DoiTokenParser to decode and verify the token
-        /** @var DoiTokenParser $tokenParser */
         $tokenParser = static::getContainer()->get(DoiTokenParser::class);
+        assert($tokenParser instanceof DoiTokenParser);
         $token       = $matches[1];
         $decodedData = $tokenParser->decode($token);
 
@@ -110,8 +110,8 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         Assert::assertNotSame($token1, $token2, 'Each contact should have a unique DOI token');
 
         // Verify each token contains the correct submission hash
-        /** @var DoiTokenParser $tokenParser */
         $tokenParser = static::getContainer()->get(DoiTokenParser::class);
+        assert($tokenParser instanceof DoiTokenParser);
 
         $decodedData1 = $tokenParser->decode($token1);
         Assert::assertInstanceOf(DoiTokenData::class, $decodedData1, 'Contact 1 DOI token should be decodable');
@@ -177,6 +177,64 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         $notReadyMessages = $this->getMailerMessagesByToAddress('notready@example.com');
         Assert::assertCount(1, $readyMessages, 'Ready submission should have received follow-up email');
         Assert::assertCount(0, $notReadyMessages, 'Not ready submission should not have received follow-up email');
+    }
+
+    public function testCommandWithBatchSize(): void
+    {
+        $form = $this->createForm('Test DOI Form');
+        $this->createDoiConfig($form);
+
+        // Create 5 submissions that are due for follow-up
+        $this->createDoiSubmission($form, 'test1@example.com', new \DateTime('-25 hours'));
+        $this->createDoiSubmission($form, 'test2@example.com', new \DateTime('-26 hours'));
+        $this->createDoiSubmission($form, 'test3@example.com', new \DateTime('-27 hours'));
+        $this->createDoiSubmission($form, 'test4@example.com', new \DateTime('-28 hours'));
+        $this->createDoiSubmission($form, 'test5@example.com', new \DateTime('-29 hours'));
+
+        // Process with batch size of 2 - should process all 5 in 3 batches (2+2+1)
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:send-followup', ['--batch' => '2']);
+
+        $output = $commandTester->getDisplay();
+        Assert::assertStringContainsString('Processed: 5 | Sent: 5', $output);
+
+        // Verify all emails were sent
+        $emails = ['test1@example.com', 'test2@example.com', 'test3@example.com', 'test4@example.com', 'test5@example.com'];
+        foreach ($emails as $email) {
+            $messages = $this->getMailerMessagesByToAddress($email);
+            Assert::assertCount(1, $messages, "Should have exactly one follow-up email sent to {$email}");
+        }
+    }
+
+    public function testCommandWithBatchSizeAndLimit(): void
+    {
+        $form = $this->createForm('Test DOI Form');
+        $this->createDoiConfig($form);
+
+        // Create 7 submissions that are due for follow-up
+        $this->createDoiSubmission($form, 'test1@example.com', new \DateTime('-25 hours'));
+        $this->createDoiSubmission($form, 'test2@example.com', new \DateTime('-26 hours'));
+        $this->createDoiSubmission($form, 'test3@example.com', new \DateTime('-27 hours'));
+        $this->createDoiSubmission($form, 'test4@example.com', new \DateTime('-28 hours'));
+        $this->createDoiSubmission($form, 'test5@example.com', new \DateTime('-29 hours'));
+        $this->createDoiSubmission($form, 'test6@example.com', new \DateTime('-30 hours'));
+        $this->createDoiSubmission($form, 'test7@example.com', new \DateTime('-31 hours'));
+
+        // Process with batch size of 3 and limit of 5 - should process 5 total (3+2)
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:send-followup', [
+            '--batch' => '3',
+            '--limit' => '5',
+        ]);
+
+        $output = $commandTester->getDisplay();
+        Assert::assertStringContainsString('Processed: 5 | Sent: 5', $output);
+
+        // Count total emails sent - should be exactly 5
+        $totalEmailsSent = 0;
+        for ($i = 1; $i <= 7; ++$i) {
+            $messages = $this->getMailerMessagesByToAddress("test{$i}@example.com");
+            $totalEmailsSent += count($messages);
+        }
+        Assert::assertSame(5, $totalEmailsSent, 'Should have sent exactly 5 emails due to limit');
     }
 
     private function createForm(string $name): Form
