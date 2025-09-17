@@ -41,9 +41,9 @@ class SendFollowUpCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $limitOption = $input->getOption('limit');
-        $limit       = null !== $limitOption ? (int) $limitOption : null;
-        $batch       = (int) $input->getOption('batch');
+        $limitOption      = $input->getOption('limit');
+        $totalLimit       = null !== $limitOption ? (int) $limitOption : null;
+        $batchLimit       = (int) $input->getOption('batch');
 
         $waitHours = (int) $this->parameters->get('doi_followup_wait_time', 24);
         $threshold = new \DateTimeImmutable(sprintf('-%d hours', $waitHours), new \DateTimeZone('UTC'));
@@ -51,9 +51,9 @@ class SendFollowUpCommand extends Command
         $processed = 0;
         $sent      = 0;
 
-        // Process submissions in batches until the limit is reached or no more submissions
+        // Process submissions in batches until the total limit is reached or no more submissions
         do {
-            $remainingBatch = null !== $limit ? min($batch, $limit - $processed) : $batch;
+            $remainingBatch = null !== $totalLimit ? min($batchLimit, $totalLimit - $processed) : $batchLimit;
             $submissions    = $this->submissionRepo->findPendingDueForFollowup($threshold, $remainingBatch);
 
             $batchProcessed = 0;
@@ -70,7 +70,7 @@ class SendFollowUpCommand extends Command
             $sent += $batchSent;
 
             // Continue only if submissions were processed and limit not reached
-        } while ($batchProcessed > 0 && (null === $limit || $processed < $limit));
+        } while ($batchProcessed > 0 && (null === $totalLimit || $processed < $totalLimit));
 
         $output->writeln(sprintf('Processed: %d | Sent: %d', $processed, $sent));
 
