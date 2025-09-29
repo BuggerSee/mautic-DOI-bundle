@@ -36,11 +36,13 @@ class FormBuilderTemplateSubscriber implements EventSubscriberInterface
             if ($form->getId()) {
                 $formDoiActions = $this->formDoiActionManager->getFormDoiActions($form);
                 $this->formDoiActionSessionManager->loadActionsIntoSession($form->getId(), $formDoiActions);
-
-                // Add FormDoiActions to template variables
-                $vars['formDoiActions'] = $formDoiActions;
-                $event->setVars($vars);
+            } else {
+                $mauticForm             = $event->getRequest()->request->all()['mauticform'] ?? null;
+                $sessionId              = $mauticForm['sessionId'] ?? '';
+                $formDoiActions         = $this->formDoiActionSessionManager->getActionsFromSession($sessionId);
             }
+            $vars['formDoiActions'] = $formDoiActions;
+            $event->setVars($vars);
 
             $event->setTemplate('@MauticDoi/Builder/index.html.twig');
         }

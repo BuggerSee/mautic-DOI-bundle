@@ -32,8 +32,12 @@ Variables
     {% set formId = form.sessionId.vars.data %}
     {% set inBuilder = inBuilder|default(false) %}
     {% set fieldsTabError = false %}
+    {% set doiTabError = false %}
     {% if form_errors(form.progressiveProfilingLimit) %}
         {% set fieldsTabError = true %}
+    {% endif %}
+    {% if formContainsErrors(form.doiConfig) %}
+        {% set doiTabError = true %}
     {% endif %}
 
     {{ form_start(form) }}
@@ -52,7 +56,12 @@ Variables
                             </a>
                         </li>
                         <li id="actions-tab"><a href="#actions-container" role="tab" data-toggle="tab">{{ 'mautic.form.tab.actions'|trans }}</a></li>
-                        <li id="doi-tab"><a href="#doi-container" role="tab" data-toggle="tab">{{ 'mautic.plugin.doi.form.tab.doi'|trans }}</a></li>
+                        <li id="doi-tab">
+                            <a href="#doi-container" role="tab" data-toggle="tab"{% if doiTabError %} class="text-danger"{% endif %}>
+                                {{ 'mautic.plugin.doi.form.tab.doi'|trans }}
+                                {% if doiTabError %}<i class="ri-alert-line"></i>{% endif -%}
+                            </a>
+                        </li>
                     </ul>
                     <!--/ tabs controls -->
 
