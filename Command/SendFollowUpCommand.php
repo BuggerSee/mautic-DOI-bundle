@@ -6,8 +6,8 @@ namespace MauticPlugin\MauticDoiBundle\Command;
 
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmissionRepository;
-use MauticPlugin\MauticDoiBundle\Service\FollowUpSender;
 use MauticPlugin\MauticDoiBundle\Integration\Config;
+use MauticPlugin\MauticDoiBundle\Service\FollowUpSender;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -45,6 +45,7 @@ class SendFollowUpCommand extends Command
     {
         if (!$this->pluginConfig->isPublished()) {
             $output->writeln('DOI plugin is disabled');
+
             return Command::FAILURE;
         }
 

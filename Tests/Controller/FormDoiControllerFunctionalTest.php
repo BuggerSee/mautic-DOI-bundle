@@ -242,11 +242,11 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $this->assertTrue($this->client->getResponse()->isOk());
 
         // Assert DOI fields are not present
-        $this->assertSame(0, $crawler->filter('input[name="mauticform[doiConfig][enabled]"]')->count(), 'Enabled field should not be present');
-        $this->assertSame(0, $crawler->filter('select[name="mauticform[doiConfig][verificationEmailId]"]')->count(), 'Verification email field should not be present');
-        $this->assertSame(0, $crawler->filter('select[name="mauticform[doiConfig][followUpEmailId]"]')->count(), 'Follow-up email field should not be present');
-        $this->assertSame(0, $crawler->filter('input[name="mauticform[doiConfig][successRedirectUrl]"]')->count(), 'Success redirect URL field should not be present');
-        $this->assertSame(0, $crawler->filter('input[name="mauticform[doiConfig][errorRedirectUrl]"]')->count(), 'Error redirect URL field should not be present');
+        $this->assertCount(0, $crawler->filter('input[name="mauticform[doiConfig][enabled]"]'), 'Enabled field should not be present');
+        $this->assertCount(0, $crawler->filter('select[name="mauticform[doiConfig][verificationEmailId]"]'), 'Verification email field should not be present');
+        $this->assertCount(0, $crawler->filter('select[name="mauticform[doiConfig][followUpEmailId]"]'), 'Follow-up email field should not be present');
+        $this->assertCount(0, $crawler->filter('input[name="mauticform[doiConfig][successRedirectUrl]"]'), 'Success redirect URL field should not be present');
+        $this->assertCount(0, $crawler->filter('input[name="mauticform[doiConfig][errorRedirectUrl]"]'), 'Error redirect URL field should not be present');
     }
 
     private function createForm(string $name, string $alias): Form
