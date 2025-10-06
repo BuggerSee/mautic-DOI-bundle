@@ -29,4 +29,15 @@ final class PluginFixtureHelper
         $this->em->flush();
     }
 
+    public function disablePlugin(): void
+    {
+        $integration = $this->em->getRepository(Integration::class)->findOneBy(['name' => 'MauticDoi']);
+        if (null === $integration) {
+            return;
+        }
+
+        $integration->setIsPublished(false);
+        $this->em->persist($integration);
+        $this->em->flush();
+    }
 }

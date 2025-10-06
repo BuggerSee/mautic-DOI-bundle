@@ -16,14 +16,14 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
     protected $useCleanupRollback = false;
 
     private DoiConfigManager $doiConfigManager;
+    private PluginFixtureHelper $pluginFixtureHelper;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $pluginFixtureHelper = new PluginFixtureHelper($this->em);
-        $pluginFixtureHelper->createAndEnablePlugin();
-
+        $this->pluginFixtureHelper = new PluginFixtureHelper($this->em);
+        $this->pluginFixtureHelper->createAndEnablePlugin();
         $this->doiConfigManager = $this->getContainer()->get(DoiConfigManager::class);
     }
 
@@ -226,6 +226,27 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Assert that the config is the same entity as the initial one (updated, not new)
         $this->assertEquals($initialDoiConfig->getId(), $updatedDoiConfig->getId());
+    }
+
+    /**
+     * Ensure DOI form fields are not available when the plugin is disabled.
+     */
+    public function testDoiFieldsAreHiddenWhenPluginDisabled(): void
+    {
+        $this->pluginFixtureHelper->disablePlugin();
+
+        $form = $this->createForm('Test DOI Disabled - Fields Hidden', 'test_doi_fields_hidden_when_disabled');
+
+        // Load the form edit page
+        $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
+        $this->assertTrue($this->client->getResponse()->isOk());
+
+        // Assert DOI fields are not present
+        $this->assertSame(0, $crawler->filter('input[name="mauticform[doiConfig][enabled]"]')->count(), 'Enabled field should not be present');
+        $this->assertSame(0, $crawler->filter('select[name="mauticform[doiConfig][verificationEmailId]"]')->count(), 'Verification email field should not be present');
+        $this->assertSame(0, $crawler->filter('select[name="mauticform[doiConfig][followUpEmailId]"]')->count(), 'Follow-up email field should not be present');
+        $this->assertSame(0, $crawler->filter('input[name="mauticform[doiConfig][successRedirectUrl]"]')->count(), 'Success redirect URL field should not be present');
+        $this->assertSame(0, $crawler->filter('input[name="mauticform[doiConfig][errorRedirectUrl]"]')->count(), 'Error redirect URL field should not be present');
     }
 
     private function createForm(string $name, string $alias): Form

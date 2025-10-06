@@ -7,6 +7,7 @@ namespace MauticPlugin\MauticDoiBundle\Command;
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmissionRepository;
 use MauticPlugin\MauticDoiBundle\Service\FollowUpSender;
+use MauticPlugin\MauticDoiBundle\Integration\Config;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -21,7 +22,8 @@ class SendFollowUpCommand extends Command
     public function __construct(
         private FormDoiSubmissionRepository $submissionRepo,
         private FollowUpSender $followUpSender,
-        private CoreParametersHelper $parameters
+        private CoreParametersHelper $parameters,
+        private Config $pluginConfig
     ) {
         parent::__construct();
     }
@@ -41,6 +43,11 @@ class SendFollowUpCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        if (!$this->pluginConfig->isPublished()) {
+            $output->writeln('DOI plugin is disabled');
+            return Command::FAILURE;
+        }
+
         $limitOption      = $input->getOption('limit');
         $totalLimit       = null !== $limitOption ? (int) $limitOption : null;
         $batchLimit       = (int) $input->getOption('batch');

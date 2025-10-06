@@ -18,12 +18,14 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
 {
     protected $useCleanupRollback = false;
 
+    private PluginFixtureHelper $pluginFixtureHelper;
+
     protected function setUp(): void
     {
         $this->configParams['doi_followup_wait_time'] = 24;
         parent::setUp();
-        $pluginFixtureHelper = new PluginFixtureHelper($this->em);
-        $pluginFixtureHelper->createAndEnablePlugin();
+        $this->pluginFixtureHelper = new PluginFixtureHelper($this->em);
+        $this->pluginFixtureHelper->createAndEnablePlugin();
     }
 
     public function testCommandWithoutLimit(): void
@@ -237,6 +239,16 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
             $totalEmailsSent += count($messages);
         }
         Assert::assertSame(5, $totalEmailsSent, 'Should have sent exactly 5 emails due to limit');
+    }
+
+    public function testCommandDisplaysMessageWhenPluginDisabled(): void
+    {
+        $this->pluginFixtureHelper->disablePlugin();
+
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:send-followup');
+
+        $output = $commandTester->getDisplay();
+        Assert::assertStringContainsString('DOI plugin is disabled', $output);
     }
 
     private function createForm(string $name): Form
