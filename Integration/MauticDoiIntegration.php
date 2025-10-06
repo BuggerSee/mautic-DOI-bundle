@@ -27,4 +27,12 @@ class MauticDoiIntegration extends BasicIntegration implements BasicInterface
     {
         return 'plugins/MauticDoiBundle/Assets/img/icon.png';
     }
+
+    /**
+     * Override the trait method to fix PHPStan error.
+     */
+    public function hasIntegrationConfiguration(): bool
+    {
+        return null !== $this->integration;
+    }
 }

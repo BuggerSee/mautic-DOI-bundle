@@ -11,6 +11,7 @@ use MauticPlugin\MauticDoiBundle\DTO\DoiTokenData;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\MauticDoiBundle\Service\DoiTokenParser;
+use MauticPlugin\MauticDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
 
 class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
@@ -20,8 +21,9 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
     protected function setUp(): void
     {
         $this->configParams['doi_followup_wait_time'] = 24;
-
         parent::setUp();
+        $pluginFixtureHelper = new PluginFixtureHelper($this->em);
+        $pluginFixtureHelper->createAndEnablePlugin();
     }
 
     public function testCommandWithoutLimit(): void

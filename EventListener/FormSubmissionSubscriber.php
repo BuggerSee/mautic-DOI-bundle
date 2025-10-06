@@ -6,6 +6,7 @@ namespace MauticPlugin\MauticDoiBundle\EventListener;
 
 use Mautic\FormBundle\Event\SubmissionEvent;
 use Mautic\FormBundle\FormEvents;
+use MauticPlugin\MauticDoiBundle\Integration\Config;
 use MauticPlugin\MauticDoiBundle\Service\VerificationEmailSender;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -13,11 +14,15 @@ class FormSubmissionSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private VerificationEmailSender $verificationEmailSender,
+        private Config $pluginConfig
     ) {
     }
 
     public function onFormSubmit(SubmissionEvent $event): void
     {
+        if (!$this->pluginConfig->isPublished()) {
+            return;
+        }
         $this->verificationEmailSender->send($event);
     }
 

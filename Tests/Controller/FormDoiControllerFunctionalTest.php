@@ -8,6 +8,7 @@ use Mautic\FormBundle\Entity\Form;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\MauticDoiBundle\Model\DoiConfigManager;
+use MauticPlugin\MauticDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use Symfony\Component\DomCrawler\Crawler;
 
 class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
@@ -19,6 +20,10 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $pluginFixtureHelper = new PluginFixtureHelper($this->em);
+        $pluginFixtureHelper->createAndEnablePlugin();
+
         $this->doiConfigManager = $this->getContainer()->get(DoiConfigManager::class);
     }
 
