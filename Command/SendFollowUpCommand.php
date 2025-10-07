@@ -54,8 +54,10 @@ class SendFollowUpCommand extends Command
         $waitHours = $this->pluginConfig->getFollowUpWaitTime();
         $threshold = new \DateTimeImmutable(sprintf('-%d hours', $waitHours), new \DateTimeZone('UTC'));
 
-        $processed = 0;
-        $sent      = 0;
+        $processed           = 0;
+        $sent                = 0;
+        $processedContactIds = [];
+        $sentContactIds      = [];
 
         // Process submissions in batches until the total limit is reached or no more submissions
         do {
@@ -67,8 +69,23 @@ class SendFollowUpCommand extends Command
 
             foreach ($submissions as $submission) {
                 ++$batchProcessed;
+
+                $lead   = $submission->getLead();
+                $leadId = null !== $lead ? $lead->getId() : null;
+                if (null !== $leadId) {
+                    $processedContactIds[] = (int) $leadId;
+                }
+
                 if ($this->followUpSender->send($submission)) {
                     ++$batchSent;
+                    if (null !== $leadId) {
+                        $sentContactIds[] = (int) $leadId;
+                    }
+                    if ($output->isVeryVerbose()) {
+                        $output->writeln(sprintf('Follow-up sent to contact ID %s (email: %s)', null !== $leadId ? (string) $leadId : 'n/a', $submission->getEmail()));
+                    }
+                } elseif ($output->isVeryVerbose()) {
+                    $output->writeln(sprintf('Follow-up not sent to contact ID %s (email: %s)', null !== $leadId ? (string) $leadId : 'n/a', $submission->getEmail()));
                 }
             }
 
@@ -79,6 +96,12 @@ class SendFollowUpCommand extends Command
         } while ($batchProcessed > 0 && (null === $totalLimit || $processed < $totalLimit));
 
         $output->writeln(sprintf('Processed: %d | Sent: %d', $processed, $sent));
+        if ($output->isVerbose()) {
+            $processedContactIds = array_values(array_unique($processedContactIds));
+            $sentContactIds      = array_values(array_unique($sentContactIds));
+            $output->writeln(sprintf('Processed contact IDs: %s', $processedContactIds ? implode(', ', $processedContactIds) : '-'));
+            $output->writeln(sprintf('Sent contact IDs: %s', $sentContactIds ? implode(', ', $sentContactIds) : '-'));
+        }
 
         return Command::SUCCESS;
     }
