@@ -21,9 +21,9 @@ final class FeatureSettingsType extends AbstractType
             'followup_wait_time',
             IntegerType::class,
             [
-                'label' => 'mautic.plugin.doi.config.followup_wait_time',
-                'data'  => $options['data']['followup_wait_time'] ?? Config::DEFAULT_FOLLOWUP_WAIT_TIME,
-                'attr'  => [
+                'label'       => 'mautic.plugin.doi.config.followup_wait_time',
+                'empty_data'  => Config::DEFAULT_FOLLOWUP_WAIT_TIME,
+                'attr'        => [
                     'tooltip' => 'mautic.plugin.doi.config.followup_wait_time_tooltip',
                     'class'   => 'form-control',
                 ],
