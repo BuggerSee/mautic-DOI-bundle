@@ -37,7 +37,7 @@ final class FeatureSettingsType extends AbstractType
             ]
         );
 
-        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event): void {
             $data = $event->getData();
             if (null === $data || (is_array($data) && !isset($data['followup_wait_time']))) {
                 $data                       = $data ?: [];
