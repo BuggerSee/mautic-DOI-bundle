@@ -22,7 +22,6 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
 
     protected function setUp(): void
     {
-        $this->configParams['doi_followup_wait_time'] = 24;
         parent::setUp();
         $this->pluginFixtureHelper = new PluginFixtureHelper($this->em);
         $this->pluginFixtureHelper->createAndEnablePlugin();
@@ -249,6 +248,40 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
 
         $output = $commandTester->getDisplay();
         Assert::assertStringContainsString('DOI plugin is disabled', $output);
+    }
+
+    public function testCommandRespectsModifiedWaitTime(): void
+    {
+        // Modify the followup wait time to 12 hours instead of the default 24 hours
+        $this->pluginFixtureHelper->modifyFollowupWaitTime(12);
+
+        $form = $this->createForm('Test DOI Form');
+        $this->createDoiConfig($form);
+
+        // Create a submission that should be ready with 12h wait time but not with 24h wait time
+        $readySubmission = $this->createDoiSubmission($form, 'ready@example.com', new \DateTime('-13 hours'));
+        // Create a submission that should not be ready even with 12h wait time
+        $notReadySubmission = $this->createDoiSubmission($form, 'notready@example.com', new \DateTime('-11 hours'));
+
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:send-followup');
+
+        $output = $commandTester->getDisplay();
+        Assert::assertStringContainsString('Processed: 1 | Sent: 1', $output);
+
+        $this->em->refresh($readySubmission);
+        $this->em->refresh($notReadySubmission);
+
+        // The 13-hour-old submission should have been processed
+        Assert::assertNotNull($readySubmission->getDateFollowupSent());
+        // The 11-hour-old submission should still be pending
+        Assert::assertSame('pending', $notReadySubmission->getStatus());
+        Assert::assertNull($notReadySubmission->getDateFollowupSent());
+
+        // Verify only the ready submission got an email
+        $readyMessages    = $this->getMailerMessagesByToAddress('ready@example.com');
+        $notReadyMessages = $this->getMailerMessagesByToAddress('notready@example.com');
+        Assert::assertCount(1, $readyMessages, 'Ready submission should have received follow-up email');
+        Assert::assertCount(0, $notReadyMessages, 'Not ready submission should not have received follow-up email');
     }
 
     private function createForm(string $name): Form

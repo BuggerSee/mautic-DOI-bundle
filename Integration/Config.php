@@ -10,6 +10,8 @@ use Mautic\PluginBundle\Entity\Integration;
 
 class Config
 {
+    public const DEFAULT_FOLLOWUP_WAIT_TIME = 24;
+
     public function __construct(
         private IntegrationsHelper $integrationsHelper
     ) {
@@ -23,6 +25,24 @@ class Config
             return (bool) $integration->getIsPublished();
         } catch (IntegrationNotFoundException) {
             return false;
+        }
+    }
+
+    public function getFollowUpWaitTime(): int
+    {
+        try {
+            $integrationSettings = $this->getIntegrationEntity()->getFeatureSettings();
+            assert(is_array($integrationSettings));
+
+            $waitTime = $integrationSettings['integration']['followup_wait_time'] ?? null;
+
+            if (is_numeric($waitTime) && (int) $waitTime >= 1) {
+                return (int) $waitTime;
+            }
+
+            return self::DEFAULT_FOLLOWUP_WAIT_TIME;
+        } catch (IntegrationNotFoundException) {
+            return self::DEFAULT_FOLLOWUP_WAIT_TIME;
         }
     }
 
