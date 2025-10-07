@@ -8,6 +8,8 @@ use MauticPlugin\MauticDoiBundle\Integration\Config;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Validator\Constraints\GreaterThan;
 
 final class FeatureSettingsType extends AbstractType
@@ -22,7 +24,6 @@ final class FeatureSettingsType extends AbstractType
             IntegerType::class,
             [
                 'label'       => 'mautic.plugin.doi.config.followup_wait_time',
-                'empty_data'  => Config::DEFAULT_FOLLOWUP_WAIT_TIME,
                 'attr'        => [
                     'tooltip' => 'mautic.plugin.doi.config.followup_wait_time_tooltip',
                     'class'   => 'form-control',
@@ -35,5 +36,14 @@ final class FeatureSettingsType extends AbstractType
                 ],
             ]
         );
+
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
+            $data = $event->getData();
+            if (null === $data || (is_array($data) && !isset($data['followup_wait_time']))) {
+                $data                       = $data ?: [];
+                $data['followup_wait_time'] = Config::DEFAULT_FOLLOWUP_WAIT_TIME;
+                $event->setData($data);
+            }
+        });
     }
 }
