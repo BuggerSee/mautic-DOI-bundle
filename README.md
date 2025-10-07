@@ -13,7 +13,7 @@ Universal email verification plugin for Mautic, providing Double Opt-In (DOI) fu
 
 ## Installation
 
-1. Extract to `plugins/MauticDoiBundle/`
+1. Extract to `plugins/LeuchtfeuerDoiBundle/`
 2. Run `php bin/console cache:clear`
 3. Run `php bin/console mautic:plugins:reload`
 4. Configure plugin settings in Mautic admin

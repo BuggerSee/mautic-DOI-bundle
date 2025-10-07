@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\Model;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Model;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Mautic\FormBundle\Entity\Form;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiActionRepository;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiAction;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionRepository;
 
 class FormDoiActionManager
 {

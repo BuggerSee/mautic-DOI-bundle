@@ -1,6 +1,6 @@
 <?php
 
-namespace MauticPlugin\MauticDoiBundle\Entity;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use Mautic\FormBundle\Entity\Form;

@@ -1,14 +1,14 @@
 <?php
 
-namespace MauticPlugin\MauticDoiBundle\Tests\Controller;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Controller;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\EmailBundle\Entity\Email;
 use Mautic\FormBundle\Entity\Form;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
-use MauticPlugin\MauticDoiBundle\Model\DoiConfigManager;
-use MauticPlugin\MauticDoiBundle\Tests\Fixtures\PluginFixtureHelper;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiAction;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiConfigManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use Symfony\Component\DomCrawler\Crawler;
 
 class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
@@ -498,14 +498,14 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
     private function assertDoiActionNotInSession(string $sessionId): void
     {
-        $sessionManager   = $this->getContainer()->get('MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager');
+        $sessionManager   = $this->getContainer()->get('MauticPlugin\LeuchtfeuerDoiBundle\Service\FormDoiActionSessionManager');
         $actionsInSession = $sessionManager->getActionsFromSession($sessionId);
         $this->assertEmpty($actionsInSession, 'Actions should not be in session');
     }
 
     private function assertDoiActionInSession(string $sessionId): void
     {
-        $sessionManager   = $this->getContainer()->get('MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager');
+        $sessionManager   = $this->getContainer()->get('MauticPlugin\LeuchtfeuerDoiBundle\Service\FormDoiActionSessionManager');
         $actionsInSession = $sessionManager->getActionsFromSession($sessionId);
         $this->assertNotEmpty($actionsInSession, 'Actions should be in session');
     }

@@ -1,13 +1,13 @@
 <?php
 
-namespace MauticPlugin\MauticDoiBundle\Controller;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Controller;
 
 use Mautic\CoreBundle\Controller\AbstractStandardFormController;
 use Mautic\FormBundle\Form\Type\ActionType;
 use Mautic\FormBundle\Model\FormModel;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
-use MauticPlugin\MauticDoiBundle\Model\FormDoiActionManager;
-use MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiAction;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiActionManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\FormDoiActionSessionManager;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -89,7 +89,7 @@ class DoiActionController extends AbstractStandardFormController
             $blank      = $entity->convertToArray();
             $formAction = array_merge($blank, $formAction);
 
-            $template                      = $formAction['settings']['template'] ?? '@MauticDoi/Action/_generic.html.twig';
+            $template                      = $formAction['settings']['template'] ?? '@LeuchtfeuerDoi/Action/_generic.html.twig';
             $passthroughVars['actionId']   = $keyId;
             $passthroughVars['actionHtml'] = $this->renderView($template, [
                 'inForm' => true,
@@ -107,7 +107,7 @@ class DoiActionController extends AbstractStandardFormController
         }
 
         return $this->ajaxAction($request, [
-            'contentTemplate' => '@MauticDoi/Builder/'.$viewParams['tmpl'].'.html.twig',
+            'contentTemplate' => '@LeuchtfeuerDoi/Builder/'.$viewParams['tmpl'].'.html.twig',
             'viewParameters'  => $viewParams,
             'passthroughVars' => $passthroughVars,
         ]);
@@ -202,7 +202,7 @@ class DoiActionController extends AbstractStandardFormController
             $blank      = $entity->convertToArray();
             $formAction = array_merge($blank, $formAction);
             $template   = (!empty($formAction['settings']['template'])) ? $formAction['settings']['template'] :
-                '@MauticDoi/Action/_generic.html.twig';
+                '@LeuchtfeuerDoi/Action/_generic.html.twig';
             $passthroughVars['actionHtml'] = $this->renderView($template, [
                 'inForm' => true,
                 'action' => $formAction,
@@ -219,7 +219,7 @@ class DoiActionController extends AbstractStandardFormController
         }
 
         return $this->ajaxAction($request, [
-            'contentTemplate' => '@MauticDoi/Builder/'.$viewParams['tmpl'].'.html.twig',
+            'contentTemplate' => '@LeuchtfeuerDoi/Builder/'.$viewParams['tmpl'].'.html.twig',
             'viewParameters'  => $viewParams,
             'passthroughVars' => $passthroughVars,
         ]);

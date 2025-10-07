@@ -27,8 +27,8 @@ Variables
 {% endblock %}
 
 {% block content %}
-    {{ includeScript('plugins/MauticDoiBundle/Assets/js/form-doi.js') }}
-    {{ includeStylesheet('plugins/MauticDoiBundle/Assets/css/form-doi.css') }}
+    {{ includeScript('plugins/LeuchtfeuerDoiBundle/Assets/js/form-doi.js') }}
+    {{ includeStylesheet('plugins/LeuchtfeuerDoiBundle/Assets/css/form-doi.css') }}
     {% set formId = form.sessionId.vars.data %}
     {% set inBuilder = inBuilder|default(false) %}
     {% set fieldsTabError = false %}
@@ -213,7 +213,7 @@ Variables
                                                 {% endif %}
                                                 <optgroup class="{{ class }}" label="{{ group|trans }}"></optgroup>
                                                 {% for k, e in groupActions %}
-                                                    {{ include('@MauticDoi/Action/_option.html.twig', {
+                                                    {{ include('@LeuchtfeuerDoi/Action/_option.html.twig', {
                                                         'action': e,
                                                         'type': k,
                                                         'isStandalone': activeForm.isStandalone,
@@ -227,7 +227,7 @@ Variables
                                 <div class="drop-here">
                                     {% if formDoiActions is defined and formDoiActions is not empty %}
                                         {% for action in formDoiActions %}
-                                            {% set template = actionSettings[action.type].template|default('@MauticDoi/Action/_generic.html.twig') %}
+                                            {% set template = actionSettings[action.type].template|default('@LeuchtfeuerDoi/Action/_generic.html.twig') %}
                                             {% set action = action|merge({
                                                 'settings': actionSettings[action.type],
                                             }) %}

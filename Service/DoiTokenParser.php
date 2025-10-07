@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\Service;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Service;
 
-use MauticPlugin\MauticDoiBundle\DTO\DoiTokenData;
+use MauticPlugin\LeuchtfeuerDoiBundle\DTO\DoiTokenData;
 
 final class DoiTokenParser
 {

@@ -11,13 +11,13 @@ return [
         'main' => [
             'mautic_doi_formaction_action' => [
                 'path'       => '/forms-doi/action/{objectAction}/{objectId}',
-                'controller' => 'MauticPlugin\MauticDoiBundle\Controller\DoiActionController::executeAction',
+                'controller' => 'MauticPlugin\LeuchtfeuerDoiBundle\Controller\DoiActionController::executeAction',
             ],
         ],
         'public' => [
             'mautic_doi_email_verify_action' => [
                 'path'       => '/email/verify/{token}',
-                'controller' => 'MauticPlugin\MauticDoiBundle\Controller\PublicController::verifyEmailAction',
+                'controller' => 'MauticPlugin\LeuchtfeuerDoiBundle\Controller\PublicController::verifyEmailAction',
             ],
         ],
     ],

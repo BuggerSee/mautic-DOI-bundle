@@ -9,7 +9,7 @@ on:
   pull_request:
 
 env:
-  PLUGIN_DIR: plugins/MauticDoiBundle
+  PLUGIN_DIR: plugins/LeuchtfeuerDoiBundle
 
 jobs:
   phpunit:

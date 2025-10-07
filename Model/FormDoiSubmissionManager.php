@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\Model;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Model;
 
 use Doctrine\ORM\EntityManagerInterface;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 
 class FormDoiSubmissionManager
 {

@@ -1,17 +1,17 @@
 <?php
 
-namespace MauticPlugin\MauticDoiBundle\Tests\Command;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Command;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\EmailBundle\Entity\Email;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\Submission;
 use Mautic\LeadBundle\Entity\Lead;
-use MauticPlugin\MauticDoiBundle\DTO\DoiTokenData;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
-use MauticPlugin\MauticDoiBundle\Service\DoiTokenParser;
-use MauticPlugin\MauticDoiBundle\Tests\Fixtures\PluginFixtureHelper;
+use MauticPlugin\LeuchtfeuerDoiBundle\DTO\DoiTokenData;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiTokenParser;
+use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
 
 class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase

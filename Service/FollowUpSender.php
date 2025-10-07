@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\Service;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Mautic\EmailBundle\Helper\MailHelper;
 use Mautic\EmailBundle\Model\EmailModel;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Entity\LeadRepository;
-use MauticPlugin\MauticDoiBundle\DTO\DoiTokenData;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
-use MauticPlugin\MauticDoiBundle\Model\DoiConfigManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\DTO\DoiTokenData;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiConfigManager;
 use Psr\Log\LoggerInterface;
 
 class FollowUpSender

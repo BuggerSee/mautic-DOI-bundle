@@ -1,16 +1,16 @@
 <?php
 
-namespace MauticPlugin\MauticDoiBundle\Integration;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Integration;
 
 use Mautic\IntegrationsBundle\Integration\BasicIntegration;
 use Mautic\IntegrationsBundle\Integration\ConfigurationTrait;
 use Mautic\IntegrationsBundle\Integration\Interfaces\BasicInterface;
 
-class MauticDoiIntegration extends BasicIntegration implements BasicInterface
+class LeuchtfeuerDoiIntegration extends BasicIntegration implements BasicInterface
 {
     use ConfigurationTrait;
 
-    public const INTEGRATION_NAME = 'MauticDoi';
+    public const INTEGRATION_NAME = 'LeuchtfeuerDoi';
     public const DISPLAY_NAME     = 'DOI by Leuchtfeuer';
 
     public function getName(): string
@@ -25,7 +25,7 @@ class MauticDoiIntegration extends BasicIntegration implements BasicInterface
 
     public function getIcon(): string
     {
-        return 'plugins/MauticDoiBundle/Assets/img/icon.png';
+        return 'plugins/LeuchtfeuerDoiBundle/Assets/img/icon.png';
     }
 
     /**

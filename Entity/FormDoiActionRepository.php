@@ -1,6 +1,6 @@
 <?php
 
-namespace MauticPlugin\MauticDoiBundle\Entity;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Entity;
 
 use Mautic\CoreBundle\Entity\CommonRepository;
 

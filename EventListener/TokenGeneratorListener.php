@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\EventListener;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\EventListener;
 
 use Mautic\EmailBundle\EmailEvents;
 use Mautic\EmailBundle\Event\EmailBuilderEvent;
 use Mautic\PageBundle\Event\UntrackableUrlsEvent;
 use Mautic\PageBundle\PageEvents;
-use MauticPlugin\MauticDoiBundle\Integration\Config;
+use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 

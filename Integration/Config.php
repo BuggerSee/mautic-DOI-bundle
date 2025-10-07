@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\Integration;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Integration;
 
 use Mautic\IntegrationsBundle\Exception\IntegrationNotFoundException;
 use Mautic\IntegrationsBundle\Helper\IntegrationsHelper;
@@ -51,7 +51,7 @@ class Config
      */
     public function getIntegrationEntity(): Integration
     {
-        $integrationObject = $this->integrationsHelper->getIntegration(MauticDoiIntegration::INTEGRATION_NAME);
+        $integrationObject = $this->integrationsHelper->getIntegration(LeuchtfeuerDoiIntegration::INTEGRATION_NAME);
 
         return $integrationObject->getIntegrationConfiguration();
     }

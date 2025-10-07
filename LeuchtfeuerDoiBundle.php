@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle;
+namespace MauticPlugin\LeuchtfeuerDoiBundle;
 
 use Mautic\CoreBundle\Factory\MauticFactory;
 use Mautic\IntegrationsBundle\Bundle\AbstractPluginBundle;
 use Mautic\PluginBundle\Entity\Plugin;
 
-class MauticDoiBundle extends AbstractPluginBundle
+class LeuchtfeuerDoiBundle extends AbstractPluginBundle
 {
     /**
      * @param array<int, mixed>|null $metadata

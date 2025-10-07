@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\EventListener;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\EventListener;
 
 use Mautic\CoreBundle\CoreEvents;
 use Mautic\CoreBundle\Event\CustomTemplateEvent;
 use Mautic\FormBundle\Entity\Form;
-use MauticPlugin\MauticDoiBundle\Integration\Config;
-use MauticPlugin\MauticDoiBundle\Model\FormDoiActionManager;
-use MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiActionManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\FormDoiActionSessionManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class FormBuilderTemplateSubscriber implements EventSubscriberInterface
@@ -46,7 +46,7 @@ class FormBuilderTemplateSubscriber implements EventSubscriberInterface
             $vars['formDoiActions'] = $formDoiActions;
             $event->setVars($vars);
 
-            $event->setTemplate('@MauticDoi/Builder/index.html.twig');
+            $event->setTemplate('@LeuchtfeuerDoi/Builder/index.html.twig');
         }
     }
 }

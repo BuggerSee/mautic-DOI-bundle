@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\Model;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Model;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Mautic\EmailBundle\Entity\EmailRepository;
 use Mautic\FormBundle\Entity\Form;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfigRepository;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfigRepository;
 
 class DoiConfigManager
 {

@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\Service;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Service;
 
 use Mautic\EmailBundle\Helper\MailHelper;
 use Mautic\EmailBundle\Model\EmailModel;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Event\SubmissionEvent;
 use Mautic\LeadBundle\Entity\Lead;
-use MauticPlugin\MauticDoiBundle\DTO\DoiTokenData;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
-use MauticPlugin\MauticDoiBundle\Model\DoiConfigManager;
-use MauticPlugin\MauticDoiBundle\Model\FormDoiSubmissionManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\DTO\DoiTokenData;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiConfigManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiSubmissionManager;
 use Psr\Log\LoggerInterface;
 
 class VerificationEmailSender

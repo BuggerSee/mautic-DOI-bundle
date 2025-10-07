@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\Migrations;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Migrations;
 
 use Doctrine\DBAL\Schema\Schema;
 use Mautic\CoreBundle\Exception\SchemaException;
 use Mautic\IntegrationsBundle\Migration\AbstractMigration;
-use MauticPlugin\MauticDoiBundle\Helper\MigrationHelper;
+use MauticPlugin\LeuchtfeuerDoiBundle\Helper\MigrationHelper;
 
 class Version_0_0_1 extends AbstractMigration
 {

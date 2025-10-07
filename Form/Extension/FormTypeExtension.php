@@ -1,12 +1,12 @@
 <?php
 
-namespace MauticPlugin\MauticDoiBundle\Form\Extension;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Form\Extension;
 
 use Mautic\FormBundle\Form\Type\FormType;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
-use MauticPlugin\MauticDoiBundle\Form\Type\FormDoiConfigType;
-use MauticPlugin\MauticDoiBundle\Integration\Config;
-use MauticPlugin\MauticDoiBundle\Model\DoiConfigManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
+use MauticPlugin\LeuchtfeuerDoiBundle\Form\Type\FormDoiConfigType;
+use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiConfigManager;
 use Symfony\Component\Form\AbstractTypeExtension;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
