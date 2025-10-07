@@ -8,6 +8,7 @@ use Mautic\EmailBundle\EmailEvents;
 use Mautic\EmailBundle\Event\EmailBuilderEvent;
 use Mautic\PageBundle\Event\UntrackableUrlsEvent;
 use Mautic\PageBundle\PageEvents;
+use MauticPlugin\MauticDoiBundle\Integration\Config;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -15,11 +16,16 @@ class TokenGeneratorListener implements EventSubscriberInterface
 {
     public function __construct(
         private TranslatorInterface $translator,
+        private Config $pluginConfig
     ) {
     }
 
     public function onEmailBuild(EmailBuilderEvent $event): void
     {
+        if (!$this->pluginConfig->isPublished()) {
+            return;
+        }
+
         $tokens = $this->getCustomTokens();
 
         if ([] === $tokens) {
@@ -41,6 +47,10 @@ class TokenGeneratorListener implements EventSubscriberInterface
 
     public function addNonTrackableToken(UntrackableUrlsEvent $event): void
     {
+        if (!$this->pluginConfig->isPublished()) {
+            return;
+        }
+
         $event->addNonTrackable('{doi_link}');
     }
 

@@ -5,6 +5,7 @@ namespace MauticPlugin\MauticDoiBundle\Form\Extension;
 use Mautic\FormBundle\Form\Type\FormType;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\MauticDoiBundle\Form\Type\FormDoiConfigType;
+use MauticPlugin\MauticDoiBundle\Integration\Config;
 use MauticPlugin\MauticDoiBundle\Model\DoiConfigManager;
 use Symfony\Component\Form\AbstractTypeExtension;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -14,12 +15,17 @@ use Symfony\Component\Form\FormEvents;
 class FormTypeExtension extends AbstractTypeExtension
 {
     public function __construct(
-        private DoiConfigManager $doiConfigManager
+        private DoiConfigManager $doiConfigManager,
+        private Config $pluginConfig
     ) {
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        if (!$this->pluginConfig->isPublished()) {
+            return;
+        }
+
         $builder->addEventListener(FormEvents::PRE_SET_DATA, [$this, 'onPreSetData']);
     }
 

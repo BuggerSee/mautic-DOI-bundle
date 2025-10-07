@@ -13,6 +13,7 @@ use Mautic\LeadBundle\Entity\PointsChangeLog;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
+use MauticPlugin\MauticDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,6 +21,14 @@ use Symfony\Component\HttpFoundation\Response;
 class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
 {
     protected $useCleanupRollback = false;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $pluginFixtureHelper = new PluginFixtureHelper($this->em);
+        $pluginFixtureHelper->createAndEnablePlugin();
+    }
 
     public function testLeadPointsChangeActionExecutesAfterDoiVerification(): void
     {

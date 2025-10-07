@@ -7,6 +7,7 @@ namespace MauticPlugin\MauticDoiBundle\EventListener;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Event\FormEvent;
 use Mautic\FormBundle\FormEvents;
+use MauticPlugin\MauticDoiBundle\Integration\Config;
 use MauticPlugin\MauticDoiBundle\Model\DoiConfigManager;
 use MauticPlugin\MauticDoiBundle\Model\FormDoiActionManager;
 use MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager;
@@ -22,7 +23,8 @@ class FormBuilderSubscriber implements EventSubscriberInterface
         private FormDoiActionManager $formDoiActionManager,
         private FormDoiActionSessionManager $formDoiActionSessionManager,
         private DoiConfigManager $doiConfigManager,
-        private RequestStack $requestStack
+        private RequestStack $requestStack,
+        private Config $pluginConfig
     ) {
     }
 
@@ -35,6 +37,10 @@ class FormBuilderSubscriber implements EventSubscriberInterface
 
     public function onFormPostSave(FormEvent $event): void
     {
+        if (!$this->pluginConfig->isPublished()) {
+            return;
+        }
+
         $form       = $event->getForm();
         $request    = $this->requestStack->getCurrentRequest();
         $mauticForm = $request->request->all()['mauticform'] ?? null;

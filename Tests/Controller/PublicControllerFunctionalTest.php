@@ -7,6 +7,7 @@ use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\Submission;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
+use MauticPlugin\MauticDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,6 +15,14 @@ use Symfony\Component\HttpFoundation\Response;
 class PublicControllerFunctionalTest extends MauticMysqlTestCase
 {
     protected $useCleanupRollback = false;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $pluginFixtureHelper = new PluginFixtureHelper($this->em);
+        $pluginFixtureHelper->createAndEnablePlugin();
+    }
 
     /**
      * Test successful email verification with redirect URL.

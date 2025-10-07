@@ -20,4 +20,12 @@ return function (ContainerConfigurator $configurator): void {
 
     $services->load('MauticPlugin\\MauticDoiBundle\\', '../')
         ->exclude('../{'.implode(',', array_merge(MauticCoreExtension::DEFAULT_EXCLUDES, $excludes)).'}');
+
+    $services->get(MauticPlugin\MauticDoiBundle\Integration\MauticDoiIntegration::class)
+        ->tag('mautic.integration')
+        ->tag('mautic.basic_integration');
+    $services->get(MauticPlugin\MauticDoiBundle\Integration\Support\ConfigSupport::class)
+        ->tag('mautic.config_integration');
+
+    $services->alias('mautic.integration.mauticdoi', MauticPlugin\MauticDoiBundle\Integration\MauticDoiIntegration::class);
 };

@@ -7,6 +7,7 @@ namespace MauticPlugin\MauticDoiBundle\EventListener;
 use Mautic\CoreBundle\CoreEvents;
 use Mautic\CoreBundle\Event\CustomTemplateEvent;
 use Mautic\FormBundle\Entity\Form;
+use MauticPlugin\MauticDoiBundle\Integration\Config;
 use MauticPlugin\MauticDoiBundle\Model\FormDoiActionManager;
 use MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -15,7 +16,8 @@ class FormBuilderTemplateSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private FormDoiActionManager $formDoiActionManager,
-        private FormDoiActionSessionManager $formDoiActionSessionManager
+        private FormDoiActionSessionManager $formDoiActionSessionManager,
+        private Config $pluginConfig
     ) {
     }
 
@@ -28,7 +30,7 @@ class FormBuilderTemplateSubscriber implements EventSubscriberInterface
 
     public function onTemplateRender(CustomTemplateEvent $event): void
     {
-        if ('@MauticForm/Builder/index.html.twig' === $event->getTemplate()) {
+        if ($this->pluginConfig->isPublished() && '@MauticForm/Builder/index.html.twig' === $event->getTemplate()) {
             $vars = $event->getVars();
             /** @var Form $form */
             $form = $vars['activeForm'];
