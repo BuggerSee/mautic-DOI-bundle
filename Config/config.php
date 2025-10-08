@@ -5,7 +5,7 @@ declare(strict_types=1);
 return [
     'name'        => 'Email Verification and Double Opt-In (DOI) by Leuchtfeuer',
     'description' => 'Universal email verification for Mautic, including Double Opt-In (DOI)',
-    'version'     => '0.0.4',
+    'version'     => '1.0.0',
     'author'      => 'Leuchtfeuer Digital Marketing GmbH',
     'routes'      => [
         'main' => [
@@ -20,8 +20,5 @@ return [
                 'controller' => 'MauticPlugin\MauticDoiBundle\Controller\PublicController::verifyEmailAction',
             ],
         ],
-    ],
-    'parameters' => [
-        'doi_followup_wait_time' => 24,
     ],
 ];

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MauticPlugin\MauticDoiBundle\Command;
 
-use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmissionRepository;
 use MauticPlugin\MauticDoiBundle\Integration\Config;
 use MauticPlugin\MauticDoiBundle\Service\FollowUpSender;
@@ -22,7 +21,6 @@ class SendFollowUpCommand extends Command
     public function __construct(
         private FormDoiSubmissionRepository $submissionRepo,
         private FollowUpSender $followUpSender,
-        private CoreParametersHelper $parameters,
         private Config $pluginConfig
     ) {
         parent::__construct();
@@ -53,7 +51,7 @@ class SendFollowUpCommand extends Command
         $totalLimit       = null !== $limitOption ? (int) $limitOption : null;
         $batchLimit       = (int) $input->getOption('batch');
 
-        $waitHours = (int) $this->parameters->get('doi_followup_wait_time', 24);
+        $waitHours = $this->pluginConfig->getFollowUpWaitTime();
         $threshold = new \DateTimeImmutable(sprintf('-%d hours', $waitHours), new \DateTimeZone('UTC'));
 
         $processed = 0;
