@@ -33,7 +33,7 @@ class FormCloneSubscriber implements EventSubscriberInterface
 
     public function onFormClone(CustomTemplateEvent $event): void
     {
-        if ('@MauticForm/Builder/index.html.twig' !== $event->getTemplate() || $this->pluginConfig->isPublished() === false) {
+        if ('@MauticForm/Builder/index.html.twig' !== $event->getTemplate() || false === $this->pluginConfig->isPublished()) {
             return;
         }
 
@@ -62,14 +62,13 @@ class FormCloneSubscriber implements EventSubscriberInterface
                 return;
             }
 
-            $originalActions = $this->formDoiActionManager->getFormDoiActionEntities($sourceForm);
-            $clonedActions   = [];
-            foreach ($originalActions as $originalAction) {
-                $clonedAction    = clone $originalAction;
-                $clonedActions[] = $clonedAction->convertToArray();
+            $doiActions = $this->formDoiActionManager->getFormDoiActions($sourceForm);
+            foreach ($doiActions as &$action) {
+                $action['id']   = 'new'.hash('sha1', uniqid((string) mt_rand()));
+                $action['form'] = null;
             }
 
-            $this->formDoiActionSessionManager->loadActionsIntoSession($sessionId, $clonedActions);
+            $this->formDoiActionSessionManager->loadActionsIntoSession($sessionId, $doiActions);
         }
     }
 }
