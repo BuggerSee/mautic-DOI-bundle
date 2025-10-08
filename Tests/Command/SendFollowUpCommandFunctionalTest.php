@@ -13,6 +13,9 @@ use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiTokenParser;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
+use Symfony\Bundle\FrameworkBundle\Console\Application;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Tester\CommandTester;
 
 class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
 {
@@ -282,6 +285,82 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         $notReadyMessages = $this->getMailerMessagesByToAddress('notready@example.com');
         Assert::assertCount(1, $readyMessages, 'Ready submission should have received follow-up email');
         Assert::assertCount(0, $notReadyMessages, 'Not ready submission should not have received follow-up email');
+    }
+
+    public function testVerboseOutputAggregatedContactIds(): void
+    {
+        $form = $this->createForm('Test DOI Form');
+        $this->createDoiConfig($form);
+
+        // Two due submissions and one recent (not due)
+        $due1   = $this->createDoiSubmission($form, 'due1@example.com', new \DateTime('-25 hours'));
+        $due2   = $this->createDoiSubmission($form, 'due2@example.com', new \DateTime('-26 hours'));
+        $recent = $this->createDoiSubmission($form, 'recent@example.com', new \DateTime('-1 hour'));
+
+        $kernel        = static::getContainer()->get('kernel');
+        $application   = new Application($kernel);
+        $command       = $application->find('leuchtfeuer:doi:send-followup');
+        $commandTester = new CommandTester($command);
+        $commandTester->execute([], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE]);
+        $output        = $commandTester->getDisplay();
+
+        // Summary should match 2 processed and sent
+        Assert::assertStringContainsString('Processed: 2 | Sent: 2', $output);
+
+        // Aggregated contact IDs should be printed and contain both due contacts
+        Assert::assertStringContainsString('Processed contact IDs:', $output);
+        Assert::assertStringContainsString('Sent contact IDs:', $output);
+
+        $this->em->refresh($due1);
+        $this->em->refresh($due2);
+        $this->em->refresh($recent);
+
+        $id1 = $due1->getLead() ? $due1->getLead()->getId() : null;
+        $id2 = $due2->getLead() ? $due2->getLead()->getId() : null;
+        $id3 = $recent->getLead() ? $recent->getLead()->getId() : null;
+
+        Assert::assertNotNull($id1);
+        Assert::assertNotNull($id2);
+
+        // Both due IDs must be present in the aggregated lines
+        Assert::assertStringContainsString((string) $id1, $output);
+        Assert::assertStringContainsString((string) $id2, $output);
+        // The recent (not processed) ID should not appear in -v output
+        if (null !== $id3) {
+            Assert::assertStringNotContainsString((string) $id3, $output);
+        }
+    }
+
+    public function testVeryVerboseOutputPerSubmissionLines(): void
+    {
+        $form = $this->createForm('Test DOI Form');
+        $this->createDoiConfig($form);
+
+        $due1 = $this->createDoiSubmission($form, 'vv1@example.com', new \DateTime('-25 hours'));
+        $due2 = $this->createDoiSubmission($form, 'vv2@example.com', new \DateTime('-26 hours'));
+
+        $kernel        = static::getContainer()->get('kernel');
+        $application   = new Application($kernel);
+        $command       = $application->find('leuchtfeuer:doi:send-followup');
+        $commandTester = new CommandTester($command);
+        $commandTester->execute([], ['verbosity' => OutputInterface::VERBOSITY_VERY_VERBOSE]);
+        $output        = $commandTester->getDisplay();
+
+        // Expect per-submission lines for each sent follow-up
+        $this->em->refresh($due1);
+        $this->em->refresh($due2);
+
+        $id1 = $due1->getLead() ? $due1->getLead()->getId() : null;
+        $id2 = $due2->getLead() ? $due2->getLead()->getId() : null;
+
+        Assert::assertNotNull($id1);
+        Assert::assertNotNull($id2);
+
+        Assert::assertStringContainsString(sprintf('Follow-up sent to contact ID %s', (string) $id1), $output);
+        Assert::assertStringContainsString(sprintf('Follow-up sent to contact ID %s', (string) $id2), $output);
+
+        // Summary should still be present
+        Assert::assertStringContainsString('Processed: 2 | Sent: 2', $output);
     }
 
     private function createForm(string $name): Form
