@@ -7,6 +7,7 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\EventListener;
 use Mautic\CoreBundle\CoreEvents;
 use Mautic\CoreBundle\Event\CustomTemplateEvent;
 use Mautic\FormBundle\Model\FormModel;
+use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiActionManager;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\FormDoiActionSessionManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -18,7 +19,8 @@ class FormCloneSubscriber implements EventSubscriberInterface
         private RequestStack $requestStack,
         private FormModel $formModel,
         private FormDoiActionManager $formDoiActionManager,
-        private FormDoiActionSessionManager $formDoiActionSessionManager
+        private FormDoiActionSessionManager $formDoiActionSessionManager,
+        private Config $pluginConfig
     ) {
     }
 
@@ -31,7 +33,7 @@ class FormCloneSubscriber implements EventSubscriberInterface
 
     public function onFormClone(CustomTemplateEvent $event): void
     {
-        if ('@MauticForm/Builder/index.html.twig' !== $event->getTemplate()) {
+        if ('@MauticForm/Builder/index.html.twig' !== $event->getTemplate() || $this->pluginConfig->isPublished() === false) {
             return;
         }
 

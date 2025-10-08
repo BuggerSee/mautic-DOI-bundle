@@ -30,7 +30,7 @@ class FormBuilderTemplateSubscriber implements EventSubscriberInterface
 
     public function onTemplateRender(CustomTemplateEvent $event): void
     {
-        if ($this->pluginConfig->isPublished() && '@MauticForm/Builder/index.html.twig' === $event->getTemplate()) {
+        if ('@MauticForm/Builder/index.html.twig' === $event->getTemplate() && $this->pluginConfig->isPublished()) {
             $vars = $event->getVars();
             /** @var Form $form */
             $form = $vars['activeForm'];
