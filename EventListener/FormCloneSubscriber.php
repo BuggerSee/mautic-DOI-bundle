@@ -60,13 +60,14 @@ class FormCloneSubscriber implements EventSubscriberInterface
                 return;
             }
 
-            $doiActions = $this->formDoiActionManager->getFormDoiActions($sourceForm);
-            foreach ($doiActions as &$action) {
-                $action['id']   = null;
-                $action['form'] = null;
+            $originalActions = $this->formDoiActionManager->getFormDoiActionEntities($sourceForm);
+            $clonedActions   = [];
+            foreach ($originalActions as $originalAction) {
+                $clonedAction    = clone $originalAction;
+                $clonedActions[] = $clonedAction->convertToArray();
             }
 
-            $this->formDoiActionSessionManager->loadActionsIntoSession($sessionId, $doiActions);
+            $this->formDoiActionSessionManager->loadActionsIntoSession($sessionId, $clonedActions);
         }
     }
 }
