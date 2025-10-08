@@ -24,6 +24,11 @@ class DoiConfigManager
         return $this->repository->findOneBy(['form' => $form]);
     }
 
+    public function getFormDoiConfigByFormId(int $formId): ?FormDoiConfig
+    {
+        return $this->repository->findOneBy(['form' => $formId]);
+    }
+
     /**
      * @param array<string, mixed> $formData
      */

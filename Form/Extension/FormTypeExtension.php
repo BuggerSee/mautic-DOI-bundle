@@ -11,12 +11,14 @@ use Symfony\Component\Form\AbstractTypeExtension;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 class FormTypeExtension extends AbstractTypeExtension
 {
     public function __construct(
         private DoiConfigManager $doiConfigManager,
-        private Config $pluginConfig
+        private Config $pluginConfig,
+        private RequestStack $requestStack
     ) {
     }
 
@@ -34,11 +36,21 @@ class FormTypeExtension extends AbstractTypeExtension
         $form   = $event->getForm();
         $entity = $event->getData();
 
-        // Load existing DOI config
-        if (!$entity->getId()) {
-            $doiConfig = new FormDoiConfig();
-        } else {
+        if ($entity->getId()) {
+            // This is an existing form, load its config
             $doiConfig = $this->doiConfigManager->getFormDoiConfig($entity) ?? new FormDoiConfig();
+        } else {
+            // This is a new or cloned form.
+            $doiConfig = null;
+
+            if ($this->isCloneRequest()) {
+                $doiConfig = $this->getClonedDoiConfigFromRequest();
+            }
+
+            // If it's not a clone or cloning failed, create a fresh config
+            if (null === $doiConfig) {
+                $doiConfig = new FormDoiConfig();
+            }
         }
 
         // Convert entities to IDs for the form
@@ -55,6 +67,28 @@ class FormTypeExtension extends AbstractTypeExtension
             'data'   => $formData,
             'mapped' => false,
         ]);
+    }
+
+    private function isCloneRequest(): bool
+    {
+        $mainRequest = $this->requestStack->getMainRequest();
+
+        return $mainRequest && 'clone' === $mainRequest->attributes->get('objectAction');
+    }
+
+    private function getClonedDoiConfigFromRequest(): ?FormDoiConfig
+    {
+        $mainRequest  = $this->requestStack->getMainRequest();
+        $sourceFormId = (int) $mainRequest?->attributes->get('objectId');
+
+        if ($sourceFormId) {
+            $originalDoiConfig = $this->doiConfigManager->getFormDoiConfigByFormId($sourceFormId);
+            if ($originalDoiConfig) {
+                return clone $originalDoiConfig;
+            }
+        }
+
+        return null;
     }
 
     public static function getExtendedTypes(): iterable
