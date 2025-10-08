@@ -1,13 +1,13 @@
 <?php
 
-namespace MauticPlugin\MauticDoiBundle\Tests\Controller;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Controller;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\Submission;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
-use MauticPlugin\MauticDoiBundle\Tests\Fixtures\PluginFixtureHelper;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
+use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;

@@ -17,7 +17,7 @@
     "mautic/core-lib": "^5.2"
   },
   "extra": {
-    "install-directory-name": "MauticDoiBundle"
+    "install-directory-name": "LeuchtfeuerDoiBundle"
   },
   "minimum-stability": "dev",
   "repositories": [

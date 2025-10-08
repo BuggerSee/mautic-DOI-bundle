@@ -1,13 +1,13 @@
 <?php
 
-namespace MauticPlugin\MauticDoiBundle\Service;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Service;
 
 use Mautic\FormBundle\Entity\SubmissionRepository;
 use Mautic\FormBundle\Event\SubmissionEvent;
 use Mautic\FormBundle\FormEvents;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiActionRepository;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
-use MauticPlugin\MauticDoiBundle\Mapper\FormDoiActionMapper;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionRepository;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
+use MauticPlugin\LeuchtfeuerDoiBundle\Mapper\FormDoiActionMapper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 

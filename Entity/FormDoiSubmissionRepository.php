@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\Entity;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Entity;
 
 use Doctrine\Common\Collections\Criteria;
 use Mautic\CoreBundle\Entity\CommonRepository;

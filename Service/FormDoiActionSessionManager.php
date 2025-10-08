@@ -1,6 +1,6 @@
 <?php
 
-namespace MauticPlugin\MauticDoiBundle\Service;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Service;
 
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 

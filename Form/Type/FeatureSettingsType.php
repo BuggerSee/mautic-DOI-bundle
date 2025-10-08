@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\Form\Type;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Form\Type;
 
-use MauticPlugin\MauticDoiBundle\Integration\Config;
+use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\FormBuilderInterface;

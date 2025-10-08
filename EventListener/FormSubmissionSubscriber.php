@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\EventListener;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\EventListener;
 
 use Mautic\FormBundle\Event\SubmissionEvent;
 use Mautic\FormBundle\FormEvents;
-use MauticPlugin\MauticDoiBundle\Integration\Config;
-use MauticPlugin\MauticDoiBundle\Service\VerificationEmailSender;
+use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\VerificationEmailSender;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class FormSubmissionSubscriber implements EventSubscriberInterface

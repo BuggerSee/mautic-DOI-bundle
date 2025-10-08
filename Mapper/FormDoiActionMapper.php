@@ -1,9 +1,9 @@
 <?php
 
-namespace MauticPlugin\MauticDoiBundle\Mapper;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Mapper;
 
 use Mautic\FormBundle\Entity\Action;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiAction;
 
 class FormDoiActionMapper
 {

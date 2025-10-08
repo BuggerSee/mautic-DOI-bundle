@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\EventListener;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\EventListener;
 
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Event\FormEvent;
 use Mautic\FormBundle\FormEvents;
-use MauticPlugin\MauticDoiBundle\Integration\Config;
-use MauticPlugin\MauticDoiBundle\Model\DoiConfigManager;
-use MauticPlugin\MauticDoiBundle\Model\FormDoiActionManager;
-use MauticPlugin\MauticDoiBundle\Service\FormDoiActionSessionManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiConfigManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiActionManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\FormDoiActionSessionManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 

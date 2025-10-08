@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\Service;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Service;
 
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
 

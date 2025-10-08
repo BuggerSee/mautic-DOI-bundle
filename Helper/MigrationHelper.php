@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\Helper;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Helper;
 
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Types\BigIntType;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\DTO;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\DTO;
 
 final class DoiTokenData
 {

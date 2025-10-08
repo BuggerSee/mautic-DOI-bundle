@@ -1,16 +1,16 @@
 <?php
 
-namespace MauticPlugin\MauticDoiBundle\Controller;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Controller;
 
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\FormRepository;
 use Mautic\LeadBundle\Tracker\ContactTracker;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfigRepository;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmissionRepository;
-use MauticPlugin\MauticDoiBundle\Model\FormDoiSubmissionManager;
-use MauticPlugin\MauticDoiBundle\Service\DoiActionsDispatcher;
-use MauticPlugin\MauticDoiBundle\Service\DoiTokenParser;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfigRepository;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmissionRepository;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiSubmissionManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiActionsDispatcher;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiTokenParser;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;

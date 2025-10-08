@@ -1,6 +1,6 @@
 <?php
 
-namespace MauticPlugin\MauticDoiBundle\Tests\Service;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Service;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\EmailBundle\Entity\Email;
@@ -10,10 +10,10 @@ use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\LeadList;
 use Mautic\LeadBundle\Entity\ListLead;
 use Mautic\LeadBundle\Entity\PointsChangeLog;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiAction;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiConfig;
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmission;
-use MauticPlugin\MauticDoiBundle\Tests\Fixtures\PluginFixtureHelper;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiAction;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
+use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;

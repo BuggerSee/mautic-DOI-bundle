@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\MauticDoiBundle\Command;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Command;
 
-use MauticPlugin\MauticDoiBundle\Entity\FormDoiSubmissionRepository;
-use MauticPlugin\MauticDoiBundle\Integration\Config;
-use MauticPlugin\MauticDoiBundle\Service\FollowUpSender;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmissionRepository;
+use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\FollowUpSender;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
