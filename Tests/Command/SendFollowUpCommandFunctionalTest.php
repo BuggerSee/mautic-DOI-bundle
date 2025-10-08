@@ -356,8 +356,8 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         Assert::assertNotNull($id1);
         Assert::assertNotNull($id2);
 
-        Assert::assertStringContainsString(sprintf('Follow-up sent to contact ID %s (email: %s)', (string) $id1, $due1->getEmail()), $output);
-        Assert::assertStringContainsString(sprintf('Follow-up sent to contact ID %s (email: %s)', (string) $id2, $due2->getEmail()), $output);
+        Assert::assertStringContainsString(sprintf('Follow-up sent to contact ID %s', (string) $id1), $output);
+        Assert::assertStringContainsString(sprintf('Follow-up sent to contact ID %s', (string) $id2), $output);
 
         // Summary should still be present
         Assert::assertStringContainsString('Processed: 2 | Sent: 2', $output);

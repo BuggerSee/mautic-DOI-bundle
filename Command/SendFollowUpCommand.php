@@ -82,10 +82,10 @@ class SendFollowUpCommand extends Command
                         $sentContactIds[] = (int) $leadId;
                     }
                     if ($output->isVeryVerbose()) {
-                        $output->writeln(sprintf('Follow-up sent to contact ID %s (email: %s)', null !== $leadId ? (string) $leadId : 'n/a', $submission->getEmail()));
+                        $output->writeln(sprintf('Follow-up sent to contact ID %s', null !== $leadId ? (string) $leadId : 'n/a'));
                     }
                 } elseif ($output->isVeryVerbose()) {
-                    $output->writeln(sprintf('Follow-up not sent to contact ID %s (email: %s)', null !== $leadId ? (string) $leadId : 'n/a', $submission->getEmail()));
+                    $output->writeln(sprintf('Follow-up not sent to contact ID %s', null !== $leadId ? (string) $leadId : 'n/a'));
                 }
             }
 
