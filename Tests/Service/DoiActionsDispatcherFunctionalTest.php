@@ -3,16 +3,13 @@
 namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Service;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
-use Mautic\EmailBundle\Entity\Email;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\Submission;
 use Mautic\LeadBundle\Entity\Company;
-use Mautic\LeadBundle\Entity\LeadList;
 use Mautic\LeadBundle\Entity\ListLead;
 use Mautic\LeadBundle\Entity\PointsChangeLog;
-use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiAction;
-use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
+use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\FormFixtureHelper;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,12 +19,15 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
 {
     protected $useCleanupRollback = false;
 
+    private FormFixtureHelper $formFixtureHelper;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         $pluginFixtureHelper = new PluginFixtureHelper($this->em);
         $pluginFixtureHelper->createAndEnablePlugin();
+        $this->formFixtureHelper = new FormFixtureHelper($this->em, $this->client);
     }
 
     public function testLeadPointsChangeActionExecutesAfterDoiVerification(): void
@@ -84,8 +84,8 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
 
     public function testLeadChangeListActionExecutesAfterDoiVerification(): void
     {
-        $addToSegment      = $this->createSegment('Add To Segment', 'add-to-segment');
-        $removeFromSegment = $this->createSegment('Remove From Segment', 'remove-from-segment');
+        $addToSegment      = $this->formFixtureHelper->createSegment('Add To Segment', 'add-to-segment');
+        $removeFromSegment = $this->formFixtureHelper->createSegment('Remove From Segment', 'remove-from-segment');
 
         $form = $this->createFormWithDoiAction('DOI Change List Test Form', 'Test Change List Action', 'lead.changelist', [
             'addToLists'      => [$addToSegment->getId()],
@@ -129,7 +129,7 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
 
     public function testEmailSendLeadActionExecutesAfterDoiVerification(): void
     {
-        $email = $this->createEmail('Test Email for Lead', 'Test email content for lead');
+        $email = $this->formFixtureHelper->createEmail('Test Email for Lead', 'Test email content for lead');
 
         $form = $this->createFormWithDoiAction('DOI Email Send Lead Test Form', 'Test Email Send Lead Action', 'email.send.lead', [
             'email' => $email->getId(),
@@ -147,126 +147,6 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
         $messages = $this->getMailerMessagesByToAddress('test@example.com');
         Assert::assertCount(1, $messages);
         Assert::assertStringContainsString('Test Email for Lead', $messages[0]->getSubject());
-    }
-
-    private function createForm(string $name): Form
-    {
-        $formPayload = [
-            'name'        => $name,
-            'description' => 'Form created for DOI action testing',
-            'formType'    => 'standalone',
-            'isPublished' => true,
-            'fields'      => [
-                [
-                    'label'        => 'Email',
-                    'type'         => 'email',
-                    'alias'        => 'email',
-                    'leadField'    => 'email',
-                    'mappedField'  => 'email',
-                    'mappedObject' => 'contact',
-                ],
-                [
-                    'label'        => 'Company',
-                    'type'         => 'text',
-                    'alias'        => 'company',
-                    'leadField'    => 'companyname',
-                    'mappedField'  => 'companyname',
-                    'mappedObject' => 'company',
-                ],
-                [
-                    'label' => 'Submit',
-                    'type'  => 'button',
-                ],
-            ],
-            'postAction' => 'return',
-        ];
-
-        $this->client->request(Request::METHOD_POST, '/api/forms/new', $formPayload);
-        $clientResponse = $this->client->getResponse();
-        $response       = json_decode($clientResponse->getContent(), true);
-        $formId         = $response['form']['id'];
-        $repository     = $this->em->getRepository(Form::class);
-
-        return $repository->find($formId);
-    }
-
-    private function createDoiConfig(Form $form): FormDoiConfig
-    {
-        $config = new FormDoiConfig();
-        $config->setForm($form);
-        $config->setEnabled(true);
-        $this->em->persist($config);
-        $this->em->flush();
-
-        return $config;
-    }
-
-    /**
-     * @param array<string,mixed> $properties
-     */
-    private function createDoiAction(Form $form, string $name, string $type, array $properties): FormDoiAction
-    {
-        $action = new FormDoiAction();
-        $action->setForm($form);
-        $action->setName($name);
-        $action->setType($type);
-        $action->setProperties($properties);
-        $action->setOrder(1);
-
-        $this->em->persist($action);
-        $this->em->flush();
-
-        return $action;
-    }
-
-    private function createCompany(string $name, int $initialScore = 0): Company
-    {
-        $company = new Company();
-        $company->setName($name);
-        $company->setScore($initialScore);
-
-        $this->em->persist($company);
-        $this->em->flush();
-
-        return $company;
-    }
-
-    private function createSegment(string $name, string $alias): LeadList
-    {
-        $segment = new LeadList();
-        $segment->setName($name);
-        $segment->setAlias($alias);
-        $segment->setPublicName($name);
-        $this->em->persist($segment);
-        $this->em->flush();
-
-        return $segment;
-    }
-
-    private function createEmail(string $name, string $content): Email
-    {
-        $email = new Email();
-        $email->setName($name);
-        $email->setSubject($name);
-        $email->setCustomHtml($content);
-        $email->setEmailType('template');
-        $email->setIsPublished(true);
-        $this->em->persist($email);
-        $this->em->flush();
-
-        return $email;
-    }
-
-    /**
-     * @param array<string,mixed> $properties
-     */
-    private function createFormWithDoiAction(string $formName, string $actionName, string $actionType, array $properties): Form
-    {
-        $form = $this->createForm($formName);
-        $this->createDoiConfig($form);
-        $this->createDoiAction($form, $actionName, $actionType, $properties);
-
-        return $form;
     }
 
     /**
@@ -309,5 +189,29 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
         $this->client->request(Request::METHOD_GET, "/email/verify/{$token}");
         $response = $this->client->getResponse();
         $this->assertSame(Response::HTTP_OK, $response->getStatusCode());
+    }
+
+    /**
+     * @param array<string,mixed> $properties
+     */
+    private function createFormWithDoiAction(string $formName, string $actionName, string $actionType, array $properties): Form
+    {
+        $form = $this->formFixtureHelper->createForm($formName);
+        $this->formFixtureHelper->createDoiConfig($form);
+        $this->formFixtureHelper->createDoiAction($form, $actionName, $actionType, $properties);
+
+        return $form;
+    }
+
+    private function createCompany(string $name, int $initialScore = 0): Company
+    {
+        $company = new Company();
+        $company->setName($name);
+        $company->setScore($initialScore);
+
+        $this->em->persist($company);
+        $this->em->flush();
+
+        return $company;
     }
 }
