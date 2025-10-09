@@ -15,6 +15,7 @@ class FormDoiSubmission
 {
     public const STATUS_PENDING   = 'pending';
     public const STATUS_CONFIRMED = 'confirmed';
+    public const STATUS_SKIPPED   = 'skipped';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -50,6 +51,19 @@ class FormDoiSubmission
 
     #[ORM\Column(type: 'string', length: 20)]
     private string $status = self::STATUS_PENDING;
+
+    #[ORM\Column(name: 'verification_skipped', type: 'boolean', options: ['default' => false])]
+    private bool $verificationSkipped = false;
+
+    #[ORM\Column(name: 'skip_reason', type: 'string', length: 50, nullable: true)]
+    private ?string $skipReason = null;
+
+    /**
+     * A secure token used to verify ownership of a browser that completed this DOI.
+     * This is only generated and set upon successful confirmation.
+     */
+    #[ORM\Column(name: 'browser_proof_token', type: 'string', length: 255, unique: true, nullable: true)]
+    private ?string $browserProofToken = null;
 
     public function getId(): ?int
     {
@@ -183,6 +197,55 @@ class FormDoiSubmission
     {
         $this->status        = self::STATUS_CONFIRMED;
         $this->dateConfirmed = new \DateTime();
+
+        return $this;
+    }
+
+    public function getVerificationSkipped(): bool
+    {
+        return $this->verificationSkipped;
+    }
+
+    public function setVerificationSkipped(bool $verificationSkipped): self
+    {
+        $this->verificationSkipped = $verificationSkipped;
+
+        return $this;
+    }
+
+    public function getSkipReason(): ?string
+    {
+        return $this->skipReason;
+    }
+
+    public function setSkipReason(?string $skipReason): self
+    {
+        $this->skipReason = $skipReason;
+
+        return $this;
+    }
+
+    public function getBrowserProofToken(): ?string
+    {
+        return $this->browserProofToken;
+    }
+
+    public function setBrowserProofToken(?string $browserProofToken): self
+    {
+        $this->browserProofToken = $browserProofToken;
+
+        return $this;
+    }
+
+    /**
+     * Marks the submission as skipped and confirmed.
+     */
+    public function skip(string $reason): self
+    {
+        $this->status              = self::STATUS_SKIPPED;
+        $this->dateConfirmed       = new \DateTime();
+        $this->verificationSkipped = true;
+        $this->skipReason          = $reason;
 
         return $this;
     }

@@ -9,6 +9,7 @@ use Mautic\FormBundle\Entity\Form;
 #[ORM\Entity(repositoryClass: FormDoiConfigRepository::class)]
 #[ORM\Table(name: 'form_doi_config')]
 #[ORM\UniqueConstraint(name: 'form_id_unique', columns: ['form_id'])]
+#[ORM\HasLifecycleCallbacks]
 class FormDoiConfig
 {
     #[ORM\Id]
@@ -43,9 +44,30 @@ class FormDoiConfig
     #[ORM\Column(type: 'boolean')]
     private bool $enabled = false;
 
+    /**
+     * @var array<mixed>|null
+     */
+    #[ORM\Column(name: 'skip_conditions', type: 'json', nullable: true)]
+    private ?array $skipConditions = null;
+
+    #[ORM\Column(name: 'skip_on_cookie', type: 'boolean', options: ['default' => false])]
+    private bool $skipOnCookie = false;
+
+    #[ORM\Column(name: 'skip_post_action', type: 'string', length: 255, nullable: true)]
+    private ?string $skipPostAction = null;
+
+    #[ORM\Column(name: 'skip_post_action_property', type: 'text', nullable: true)]
+    private ?string $skipPostActionProperty = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
+        $this->updatedAt = new \DateTime();
+    }
+
+    #[ORM\PreUpdate]
+    public function setUpdated(): void
+    {
         $this->updatedAt = new \DateTime();
     }
 
@@ -148,6 +170,60 @@ class FormDoiConfig
     public function isEnabled(): bool
     {
         return $this->enabled;
+    }
+
+    /**
+     * @return array<mixed>|null
+     */
+    public function getSkipConditions(): ?array
+    {
+        return $this->skipConditions;
+    }
+
+    /**
+     * @param array<mixed>|null $skipConditions
+     */
+    public function setSkipConditions(?array $skipConditions): self
+    {
+        $this->skipConditions = $skipConditions;
+
+        return $this;
+    }
+
+    public function getSkipOnCookie(): bool
+    {
+        return $this->skipOnCookie;
+    }
+
+    public function setSkipOnCookie(bool $skipOnCookie): self
+    {
+        $this->skipOnCookie = $skipOnCookie;
+
+        return $this;
+    }
+
+    public function getSkipPostAction(): ?string
+    {
+        return $this->skipPostAction;
+    }
+
+    public function setSkipPostAction(?string $skipPostAction): self
+    {
+        $this->skipPostAction = $skipPostAction;
+
+        return $this;
+    }
+
+    public function getSkipPostActionProperty(): ?string
+    {
+        return $this->skipPostActionProperty;
+    }
+
+    public function setSkipPostActionProperty(?string $skipPostActionProperty): self
+    {
+        $this->skipPostActionProperty = $skipPostActionProperty;
+
+        return $this;
     }
 
     /**
