@@ -35,7 +35,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
      */
     public function testSaveDoiConfigWhenEnabled(): void
     {
-        $form              = $this->createForm('Test DOI Form', 'test_doi_form');
+        $form              = $this->formFixtureHelper->createForm('Test DOI Form', 'test_doi_form');
         $verificationEmail = $this->createEmail('DOI Verification Email');
         $followUpEmail     = $this->createEmail('DOI Follow-up Email');
 
@@ -69,7 +69,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
      */
     public function testSaveDoiConfigWhenDisabled(): void
     {
-        $form = $this->createForm('Test DOI Form Disabled', 'test_doi_form_disabled');
+        $form = $this->formFixtureHelper->createForm('Test DOI Form Disabled', 'test_doi_form_disabled');
 
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
         $this->assertTrue($this->client->getResponse()->isOk());
@@ -93,7 +93,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
      */
     public function testValidationFailsWhenEnabledWithoutVerificationEmail(): void
     {
-        $form = $this->createForm('Test DOI Validation', 'test_doi_validation');
+        $form = $this->formFixtureHelper->createForm('Test DOI Validation', 'test_doi_validation');
 
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
         $this->assertTrue($this->client->getResponse()->isOk());
@@ -119,7 +119,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
      */
     public function testValidationPassesWhenDisabledWithoutVerificationEmail(): void
     {
-        $form = $this->createForm('Test DOI Disabled Validation', 'test_doi_disabled_validation');
+        $form = $this->formFixtureHelper->createForm('Test DOI Disabled Validation', 'test_doi_disabled_validation');
 
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
         $this->assertTrue($this->client->getResponse()->isOk());
@@ -144,7 +144,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
      */
     public function testExistingDoiConfigIsLoadedInForm(): void
     {
-        $form              = $this->createForm('Test Existing DOI Config', 'test_existing_doi_config');
+        $form              = $this->formFixtureHelper->createForm('Test Existing DOI Config', 'test_existing_doi_config');
         $verificationEmail = $this->createEmail('Existing Verification Email');
 
         // Create DOI config directly
@@ -176,7 +176,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
     public function testUpdateExistingDoiConfig(): void
     {
         // Create initial form and emails
-        $form                     = $this->createForm('Test DOI Update Form', 'test_doi_update_form');
+        $form                     = $this->formFixtureHelper->createForm('Test DOI Update Form', 'test_doi_update_form');
         $initialVerificationEmail = $this->createEmail('Initial Verification Email');
         $initialFollowUpEmail     = $this->createEmail('Initial Follow-up Email');
 
@@ -238,7 +238,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
     {
         $this->pluginFixtureHelper->disablePlugin();
 
-        $form = $this->createForm('Test DOI Disabled - Fields Hidden', 'test_doi_fields_hidden_when_disabled');
+        $form = $this->formFixtureHelper->createForm('Test DOI Disabled - Fields Hidden', 'test_doi_fields_hidden_when_disabled');
 
         // Load the form edit page
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
@@ -252,21 +252,9 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(0, $crawler->filter('input[name="mauticform[doiConfig][errorRedirectUrl]"]'), 'Error redirect URL field should not be present');
     }
 
-    private function createForm(string $name, string $alias): Form
-    {
-        $form = new Form();
-        $form->setName($name);
-        $form->setAlias($alias);
-        $form->setPostActionProperty('Success');
-        $this->em->persist($form);
-        $this->em->flush();
-
-        return $form;
-    }
-
     public function testSaveFormWithDoiActions(): void
     {
-        $form              = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
+        $form              = $this->formFixtureHelper->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
         $verificationEmail = $this->createEmail('DOI Verification Email');
         $sessionId         = (string) $form->getId();
 
@@ -306,7 +294,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
     public function testEditFormDoiAction(): void
     {
-        $form              = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
+        $form              = $this->formFixtureHelper->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
         $verificationEmail = $this->createEmail('DOI Verification Email');
         $sessionId         = (string) $form->getId();
 
@@ -371,7 +359,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
     public function testRemoveFormDoiAction(): void
     {
-        $form              = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
+        $form              = $this->formFixtureHelper->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
         $verificationEmail = $this->createEmail('DOI Verification Email');
         $sessionId         = (string) $form->getId();
 
@@ -441,7 +429,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
     public function testCloneFormPersistsDoiConfigAndActions(): void
     {
-        $form = $this->createForm('Original DOI Clone Form', 'original_doi_clone_form');
+        $form = $this->formFixtureHelper->createForm('Original DOI Clone Form', 'original_doi_clone_form');
 
         $verificationEmail = $this->formFixtureHelper->createEmail('Clone Verification Email', '<p>Verification</p>');
         $followUpEmail     = $this->formFixtureHelper->createEmail('Clone Follow-up Email', '<p>Follow-up</p>');

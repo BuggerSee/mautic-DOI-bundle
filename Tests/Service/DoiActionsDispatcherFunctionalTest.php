@@ -196,7 +196,7 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
      */
     private function createFormWithDoiAction(string $formName, string $actionName, string $actionType, array $properties): Form
     {
-        $form = $this->formFixtureHelper->createForm($formName);
+        $form = $this->formFixtureHelper->createFormWithCompanyViaApi($formName);
         $this->formFixtureHelper->createDoiConfig($form);
         $this->formFixtureHelper->createDoiAction($form, $actionName, $actionType, $properties);
 

@@ -51,6 +51,7 @@ class FormSubmissionSubscriber implements EventSubscriberInterface
         // Check if we should skip verification based on a cookie
         if ($this->ruleEvaluator->shouldSkipBasedOnCookie($doiConfig, $contact->getEmail())) {
             $this->handleSkippedVerification($event, FormDoiSubmission::SKIP_REASON_COOKIE_MATCH);
+
             return;
         }
 
