@@ -28,6 +28,14 @@ class FormDoiActionManager
     }
 
     /**
+     * @return array<int, FormDoiAction>
+     */
+    public function getFormDoiActionEntities(Form $form): array
+    {
+        return $this->formDoiActionRepository->findBy(['form' => $form], ['order' => 'ASC']);
+    }
+
+    /**
      * @param array<int, array<string, mixed>> $newActions
      */
     public function saveActions(Form $form, array $newActions): void

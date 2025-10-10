@@ -30,7 +30,7 @@ class FormBuilderTemplateSubscriber implements EventSubscriberInterface
 
     public function onTemplateRender(CustomTemplateEvent $event): void
     {
-        if ($this->pluginConfig->isPublished() && '@MauticForm/Builder/index.html.twig' === $event->getTemplate()) {
+        if ('@MauticForm/Builder/index.html.twig' === $event->getTemplate() && $this->pluginConfig->isPublished()) {
             $vars = $event->getVars();
             /** @var Form $form */
             $form = $vars['activeForm'];
@@ -39,14 +39,32 @@ class FormBuilderTemplateSubscriber implements EventSubscriberInterface
                 $formDoiActions = $this->formDoiActionManager->getFormDoiActions($form);
                 $this->formDoiActionSessionManager->loadActionsIntoSession($form->getId(), $formDoiActions);
             } else {
-                $mauticForm             = $event->getRequest()->request->all()['mauticform'] ?? null;
-                $sessionId              = $mauticForm['sessionId'] ?? '';
+                $sessionId              = $this->getFormSessionId($event);
                 $formDoiActions         = $this->formDoiActionSessionManager->getActionsFromSession($sessionId);
             }
             $vars['formDoiActions'] = $formDoiActions;
             $event->setVars($vars);
 
             $event->setTemplate('@LeuchtfeuerDoi/Builder/index.html.twig');
+        }
+    }
+
+    private function getFormSessionId(CustomTemplateEvent $event): ?string
+    {
+        try {
+            $mauticForm = $event->getRequest()->request->all()['mauticform'] ?? null;
+            $sessionId  = $mauticForm['sessionId'] ?? null;
+
+            // If null, extract the sessionId from the form vars
+            if (null === $sessionId) {
+                $templateVars = $event->getVars();
+                $form         = $templateVars['form'] ?? null;
+                $sessionId    = $form->children['sessionId']->vars['value'] ?? null;
+            }
+
+            return $sessionId;
+        } catch (\Throwable) {
+            return null;
         }
     }
 }

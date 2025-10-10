@@ -2,6 +2,19 @@
     Mautic.onFormDoiActionsBuilder = function() {
         Mautic.initHideItemButton('#mauticforms-doi-verified-actions');
     };
+    
+    Mautic.onFormDoiBuilder = function() {
+        const doiSwitch = mQuery('input[name="mauticform[doiConfig][enabled]"]');
+
+        const updateDoiAttribute = function () {
+            const isEnabled = mQuery('input[name="mauticform[doiConfig][enabled]"]:checked').val();
+            mQuery('#doi-container').attr('data-doi-enabled', isEnabled);
+            mQuery('#mauticforms-doi-verified-actions').attr('data-doi-enabled', isEnabled);
+        };
+
+        doiSwitch.on('change', updateDoiAttribute);
+        updateDoiAttribute();
+    };
 
     Mautic.formDoiActionOnLoad = function (container, response) {
         if (!response.actionHtml) return;

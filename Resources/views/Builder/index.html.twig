@@ -194,7 +194,7 @@ Variables
                                 {% endif %}
                             </div>
 
-                            <div id="mauticforms-doi-verified-actions" data-onload-callback="onFormDoiActionsBuilder">
+                            <div id="mauticforms-doi-verified-actions" class="doi-hide-when-disabled" data-onload-callback="onFormDoiActionsBuilder">
                                 <h3 class="mt-md mb-md">{{ 'mautic.plugin.doi.form.add_action.doi_verified.header'|trans }}</h3>
                                 <div class="row">
                                     <div class="available-actions mb-md col-sm-4">
@@ -247,7 +247,7 @@ Variables
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="tab-pane fade bdr-w-0" id="doi-container">
+                        <div class="tab-pane fade bdr-w-0" id="doi-container" data-onload-callback="onFormDoiBuilder">
                             <div class="row">
                                 <div class="col-md-6">
                                     <h3 class="mt-md mb-md">{{ 'mautic.plugin.doi.form.tab.doi.header'|trans }}</h3>
@@ -257,7 +257,7 @@ Variables
                                 </div>
                             </div>
 
-                            <div class="row">
+                            <div class="row doi-hide-when-disabled">
                                 <div class="col-md-6">
                                     {{ form_row(form.doiConfig.verificationEmailId) }}
                                     {{ form_row(form.doiConfig.successRedirectUrl) }}
