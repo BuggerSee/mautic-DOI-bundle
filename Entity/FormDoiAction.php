@@ -47,6 +47,12 @@ class FormDoiAction
         ]));
     }
 
+    public function __clone()
+    {
+        $this->id   = null;
+        $this->form = null;
+    }
+
     public function getId(): ?int
     {
         return $this->id;

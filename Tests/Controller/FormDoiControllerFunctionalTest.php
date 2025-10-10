@@ -8,6 +8,7 @@ use Mautic\FormBundle\Entity\Form;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiAction;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiConfigManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\FormFixtureHelper;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use Symfony\Component\DomCrawler\Crawler;
 
@@ -17,6 +18,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
     private DoiConfigManager $doiConfigManager;
     private PluginFixtureHelper $pluginFixtureHelper;
+    private FormFixtureHelper $formFixtureHelper;
 
     protected function setUp(): void
     {
@@ -24,7 +26,8 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         $this->pluginFixtureHelper = new PluginFixtureHelper($this->em);
         $this->pluginFixtureHelper->createAndEnablePlugin();
-        $this->doiConfigManager = $this->getContainer()->get(DoiConfigManager::class);
+        $this->doiConfigManager  = $this->getContainer()->get(DoiConfigManager::class);
+        $this->formFixtureHelper = new FormFixtureHelper($this->em, $this->client);
     }
 
     /**
@@ -434,6 +437,117 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         // Verify the action was removed from the database
         $remainingActions = $doiActionRepository->findBy(['form' => $form]);
         $this->assertCount(0, $remainingActions, 'DOI action should be removed from the database');
+    }
+
+    public function testCloneFormPersistsDoiConfigAndActions(): void
+    {
+        $form = $this->createForm('Original DOI Clone Form', 'original_doi_clone_form');
+
+        $verificationEmail = $this->formFixtureHelper->createEmail('Clone Verification Email', '<p>Verification</p>');
+        $followUpEmail     = $this->formFixtureHelper->createEmail('Clone Follow-up Email', '<p>Follow-up</p>');
+
+        $originalConfig = $this->formFixtureHelper->createDoiConfig(
+            $form,
+            $verificationEmail,
+            $followUpEmail,
+            true,
+            'https://example.com/original-success',
+            'https://example.com/original-error'
+        );
+
+        $originalAction = $this->formFixtureHelper->createDoiAction(
+            $form,
+            'Original DOI Email Action',
+            'form.email',
+            [
+                'subject' => 'Original subject',
+                'message' => 'Original message',
+            ]
+        );
+
+        $originalFormId      = (int) $form->getId();
+        $originalConfigId    = (int) $originalConfig->getId();
+        $originalActionId    = (int) $originalAction->getId();
+        $verificationEmailId = (int) $verificationEmail->getId();
+        $followUpEmailId     = (int) $followUpEmail->getId();
+
+        $crawler  = $this->client->request('GET', sprintf('/s/forms/clone/%d', $originalFormId));
+        $response = $this->client->getResponse();
+        $this->assertTrue($response->isOk(), 'Expected clone endpoint to render form edit page with status 200.');
+
+        $idField = $crawler->filter('input[name="mauticform[id]"]');
+        if (0 !== $idField->count()) {
+            $this->assertSame('', (string) $idField->attr('value'), 'Cloned form should not have an id until saved.');
+        }
+
+        $sessionIdField = $crawler->filter('input[name="mauticform[sessionId]"]');
+        $this->assertCount(1, $sessionIdField, 'Cloned form edit page must contain session id field.');
+        $sessionId = (string) $sessionIdField->attr('value');
+        $this->assertNotSame('', $sessionId, 'Session id should not be empty for cloned form.');
+
+        $enabledField = $crawler->filter('input[name="mauticform[doiConfig][enabled]"]:checked');
+        $this->assertGreaterThan(0, $enabledField->count(), 'Enabled field should be checked on cloned form.');
+        $this->assertSame('1', $enabledField->attr('value'));
+
+        $selectedVerificationEmail = $crawler->filter('select[name="mauticform[doiConfig][verificationEmailId]"] option:selected');
+        $this->assertGreaterThan(0, $selectedVerificationEmail->count(), 'Verification email should be preselected.');
+        $this->assertSame((string) $verificationEmailId, $selectedVerificationEmail->attr('value'));
+
+        $selectedFollowUpEmail = $crawler->filter('select[name="mauticform[doiConfig][followUpEmailId]"] option:selected');
+        $this->assertGreaterThan(0, $selectedFollowUpEmail->count(), 'Follow-up email should be preselected.');
+        $this->assertSame((string) $followUpEmailId, $selectedFollowUpEmail->attr('value'));
+
+        $successRedirectField = $crawler->filter('input[name="mauticform[doiConfig][successRedirectUrl]"]');
+        $this->assertSame('https://example.com/original-success', (string) $successRedirectField->attr('value'));
+
+        $errorRedirectField = $crawler->filter('input[name="mauticform[doiConfig][errorRedirectUrl]"]');
+        $this->assertSame('https://example.com/original-error', (string) $errorRedirectField->attr('value'));
+
+        $clonedName  = 'Original DOI Clone Form - cloned';
+
+        $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
+        $formElement->setValues([
+            'mauticform[name]'                                => $clonedName,
+        ]);
+
+        $this->client->submit($formElement);
+        $this->assertTrue($this->client->getResponse()->isOk(), 'Saving cloned form failed.');
+
+        $this->em->clear();
+
+        $formRepository = $this->em->getRepository(Form::class);
+        $originalForm   = $formRepository->find($originalFormId);
+        $clonedForm     = $formRepository->findOneBy(['name' => $clonedName]);
+        $this->assertInstanceOf(Form::class, $originalForm);
+        $this->assertInstanceOf(Form::class, $clonedForm, 'Cloned form should be persisted.');
+        $this->assertNotSame($originalForm->getId(), $clonedForm->getId(), 'Cloned form must have a different id.');
+
+        $configRepository       = $this->em->getRepository(FormDoiConfig::class);
+        $originalConfigReloaded = $configRepository->findOneBy(['form' => $originalForm]);
+        $clonedConfig           = $configRepository->findOneBy(['form' => $clonedForm]);
+        $this->assertNotNull($originalConfigReloaded, 'Original form should retain its DOI config.');
+        $this->assertSame($originalConfigId, $originalConfigReloaded->getId(), 'Original config should remain unchanged.');
+        $this->assertNotNull($clonedConfig, 'Cloned form should have DOI config.');
+        $this->assertNotSame($originalConfigId, $clonedConfig->getId(), 'Cloned config should be a new entity.');
+        $this->assertTrue($clonedConfig->isEnabled());
+        $this->assertSame($verificationEmailId, $clonedConfig->getVerificationEmail()->getId());
+        $this->assertSame($followUpEmailId, $clonedConfig->getFollowUpEmail()->getId());
+        $this->assertSame('https://example.com/original-success', $clonedConfig->getSuccessRedirectUrl());
+        $this->assertSame('https://example.com/original-error', $clonedConfig->getErrorRedirectUrl());
+
+        $doiActionRepository = $this->em->getRepository(FormDoiAction::class);
+        $originalActions     = $doiActionRepository->findBy(['form' => $originalForm]);
+        $clonedActions       = $doiActionRepository->findBy(['form' => $clonedForm]);
+        $this->assertCount(1, $originalActions, 'Original form should still have its DOI action.');
+        $this->assertSame($originalActionId, $originalActions[0]->getId(), 'Original DOI action should remain unchanged.');
+        $this->assertCount(1, $clonedActions, 'Cloned form should have exactly one DOI action.');
+        $clonedAction = $clonedActions[0];
+        $this->assertNotSame($originalActionId, $clonedAction->getId(), 'Cloned action should be a new entity.');
+        $this->assertSame('Original DOI Email Action', $clonedAction->getName());
+        $this->assertSame('form.email', $clonedAction->getType());
+        $this->assertSame('Original subject', $clonedAction->getProperties()['subject'] ?? null);
+        $this->assertSame('Original message', $clonedAction->getProperties()['message'] ?? null);
+        $this->assertSame(1, $clonedAction->getOrder());
     }
 
     private function submitNewDoiActionForm(string $sessionId): void

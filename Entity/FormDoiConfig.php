@@ -49,6 +49,14 @@ class FormDoiConfig
         $this->updatedAt = new \DateTime();
     }
 
+    public function __clone(): void
+    {
+        $this->id        = null;
+        $this->createdAt = new \DateTime();
+        $this->updatedAt = new \DateTime();
+        $this->form      = null;
+    }
+
     public function getId(): ?int
     {
         return $this->id;

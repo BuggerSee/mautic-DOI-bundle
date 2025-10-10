@@ -225,7 +225,7 @@ class DoiActionController extends AbstractStandardFormController
         ]);
     }
 
-    public function deleteAction(Request $request, int $objectId, FormDoiActionSessionManager $formDoiActionSessionManager): JsonResponse
+    public function deleteAction(Request $request, string $objectId, FormDoiActionSessionManager $formDoiActionSessionManager): JsonResponse
     {
         $formId    = $request->query->get('formId');
         $actions   = $formDoiActionSessionManager->getActionsFromSession($formId);
