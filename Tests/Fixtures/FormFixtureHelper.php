@@ -42,7 +42,8 @@ final class FormFixtureHelper
         ?Email $followUpEmail = null,
         bool $enabled = true,
         ?string $successRedirectUrl = null,
-        ?string $errorRedirectUrl = null
+        ?string $errorRedirectUrl = null,
+        bool $skipOnCookie = false,
     ): FormDoiConfig {
         $config = new FormDoiConfig();
         $config->setForm($form);
@@ -51,6 +52,7 @@ final class FormFixtureHelper
         $config->setEnabled($enabled);
         $config->setSuccessRedirectUrl($successRedirectUrl);
         $config->setErrorRedirectUrl($errorRedirectUrl);
+        $config->setSkipOnCookie($skipOnCookie);
 
         $this->em->persist($config);
         $this->em->flush();

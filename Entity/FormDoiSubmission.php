@@ -202,7 +202,7 @@ class FormDoiSubmission
         return $this;
     }
 
-    public function getVerificationSkipped(): bool
+    public function isVerificationSkipped(): bool
     {
         return $this->verificationSkipped;
     }
