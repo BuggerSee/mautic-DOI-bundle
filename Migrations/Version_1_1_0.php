@@ -13,8 +13,12 @@ class Version_1_1_0 extends AbstractMigration
     private string $formDoiSubmissionsTable = 'form_doi_submissions';
     private string $formDoiConfigTable      = 'form_doi_config';
 
+    private Schema $schema;
+
     protected function isApplicable(Schema $schema): bool
     {
+        $this->schema = $schema;
+
         try {
             $submissionsTableName = $this->concatPrefix($this->formDoiSubmissionsTable);
             $configTableName      = $this->concatPrefix($this->formDoiConfigTable);
@@ -46,16 +50,42 @@ class Version_1_1_0 extends AbstractMigration
     protected function up(): void
     {
         $submissions = $this->concatPrefix($this->formDoiSubmissionsTable);
-        $config      = $this->concatPrefix($this->formDoiConfigTable);
+        $config = $this->concatPrefix($this->formDoiConfigTable);
 
-        // Add columns to form_doi_submissions
-        $this->addSql("ALTER TABLE `{$submissions}` ADD verification_skipped TINYINT(1) DEFAULT 0 NOT NULL, ADD skip_reason VARCHAR(50) DEFAULT NULL, ADD browser_proof_token VARCHAR(255) DEFAULT NULL");
+        $submissionsTable = $this->schema->getTable($submissions);
+        if (!$submissionsTable->hasColumn('verification_skipped')) {
+            $this->addSql("ALTER TABLE `{$submissions}` ADD verification_skipped TINYINT(1) DEFAULT 0 NOT NULL");
+        }
 
-        // Create a unique index on browser_proof_token
-        $this->addSql("CREATE UNIQUE INDEX UNIQ_E6D188B11F48B612 ON `{$submissions}` (browser_proof_token)");
+        if (!$submissionsTable->hasColumn('skip_reason')) {
+            $this->addSql("ALTER TABLE `{$submissions}` ADD skip_reason VARCHAR(50) DEFAULT NULL");
+        }
 
-        // Add columns to form_doi_config
-        $this->addSql("ALTER TABLE `{$config}` ADD skip_conditions LONGTEXT DEFAULT NULL COMMENT '(DC2Type:json)', ADD skip_on_cookie TINYINT(1) DEFAULT 0 NOT NULL, ADD skip_post_action VARCHAR(255) DEFAULT NULL, ADD skip_post_action_property LONGTEXT DEFAULT NULL");
+        if (!$submissionsTable->hasColumn('browser_proof_token')) {
+            $this->addSql("ALTER TABLE `{$submissions}` ADD browser_proof_token VARCHAR(255) DEFAULT NULL");
+        }
+
+        // Create a unique index if it doesn't exist
+        if (!$submissionsTable->hasIndex('UNIQ_E6D188B11F48B612')) {
+            $this->addSql("CREATE UNIQUE INDEX UNIQ_E6D188B11F48B612 ON `{$submissions}` (browser_proof_token)");
+        }
+
+        $configTable = $this->schema->getTable($config);
+        if (!$configTable->hasColumn('skip_conditions')) {
+            $this->addSql("ALTER TABLE `{$config}` ADD skip_conditions LONGTEXT DEFAULT NULL COMMENT '(DC2Type:json)'");
+        }
+
+        if (!$configTable->hasColumn('skip_on_cookie')) {
+            $this->addSql("ALTER TABLE `{$config}` ADD skip_on_cookie TINYINT(1) DEFAULT 0 NOT NULL");
+        }
+
+        if (!$configTable->hasColumn('skip_post_action')) {
+            $this->addSql("ALTER TABLE `{$config}` ADD skip_post_action VARCHAR(255) DEFAULT NULL");
+        }
+
+        if (!$configTable->hasColumn('skip_post_action_property')) {
+            $this->addSql("ALTER TABLE `{$config}` ADD skip_post_action_property LONGTEXT DEFAULT NULL");
+        }
     }
 
     protected function down(): void
