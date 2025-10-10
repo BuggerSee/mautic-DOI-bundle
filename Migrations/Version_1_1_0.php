@@ -50,7 +50,7 @@ class Version_1_1_0 extends AbstractMigration
     protected function up(): void
     {
         $submissions = $this->concatPrefix($this->formDoiSubmissionsTable);
-        $config = $this->concatPrefix($this->formDoiConfigTable);
+        $config      = $this->concatPrefix($this->formDoiConfigTable);
 
         $submissionsTable = $this->schema->getTable($submissions);
         if (!$submissionsTable->hasColumn('verification_skipped')) {
