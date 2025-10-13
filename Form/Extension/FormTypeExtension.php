@@ -60,6 +60,7 @@ class FormTypeExtension extends AbstractTypeExtension
             'successRedirectUrl'  => $doiConfig->getSuccessRedirectUrl(),
             'errorRedirectUrl'    => $doiConfig->getErrorRedirectUrl(),
             'enabled'             => $doiConfig->isEnabled(),
+            'skipOnCookie'        => $doiConfig->isSkipOnCookie(),
         ];
 
         // Add DOI config fields with ID data

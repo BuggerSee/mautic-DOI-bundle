@@ -32,7 +32,7 @@ class RuleEvaluator
      */
     public function shouldSkipBasedOnCookie(FormDoiConfig $config, string $email): bool
     {
-        if (!$config->getSkipOnCookie()) {
+        if (!$config->isSkipOnCookie()) {
             return false;
         }
 

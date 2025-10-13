@@ -26,6 +26,13 @@ class FormDoiConfigType extends AbstractType
                     'tooltip' => 'mautic.plugin.doi.form.field.enabled.tooltip',
                 ],
             ])
+            ->add('skipOnCookie', YesNoButtonGroupType::class, [
+                'label' => 'mautic.plugin.doi.form.field.skip_on_cookie',
+                'attr'  => [
+                    'class'   => 'form-control',
+                    'tooltip' => 'mautic.plugin.doi.form.field.skip_on_cookie.tooltip',
+                ],
+            ])
             ->add('verificationEmailId', EmailListType::class, [
                 'label'      => 'mautic.plugin.doi.form.field.verification_email',
                 'label_attr' => ['class' => 'control-label'],

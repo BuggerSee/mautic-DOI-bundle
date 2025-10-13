@@ -198,7 +198,7 @@ class FormDoiConfig
         return $this;
     }
 
-    public function getSkipOnCookie(): bool
+    public function isSkipOnCookie(): bool
     {
         return $this->skipOnCookie;
     }

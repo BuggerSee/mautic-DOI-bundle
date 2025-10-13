@@ -57,6 +57,7 @@ class DoiConfigManager
         $doiConfig->setSuccessRedirectUrl($formData['successRedirectUrl'] ?? null);
         $doiConfig->setErrorRedirectUrl($formData['errorRedirectUrl'] ?? null);
         $doiConfig->setEnabled((bool) $formData['enabled']);
+        $doiConfig->setSkipOnCookie((bool) ($formData['skipOnCookie'] ?? false));
 
         $doiConfig->setForm($form);
         $doiConfig->setUpdatedAt(new \DateTime());
