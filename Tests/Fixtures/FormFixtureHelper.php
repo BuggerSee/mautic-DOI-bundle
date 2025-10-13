@@ -44,6 +44,8 @@ final class FormFixtureHelper
         ?string $successRedirectUrl = null,
         ?string $errorRedirectUrl = null,
         bool $skipOnCookie = false,
+        ?string $skipPostAction = null,
+        ?string $skipPostActionProperty = null,
     ): FormDoiConfig {
         $config = new FormDoiConfig();
         $config->setForm($form);
@@ -53,6 +55,8 @@ final class FormFixtureHelper
         $config->setSuccessRedirectUrl($successRedirectUrl);
         $config->setErrorRedirectUrl($errorRedirectUrl);
         $config->setSkipOnCookie($skipOnCookie);
+        $config->setSkipPostAction($skipPostAction);
+        $config->setSkipPostActionProperty($skipPostActionProperty);
 
         $this->em->persist($config);
         $this->em->flush();

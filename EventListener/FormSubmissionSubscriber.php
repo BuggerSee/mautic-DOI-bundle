@@ -6,6 +6,7 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\EventListener;
 
 use Mautic\FormBundle\Event\SubmissionEvent;
 use Mautic\FormBundle\FormEvents;
+use MauticPlugin\LeuchtfeuerDoiBundle\DoiEvents;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiConfigManager;
@@ -69,6 +70,12 @@ class FormSubmissionSubscriber implements EventSubscriberInterface
             return;
         }
 
+        // Get DOI configuration
+        $doiConfig = $this->doiConfigManager->getFormDoiConfig($form);
+        if (null === $doiConfig) {
+            return;
+        }
+
         // Create a DOI submission record marked as skipped
         $hash = $this->hashGenerator->generate($formSubmission->getId(), $contact->getEmail());
 
@@ -83,6 +90,18 @@ class FormSubmissionSubscriber implements EventSubscriberInterface
             ->skip($skipReason);
 
         $this->submissionManager->save($doiSubmission);
+
+        // Register callback for custom skip action (executed BEFORE standard actions)
+        if ($doiConfig->getSkipPostAction()) {
+            $event->setPostSubmitCallback(
+                'doi.skip_action',
+                [
+                    'eventName' => DoiEvents::DOI_ON_SKIP_POST_ACTION,
+                    'doiConfig' => $doiConfig,
+                    'priority'  => 100, // Higher priority to execute first
+                ]
+            );
+        }
 
         // Execute post-verification actions immediately since we're skipping verification
         $this->actionsDispatcher->executePostEmailVerificationActions($doiSubmission);
