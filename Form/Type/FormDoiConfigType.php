@@ -7,6 +7,8 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Form\Type;
 use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;
 use Mautic\EmailBundle\Form\Type\EmailListType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormInterface;
@@ -90,6 +92,30 @@ class FormDoiConfigType extends AbstractType
                         'groups'  => ['doi_config'],
                     ]),
                 ],
+            ])
+            ->add('skipPostAction', ChoiceType::class, [
+                'choices' => [
+                    'mautic.form.form.postaction.return'   => 'return',
+                    'mautic.form.form.postaction.message'  => 'message',
+                    'mautic.form.form.postaction.redirect' => 'redirect',
+                ],
+                'label'             => 'mautic.plugin.doi.form.field.skip_post_action',
+                'label_attr'        => ['class' => 'control-label'],
+                'attr'              => [
+                    'class'    => 'form-control',
+                    'tooltip'  => 'mautic.plugin.doi.form.field.skip_post_action.tooltip',
+                ],
+                'required'    => false,
+                'placeholder' => false,
+            ])
+            ->add('skipPostActionProperty', TextType::class, [
+                'label'      => 'mautic.plugin.doi.form.field.skip_post_action_property',
+                'label_attr' => ['class' => 'control-label'],
+                'attr'       => [
+                    'class'         => 'form-control',
+                    'tooltip'       => 'mautic.plugin.doi.form.field.skip_post_action_property.tooltip',
+                ],
+                'required'   => false,
             ]);
     }
 
