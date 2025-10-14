@@ -151,6 +151,74 @@ class DoiSkippedSubmitActionFunctionalTest extends MauticMysqlTestCase
     }
 
     /**
+     * Verifies that the custom "skip action" message overrides the standard form redirect
+     * when a known contact submits the form via AJAX.
+     */
+    public function testSkipActionMessageOverridesStandardRedirect(): void
+    {
+        // 1. Arrange
+        $email = 'redirect-override-test@example.com';
+
+        /** @var Form $form */
+        $form = $this->formFixtureHelper->createFormViaApi('Test Skip Message Over Redirect Form');
+        $form->setIsPublished(true);
+        // Default action is a redirect
+        $form->setPostAction('redirect');
+        $form->setPostActionProperty(self::STANDARD_REDIRECT_URL);
+        $this->em->flush();
+
+        $this->formFixtureHelper->createDoiConfig(
+            form: $form,
+            skipOnCookie: true,
+            // But the skip action is a message
+            skipPostAction: 'message',
+            skipPostActionProperty: self::CUSTOM_MESSAGE
+        );
+
+        // Phase 1: Get the cookie.
+        $this->performInitialSubmissionAndVerification($form, $email);
+
+        // 2. Act (Phase 2): Submit the form via AJAX
+        $payload = [
+            'mauticform' => [
+                'email'     => $email,
+                'formId'    => $form->getId(),
+                'formName'  => $form->getAlias(),
+                'messenger' => 1, // Indicates an AJAX submission that expects a postMessage response
+            ],
+        ];
+        $this->client->request(Request::METHOD_POST, "/form/submit?formId={$form->getId()}", $payload);
+        $response = $this->client->getResponse();
+        $content  = $response->getContent();
+
+        // 3. Assert
+        Assert::assertTrue($response->isOk(), 'Response should be successful.');
+        Assert::assertFalse($response->isRedirect(), 'Response should not be an HTTP redirect.');
+
+        // For AJAX requests, Mautic returns HTML with a postMessage script. We need to parse the JSON from it.
+        preg_match('/parent\\.postMessage\\("(.+)",/U', $content, $matches);
+        Assert::assertArrayHasKey(1, $matches, 'Could not find postMessage payload in the response.');
+
+        // The captured group is a string-escaped JSON payload with Unicode sequences (\uXXXX).
+        // To correctly decode it, we perform a two-step process.
+        // 1. Wrap the string in quotes to make it a valid JSON string literal.
+        $jsonStringLiteral = '"'.$matches[1].'"';
+
+        // 2. The first decode resolves the Unicode sequences (e.g., \u007B -> {) into a single string.
+        $decodedJsonString = json_decode($jsonStringLiteral);
+        Assert::assertIsString($decodedJsonString, 'First JSON decode should result in a string.');
+
+        // 3. The second decode parses the now-valid JSON string into a PHP array.
+        $postMessagePayload = json_decode($decodedJsonString, true);
+        Assert::assertIsArray($postMessagePayload, "The postMessage payload could not be decoded into an array. JSON: {$decodedJsonString}");
+
+        // The core assertion: The message action should *replace* the redirect action in the response data.
+        Assert::assertNull($postMessagePayload['redirect'], 'The "redirect" key should be null".');
+        Assert::assertArrayHasKey('successMessage', $postMessagePayload, 'The "successMessage" key should be present.');
+        Assert::assertSame(self::CUSTOM_MESSAGE, $postMessagePayload['successMessage'], 'The success message should be the custom skip message.');
+    }
+
+    /**
      * Helper method to perform the initial submission and verification to get the browser proof cookie.
      */
     private function performInitialSubmissionAndVerification(Form $form, string $email): void

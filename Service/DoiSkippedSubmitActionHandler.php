@@ -67,7 +67,7 @@ class DoiSkippedSubmitActionHandler
      * Return array payload in AJAX/messenger mode to override default successMessage,
      * otherwise return a Symfony Response for normal requests.
      *
-     * @return Response|array<string, array<string>>
+     * @return Response|array<string, mixed>
      */
     private function createMessageResponse(?string $message, bool $asArrayPayload): Response|array
     {
@@ -76,8 +76,13 @@ class DoiSkippedSubmitActionHandler
         }
 
         if ($asArrayPayload) {
-            // This will overwrite the controller's default successMessage via array_merge
-            return ['successMessage' => [$message]];
+            // Payload merges into the controller's default response.
+            // Overwrite 'redirect' with null to stop redirect if form action was 'redirect'.
+            // successMessage must be an array for implode().
+            return [
+                'successMessage' => [$message],
+                'redirect'       => null,
+            ];
         }
 
         return new Response($message);
@@ -96,8 +101,6 @@ class DoiSkippedSubmitActionHandler
 
         if (null === $returnUrl) {
             // Fall back to a message if no referrer/return param exists
-            // Note: In AJAX/messenger mode, createMessageResponse will turn this into an array payload,
-            // but here we don't know the mode, so return a Response; processSkipAction decides the type.
             return $this->createMessageResponse($message, false);
         }
 
