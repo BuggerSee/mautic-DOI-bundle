@@ -13,6 +13,10 @@ return [
                 'path'       => '/forms-doi/action/{objectAction}/{objectId}',
                 'controller' => 'MauticPlugin\LeuchtfeuerDoiBundle\Controller\DoiActionController::executeAction',
             ],
+            'mautic_doi_render_condition_action' => [
+                'path'       => '/forms-doi/render-condition',
+                'controller' => 'MauticPlugin\LeuchtfeuerDoiBundle\Controller\ConditionBuilderController::renderConditionAction',
+            ],
         ],
         'public' => [
             'mautic_doi_email_verify_action' => [

@@ -9,6 +9,7 @@ use Mautic\CoreBundle\Event\CustomTemplateEvent;
 use Mautic\FormBundle\Entity\Form;
 use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiActionManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\AvailableSkipOptions;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\FormDoiActionSessionManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -17,7 +18,8 @@ class FormBuilderTemplateSubscriber implements EventSubscriberInterface
     public function __construct(
         private FormDoiActionManager $formDoiActionManager,
         private FormDoiActionSessionManager $formDoiActionSessionManager,
-        private Config $pluginConfig
+        private Config $pluginConfig,
+        private AvailableSkipOptions $availableSkipOptions
     ) {
     }
 
@@ -42,9 +44,10 @@ class FormBuilderTemplateSubscriber implements EventSubscriberInterface
                 $sessionId              = $this->getFormSessionId($event);
                 $formDoiActions         = $this->formDoiActionSessionManager->getActionsFromSession($sessionId);
             }
-            $vars['formDoiActions'] = $formDoiActions;
-            $event->setVars($vars);
+            $vars['formDoiActions']        = $formDoiActions;
+            $vars['conditionChoiceFields'] = $this->availableSkipOptions->getAvailableSkipOptions();
 
+            $event->setVars($vars);
             $event->setTemplate('@LeuchtfeuerDoi/Builder/index.html.twig');
         }
     }

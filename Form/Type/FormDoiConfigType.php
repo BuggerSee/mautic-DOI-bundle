@@ -6,18 +6,29 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Form\Type;
 
 use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;
 use Mautic\EmailBundle\Form\Type\EmailListType;
+use Mautic\LeadBundle\Form\DataTransformer\FieldFilterTransformer;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\AvailableSkipOptions;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Url;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class FormDoiConfigType extends AbstractType
 {
+    public function __construct(
+        private TranslatorInterface $translator,
+        private AvailableSkipOptions $availableSkipOptions
+    ) {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -117,6 +128,28 @@ class FormDoiConfigType extends AbstractType
                 ],
                 'required'   => false,
             ]);
+
+        $filterModalTransformer = new FieldFilterTransformer($this->translator, ['object' => 'lead']);
+        $builder->add(
+            $builder->create(
+                'skipConditions',
+                CollectionType::class,
+                [
+                    'entry_type'     => SkipConditionType::class,
+                    'error_bubbling' => false,
+                    'mapped'         => true,
+                    'allow_add'      => true,
+                    'allow_delete'   => true,
+                    'label'          => false,
+                    'block_prefix'   => '_doiconfig_skipconditions',
+                ]
+            )->addModelTransformer($filterModalTransformer)
+        );
+    }
+
+    public function buildView(FormView $view, FormInterface $form, array $options): void
+    {
+        $view->vars['fields'] = $this->availableSkipOptions->getAvailableSkipOptions();
     }
 
     public function configureOptions(OptionsResolver $resolver): void

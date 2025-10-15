@@ -63,6 +63,7 @@ class FormTypeExtension extends AbstractTypeExtension
             'skipOnCookie'            => $doiConfig->isSkipOnCookie(),
             'skipPostAction'          => $doiConfig->getSkipPostAction(),
             'skipPostActionProperty'  => $doiConfig->getSkipPostActionProperty(),
+            'skipConditions'          => $doiConfig->getSkipConditions(),
         ];
 
         // Add DOI config fields with ID data

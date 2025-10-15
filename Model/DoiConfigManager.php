@@ -60,6 +60,7 @@ class DoiConfigManager
         $doiConfig->setSkipOnCookie((bool) ($formData['skipOnCookie'] ?? false));
         $doiConfig->setSkipPostAction($formData['skipPostAction'] ?? null);
         $doiConfig->setSkipPostActionProperty($formData['skipPostActionProperty'] ?? null);
+        $doiConfig->setSkipConditions($formData['skipConditions'] ?? null);
 
         $doiConfig->setForm($form);
         $doiConfig->setUpdatedAt(new \DateTime());
