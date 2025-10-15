@@ -6,6 +6,7 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Form\Type;
 
 use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;
 use Mautic\EmailBundle\Form\Type\EmailListType;
+use Mautic\FormBundle\Entity\Form;
 use Mautic\LeadBundle\Form\DataTransformer\FieldFilterTransformer;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\AvailableSkipOptions;
 use Symfony\Component\Form\AbstractType;
@@ -25,7 +26,7 @@ class FormDoiConfigType extends AbstractType
 {
     public function __construct(
         private TranslatorInterface $translator,
-        private AvailableSkipOptions $availableSkipOptions
+        private AvailableSkipOptions $availableSkipOptions,
     ) {
     }
 
@@ -129,6 +130,10 @@ class FormDoiConfigType extends AbstractType
                 'required'   => false,
             ]);
 
+        if (isset($options['mautic_form'])) {
+            $builder->setAttribute('mautic_form', $options['mautic_form']);
+        }
+
         $filterModalTransformer = new FieldFilterTransformer($this->translator, ['object' => 'lead']);
         $builder->add(
             $builder->create(
@@ -136,6 +141,9 @@ class FormDoiConfigType extends AbstractType
                 CollectionType::class,
                 [
                     'entry_type'     => SkipConditionType::class,
+                    'entry_options'  => [
+                        'mautic_form' => $options['mautic_form'] ?? null,
+                    ],
                     'error_bubbling' => false,
                     'mapped'         => true,
                     'allow_add'      => true,
@@ -149,7 +157,8 @@ class FormDoiConfigType extends AbstractType
 
     public function buildView(FormView $view, FormInterface $form, array $options): void
     {
-        $view->vars['fields'] = $this->availableSkipOptions->getAvailableSkipOptions();
+        $formEntity           = $form->getConfig()->getAttribute('mautic_form');
+        $view->vars['fields'] = $this->availableSkipOptions->getAvailableSkipOptions($formEntity);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -165,7 +174,10 @@ class FormDoiConfigType extends AbstractType
 
                 return $groups;
             },
-            'data_class' => null, // Allow array data
+            'data_class'  => null, // Allow array data
+            'mautic_form' => null,
         ]);
+
+        $resolver->setAllowedTypes('mautic_form', ['null', Form::class]);
     }
 }

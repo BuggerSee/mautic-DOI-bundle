@@ -3,9 +3,10 @@
 namespace MauticPlugin\LeuchtfeuerDoiBundle\Controller;
 
 use Mautic\CoreBundle\Helper\InputHelper;
+use Mautic\FormBundle\Model\FormModel;
 use Mautic\LeadBundle\Form\Type\FilterPropertiesType;
-use Mautic\LeadBundle\Model\ListModel;
 use Mautic\LeadBundle\Provider\FormAdjustmentsProviderInterface;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\AvailableSkipOptions;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,15 +18,18 @@ class ConditionBuilderController extends AbstractController
         Request $request,
         FormFactoryInterface $formFactory,
         FormAdjustmentsProviderInterface $formAdjustmentsProvider,
-        ListModel $listModel
+        AvailableSkipOptions $availableSkipOptions,
+        FormModel $formModel
     ): JsonResponse {
         $fieldAlias  = InputHelper::clean($request->get('fieldAlias'));
         $fieldObject = InputHelper::clean($request->get('fieldObject'));
         $operator    = InputHelper::clean($request->get('operator'));
         $search      = InputHelper::clean($request->get('search'));
+        $formId      = InputHelper::clean($request->get('formId'));
         $filterNum   = (int) $request->get('filterNum');
 
-        $form = $formFactory->createNamed('RENAME', FilterPropertiesType::class);
+        $formEntity = $formModel->getEntity($formId);
+        $form       = $formFactory->createNamed('RENAME', FilterPropertiesType::class);
 
         if ($fieldAlias && $operator) {
             $formAdjustmentsProvider->adjustForm(
@@ -33,7 +37,7 @@ class ConditionBuilderController extends AbstractController
                 $fieldAlias,
                 $fieldObject,
                 $operator,
-                $listModel->getChoiceFields($search)[$fieldObject][$fieldAlias]
+                $availableSkipOptions->getAvailableSkipOptions($formEntity, $search)[$fieldObject][$fieldAlias]
             );
         }
 

@@ -82,8 +82,9 @@
         var fieldObject = mQuery('#mauticform_doiConfig_skipConditions_'+filterNum+'_object');
         var filterValue = mQuery('#mauticform_doiConfig_skipConditions_'+filterNum+'_properties_filter').val();
         var filterId  = '#mauticform_doiConfig_skipConditions_' + filterNum + '_properties_filter';
+        const formId = mQuery('#mauticform_sessionId').val();
 
-        loadFilterForm(filterNum, fieldObject.val(), fieldAlias.val(), operatorSelect.val(), function(propertiesFields) {
+        loadFilterForm(formId, filterNum, fieldObject.val(), fieldAlias.val(), operatorSelect.val(), function(propertiesFields) {
             var selector = '#mauticform_doiConfig_skipConditions_'+filterNum;
             mQuery(selector+'_properties').html(propertiesFields);
             triggerOnPropertiesFormLoadedEvent(selector, filterValue);
@@ -158,7 +159,7 @@
         });
     };
 
-    const loadFilterForm = function(filterNum, fieldObject, fieldAlias, operator, resultHtml, search = null) {
+    const loadFilterForm = function(formId, filterNum, fieldObject, fieldAlias, operator, resultHtml, search = null) {
         const url = mQuery('[data-doi-render-condition-properties]').data('doi-render-condition-properties');
         mQuery.ajax({
             showLoadingBar: true,
@@ -170,6 +171,7 @@
                 operator: operator,
                 filterNum: filterNum,
                 search: search,
+                formId: formId
             },
             success: function (response) {
                 Mautic.stopPageLoadingBar();

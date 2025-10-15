@@ -45,7 +45,7 @@ class FormBuilderTemplateSubscriber implements EventSubscriberInterface
                 $formDoiActions         = $this->formDoiActionSessionManager->getActionsFromSession($sessionId);
             }
             $vars['formDoiActions']        = $formDoiActions;
-            $vars['conditionChoiceFields'] = $this->availableSkipOptions->getAvailableSkipOptions();
+            $vars['conditionChoiceFields'] = $this->availableSkipOptions->getAvailableSkipOptions($form);
 
             $event->setVars($vars);
             $event->setTemplate('@LeuchtfeuerDoi/Builder/index.html.twig');

@@ -68,8 +68,9 @@ class FormTypeExtension extends AbstractTypeExtension
 
         // Add DOI config fields with ID data
         $form->add('doiConfig', FormDoiConfigType::class, [
-            'data'   => $formData,
-            'mapped' => false,
+            'data'        => $formData,
+            'mapped'      => false,
+            'mautic_form' => $entity,
         ]);
     }
 

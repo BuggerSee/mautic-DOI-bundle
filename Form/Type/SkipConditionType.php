@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerDoiBundle\Form\Type;
 
+use Mautic\FormBundle\Entity\Form;
 use Mautic\LeadBundle\Form\Type\FilterPropertiesType;
-use Mautic\LeadBundle\Model\ListModel;
 use Mautic\LeadBundle\Provider\FormAdjustmentsProviderInterface;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\AvailableSkipOptions;
 use Symfony\Component\Form\AbstractType;
@@ -22,14 +22,19 @@ class SkipConditionType extends AbstractType
 {
     public function __construct(
         private FormAdjustmentsProviderInterface $formAdjustmentsProvider,
-        private ListModel $listModel,
-        private AvailableSkipOptions $availableSkipOptions
+        private AvailableSkipOptions $availableSkipOptions,
     ) {
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $fieldChoices = $this->listModel->getChoiceFields();
+        // Store the form entity if provided
+        if (isset($options['mautic_form'])) {
+            $builder->setAttribute('mautic_form', $options['mautic_form']);
+        }
+
+        $formEntity   = $options['mautic_form'] ?? null;
+        $fieldChoices = $this->availableSkipOptions->getAvailableSkipOptions($formEntity);
 
         $builder->add(
             'glue',
@@ -115,13 +120,16 @@ class SkipConditionType extends AbstractType
             [
                 'label'          => false,
                 'error_bubbling' => false,
+                'mautic_form'    => null,
             ]
         );
+        $resolver->setAllowedTypes('mautic_form', ['null', Form::class]);
     }
 
     public function buildView(FormView $view, FormInterface $form, array $options): void
     {
-        $view->vars['fields'] = $this->availableSkipOptions->getAvailableSkipOptions();
+        $formEntity           = $form->getConfig()->getAttribute('mautic_form');
+        $view->vars['fields'] = $this->availableSkipOptions->getAvailableSkipOptions($formEntity);
     }
 
     public function getBlockPrefix(): string
