@@ -18,13 +18,13 @@
   {% endif %}
 
   {% if isPrototype or fields[object][filterType].label is defined %}
-    <div class="segment-filter panel {% if inGroup %}in-group{% endif %}" id="{{ id }}">
+    <div class="skip-condition-panel panel {% if inGroup %}in-group{% endif %}" id="{{ id }}">
         <div class="panel-heading pl-0 pr-0">
             <div class="panel-glue col-sm-2 pl-0{% if '0' == form.vars.name %} hide{% endif %}">
                 {{ form_widget(form.glue) }}
             </div>
             <div class="col-sm-2 pr-0 pull-right">
-                <div class="segment-button d-flex jc-end btn-group btn-group-xs pull-right" role="group">
+                <div class="skip-condition-button d-flex jc-end btn-group btn-group-xs pull-right" role="group">
                     {% include '@MauticCore/Helper/button.html.twig' with {
                         buttons: [
                             {

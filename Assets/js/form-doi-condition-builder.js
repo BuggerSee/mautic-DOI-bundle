@@ -11,7 +11,7 @@
             }
         });
 
-        mQuery('#doi-skip-condition-list .segment-filter').each( function (index, filter) {
+        mQuery('#doi-skip-condition-list .skip-condition-panel').each( function (index, filter) {
             attachEvents(mQuery(filter));
         });
 
@@ -193,10 +193,10 @@
                     {'opacity': 0},
                     'fast',
                     function () {
-                        // Remove existing tooltip
+                        // Remove the existing tooltip
                         mQuery('*[role="tooltip"]').tooltip('destroy');
                         mQuery(this).remove();
-                        reorderSegmentFilters();
+                        reorderSkipConditions();
                     }
                 );
             });
@@ -204,10 +204,11 @@
     };
 
     const getFilterCount = function() {
-        return mQuery('.selected-filters').children('.segment-filter').length;
+        return mQuery('#doi-skip-condition-list').children('.skip-condition-panel').length;
     };
 
-    const reorderSegmentFilters = function() {
+    // reorderSkipConditions ~ reorderSegmentFilters
+    const reorderSkipConditions = function() {
         // Update the filter numbers sot that they are ordered correctly when processed and grouped server side
         let counter = 0;
         const $filters = mQuery('#doi-skip-condition-list .panel');
@@ -253,8 +254,6 @@
                     Mautic.destroyChosen($element);
                     Mautic.activateChosenSelect($element);
                 }
-
-                Mautic.segmentFilter().showCopyBasedOnGlue($filter);
 
                 if (mQuery(this).is(':radio') && id.includes("_dateTypeMode_")) {
                     if (mQuery(this).closest('label').hasClass('active')) {
