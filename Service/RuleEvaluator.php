@@ -184,17 +184,28 @@ class RuleEvaluator
                 if (!is_array($filterValue)) {
                     return false;
                 }
-                $lowerFilterValues = array_map(static fn ($val): string => strtolower((string) $val), $filterValue);
+                // Handle single values and comma-separated string values (from checkboxgrp)
+                $actualValues = is_array($actualValue) ? $actualValue : explode(',', (string) $actualValue);
 
-                return in_array(strtolower((string) $actualValue), $lowerFilterValues, true);
+                // Normalize both arrays for case-insensitive comparison
+                $actualValuesLower = array_map('strtolower', array_map('trim', $actualValues));
+                $filterValuesLower = array_map('strtolower', array_map('trim', $filterValue));
+
+                // Return true if any of the actual values are in the filter list
+                return !empty(array_intersect($actualValuesLower, $filterValuesLower));
 
             case OperatorOptions::NOT_IN:
                 if (!is_array($filterValue)) {
                     return true;
                 }
-                $lowerFilterValues = array_map(static fn ($val): string => strtolower((string) $val), $filterValue);
+                // Handle single values and comma-separated string values
+                $actualValues = is_array($actualValue) ? $actualValue : explode(',', (string) $actualValue);
 
-                return !in_array(strtolower((string) $actualValue), $lowerFilterValues, true);
+                $actualValuesLower = array_map('strtolower', array_map('trim', $actualValues));
+                $filterValuesLower = array_map('strtolower', array_map('trim', $filterValue));
+
+                // Return true if NONE of the actual values are in the filter list
+                return empty(array_intersect($actualValuesLower, $filterValuesLower));
 
             case OperatorOptions::REGEXP:
                 $pattern = (string) $filterValue;

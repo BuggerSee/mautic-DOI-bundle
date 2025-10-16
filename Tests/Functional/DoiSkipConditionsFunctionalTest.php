@@ -40,7 +40,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
     public function testSkipConditionsEvaluation(array $skipConditions, array $submissionData, string $expectedStatus, int $contactNumber): void
     {
         // 1. Setup: Create Form and DOI Config with the specific conditions
-        $form = $this->formFixtureHelper->createComplexForm('Conditions Test Form');
+        $form = $this->formFixtureHelper->createComplexFormViaApi('Conditions Test Form');
         $this->formFixtureHelper->createDoiConfig(
             form: $form,
             skipConditions: $skipConditions
@@ -56,7 +56,26 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         $mauticFormValues = [];
         foreach ($submissionData as $key => $value) {
-            $mauticFormValues["mauticform[{$key}]"] = $value;
+            if (is_array($value)) {
+                // Handle checkbox arrays - need to find checkboxes by their value, not by array index
+                $allFields = $formElement->all();
+                foreach ($allFields as $fieldName => $field) {
+                    // Match checkbox fields for this key (e.g., mauticform[interests][0], mauticform[interests][1])
+                    if (preg_match("/^mauticform\[{$key}\]\[\d+\]$/", $fieldName)) {
+                        // Check if this checkbox's value is in our desired values array
+                        $checkboxValue = $field->availableOptionValues()[0] ?? null;
+                        if ($checkboxValue && in_array($checkboxValue, $value, true)) {
+                            $field->tick();
+                        }
+                    }
+                }
+            } else {
+                // Handle regular form fields
+                $fieldName = "mauticform[{$key}]";
+                if ($formElement->has($fieldName)) {
+                    $formElement->get($fieldName)->setValue($value);
+                }
+            }
         }
         $formElement->setValues($mauticFormValues);
         $this->client->submit($formElement);
@@ -187,5 +206,76 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
             'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
             'contactNumber'  => ++$contactNumber,
         ];
+
+        // --- CHECKBOX TEST CASES ---
+
+        yield 'Checkbox EQUALS exact value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::EQUAL_TO, 'properties' => ['filter' => 'sales'], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
+            ],
+            'submissionData' => ['interests' => ['sales']],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Checkbox IN rule where one submitted value matches, should skip' => [
+            'skipConditions' => [
+                // Skips if submitted interests include 'tech' OR 'sales'
+                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
+            ],
+            // user submits 'marketing' and 'tech'
+            'submissionData' => ['interests' => ['marketing', 'tech']],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Checkbox IN rule where no submitted values match, should be pending' => [
+            'skipConditions' => [
+                // Skips if submitted interests include 'tech' OR 'sales'
+                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
+            ],
+            // user only submits 'marketing'
+            'submissionData' => ['interests' => ['marketing']],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        // Test for "Excluding" (NOT IN)
+        yield 'Checkbox NOT IN rule where no submitted values match, should skip' => [
+            'skipConditions' => [
+                // Skips if submitted interests DO NOT include 'tech' OR 'sales'
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
+            ],
+            // user only submits 'marketing'
+            'submissionData' => ['interests' => ['marketing']],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Checkbox NOT IN rule where one submitted value matches, should be pending' => [
+            'skipConditions' => [
+                // Skips if submitted interests DO NOT include 'tech' OR 'sales'
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
+            ],
+            // user submits 'marketing' and 'tech'
+            'submissionData' => ['interests' => ['marketing', 'tech']],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Checkbox NOT IN with an empty submission, should skip' => [
+            'skipConditions' => [
+                // Skips if submitted interests DO NOT include 'tech' OR 'sales'
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
+            ],
+            // user does not check any boxes
+            'submissionData' => ['interests' => []],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+
     }
+
+
 }

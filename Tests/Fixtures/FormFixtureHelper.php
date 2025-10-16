@@ -217,7 +217,7 @@ final class FormFixtureHelper
         return $repository->find($formId);
     }
 
-    public function createComplexForm(string $name): Form
+    public function createComplexFormViaApi(string $name): Form
     {
         $formPayload = [
             'name'        => $name,
@@ -266,6 +266,41 @@ final class FormFixtureHelper
                                 ['label' => 'Technology', 'value' => 'tech'],
                                 ['label' => 'Marketing', 'value' => 'marketing'],
                                 ['label' => 'Sales', 'value' => 'sales'],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'label'      => 'Colors',
+                    'alias'      => 'colors',
+                    'type'       => 'select',
+                    'properties' => [
+                        'syncList'   => 0,
+                        'list' => [
+                            'list' => [
+                                ['label' => 'Red', 'value' => 'red'],
+                                ['label' => 'Green', 'value' => 'green'],
+                                ['label' => 'Blue', 'value' => 'blue'],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'label'      => 'Available days',
+                    'alias'      => 'available_days',
+                    'type'       => 'select',
+                    'properties' => [
+                        'syncList'   => 0,
+                        'multiple'   => 1,
+                        'list' => [
+                            'list' => [
+                                ['label' => 'Monday', 'value' => 'monday'],
+                                ['label' => 'Tuesday', 'value' => 'tuesday'],
+                                ['label' => 'Wednesday', 'value' => 'wednesday'],
+                                ['label' => 'Thursday', 'value' => 'thursday'],
+                                ['label' => 'Friday', 'value' => 'friday'],
+                                ['label' => 'Saturday', 'value' => 'saturday'],
+                                ['label' => 'Sunday', 'value' => 'sunday'],
                             ],
                         ],
                     ],
