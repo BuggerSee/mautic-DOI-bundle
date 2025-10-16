@@ -12,3 +12,18 @@
 .doi-hide-when-disabled[data-doi-enabled="0"] {
     display: none;
 }
+
+#available_conditions_list_chosen li.active-result::before {
+    font-family: 'remixicon';
+    padding-right: 3px;
+}
+
+.available-doi-skip-option-type--lead::before {
+    content: "\f25b";
+}
+.available-doi-skip-option-type--company::before {
+    content: "\eb09";
+}
+.available-doi-skip-option-type--form::before {
+    content: "\f1c7";
+}
