@@ -8,7 +8,6 @@ use Mautic\FormBundle\Entity\Submission;
 use Mautic\LeadBundle\Entity\CompanyLeadRepository;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Exception\PrimaryCompanyNotFoundException;
-use Mautic\LeadBundle\Helper\PrimaryCompanyHelper;
 use Mautic\LeadBundle\Segment\OperatorOptions;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
@@ -25,7 +24,6 @@ class RuleEvaluator
     public function __construct(
         private FormDoiSubmissionRepository $submissionRepository,
         private RequestStack $requestStack,
-        private PrimaryCompanyHelper $primaryCompanyHelper,
         private CompanyLeadRepository $companyLeadRepository
     ) {
     }
@@ -138,40 +136,42 @@ class RuleEvaluator
      * @param string $operator    The comparison operator
      * @param mixed  $actualValue The value from the contact/company/form
      * @param mixed  $filterValue The value from the rule to compare against
-     *
-     * @return bool
      */
     private function evaluateSingleCondition(string $operator, mixed $actualValue, mixed $filterValue): bool
     {
         switch ($operator) {
             case OperatorOptions::EQUAL_TO:
-                return strcasecmp((string) $actualValue, (string) $filterValue) === 0;
+                return 0 === strcasecmp((string) $actualValue, (string) $filterValue);
 
             case OperatorOptions::NOT_EQUAL_TO:
-                return strcasecmp((string) $actualValue, (string) $filterValue) !== 0;
+                return 0 !== strcasecmp((string) $actualValue, (string) $filterValue);
 
             case OperatorOptions::GREATER_THAN:
                 if (!is_numeric($actualValue) || !is_numeric($filterValue)) {
                     return false;
                 }
+
                 return (float) $actualValue > (float) $filterValue;
 
             case OperatorOptions::GREATER_THAN_OR_EQUAL:
                 if (!is_numeric($actualValue) || !is_numeric($filterValue)) {
                     return false;
                 }
+
                 return (float) $actualValue >= (float) $filterValue;
 
             case OperatorOptions::LESS_THAN:
                 if (!is_numeric($actualValue) || !is_numeric($filterValue)) {
                     return false;
                 }
+
                 return (float) $actualValue < (float) $filterValue;
 
             case OperatorOptions::LESS_THAN_OR_EQUAL:
                 if (!is_numeric($actualValue) || !is_numeric($filterValue)) {
                     return false;
                 }
+
                 return (float) $actualValue <= (float) $filterValue;
 
             case OperatorOptions::EMPTY:
@@ -211,7 +211,7 @@ class RuleEvaluator
                 $pattern = (string) $filterValue;
                 $subject = (string) $actualValue;
 
-                return '' !== $pattern && @preg_match($pattern, $subject) === 1;
+                return '' !== $pattern && 1 === @preg_match($pattern, $subject);
 
             case OperatorOptions::NOT_REGEXP:
                 $pattern = (string) $filterValue;
@@ -220,25 +220,25 @@ class RuleEvaluator
                 }
                 $subject = (string) $actualValue;
 
-                return @preg_match($pattern, $subject) !== 1;
+                return 1 !== @preg_match($pattern, $subject);
 
             case OperatorOptions::STARTS_WITH:
-                $search = (string) $filterValue;
+                $search  = (string) $filterValue;
                 $subject = (string) $actualValue;
 
                 return '' !== $search && str_starts_with(strtolower($subject), strtolower($search));
 
             case OperatorOptions::ENDS_WITH:
-                $search = (string) $filterValue;
+                $search  = (string) $filterValue;
                 $subject = (string) $actualValue;
 
                 return '' !== $search && str_ends_with(strtolower($subject), strtolower($search));
 
             case OperatorOptions::CONTAINS:
-                $search = (string) $filterValue;
+                $search  = (string) $filterValue;
                 $subject = (string) $actualValue;
 
-                return '' !== $search && stripos($subject, $search) !== false;
+                return '' !== $search && false !== stripos($subject, $search);
 
             case OperatorOptions::LIKE:
                 $filterString = (string) $filterValue;

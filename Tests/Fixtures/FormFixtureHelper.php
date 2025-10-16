@@ -36,6 +36,9 @@ final class FormFixtureHelper
         return $form;
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $skipConditions
+     */
     public function createDoiConfig(
         Form $form,
         ?Email $verificationEmail = null,
@@ -46,7 +49,7 @@ final class FormFixtureHelper
         bool $skipOnCookie = false,
         ?string $skipPostAction = null,
         ?string $skipPostActionProperty = null,
-        array $skipConditions = [] // Add this parameter
+        array $skipConditions = []
     ): FormDoiConfig {
         $config = new FormDoiConfig();
         $config->setForm($form);
@@ -58,7 +61,7 @@ final class FormFixtureHelper
         $config->setSkipOnCookie($skipOnCookie);
         $config->setSkipPostAction($skipPostAction);
         $config->setSkipPostActionProperty($skipPostActionProperty);
-        $config->setSkipConditions($skipConditions); // Add this line
+        $config->setSkipConditions($skipConditions);
 
         $this->em->persist($config);
         $this->em->flush();
@@ -276,7 +279,7 @@ final class FormFixtureHelper
                     'type'       => 'select',
                     'properties' => [
                         'syncList'   => 0,
-                        'list' => [
+                        'list'       => [
                             'list' => [
                                 ['label' => 'Red', 'value' => 'red'],
                                 ['label' => 'Green', 'value' => 'green'],
@@ -292,7 +295,7 @@ final class FormFixtureHelper
                     'properties' => [
                         'syncList'   => 0,
                         'multiple'   => 1,
-                        'list' => [
+                        'list'       => [
                             'list' => [
                                 ['label' => 'Monday', 'value' => 'monday'],
                                 ['label' => 'Tuesday', 'value' => 'tuesday'],
@@ -303,6 +306,22 @@ final class FormFixtureHelper
                                 ['label' => 'Sunday', 'value' => 'sunday'],
                             ],
                         ],
+                    ],
+                ],
+                [
+                    'label'      => 'Preferred Contact Method',
+                    'alias'      => 'contact_preference',
+                    'type'       => 'radiogrp',
+                    'properties' => [
+                        'syncList'   => 0,
+                        'optionlist' => [
+                            'list' => [
+                                ['label' => 'Email', 'value' => 'email'],
+                                ['label' => 'Phone', 'value' => 'phone'],
+                                ['label' => 'Text Message', 'value' => 'sms'],
+                            ],
+                        ],
+                        'labelAttributes' => '',
                     ],
                 ],
                 [

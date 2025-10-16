@@ -10,6 +10,8 @@ use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\FormFixtureHelper;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
+use Symfony\Component\DomCrawler\Field\ChoiceFormField;
+use Symfony\Component\DomCrawler\Form;
 use Symfony\Component\HttpFoundation\Request;
 
 class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
@@ -32,10 +34,9 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
     /**
      * @dataProvider skipConditionsDataProvider
      *
-     * @param array<int, mixed>     $skipConditions
-     * @param array<string, string> $submissionData
-     * @param string                $expectedStatus
-     * @param int                   $contactNumber  To ensure unique emails per test
+     * @param array<int, mixed>    $skipConditions
+     * @param array<string, mixed> $submissionData
+     * @param int                  $contactNumber  To ensure unique emails per test
      */
     public function testSkipConditionsEvaluation(array $skipConditions, array $submissionData, string $expectedStatus, int $contactNumber): void
     {
@@ -46,11 +47,11 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
             skipConditions: $skipConditions
         );
 
-        $email = "contact-{$contactNumber}@example.com";
+        $email                   = "contact-{$contactNumber}@example.com";
         $submissionData['email'] = $email;
 
         // 2. Execution: Submit the form
-        $crawler = $this->client->request(Request::METHOD_GET, "/form/{$form->getId()}");
+        $crawler     = $this->client->request(Request::METHOD_GET, "/form/{$form->getId()}");
         $formCrawler = $crawler->filter('form[id=mauticform_conditionstestform]');
         $formElement = $formCrawler->form();
 
@@ -60,6 +61,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
                 // Check if this is a multiselect field first
                 $multiselectFieldName = "mauticform[{$key}]";
                 if ($formElement->has($multiselectFieldName)) {
+                    /** @var ChoiceFormField $field */
                     $field = $formElement->get($multiselectFieldName);
                     // Check if field is an object and has setValue method
                     if (is_object($field) && method_exists($field, 'setValue')) {
@@ -105,9 +107,16 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
         }
     }
 
-    private function handleCheckboxValues($formElement, string $key, array $values): void
+    /**
+     * @param array<int, string> $values
+     */
+    private function handleCheckboxValues(Form $formElement, string $key, array $values): void
     {
         $allFields = $formElement->all();
+
+        /**
+         * @var ChoiceFormField $field
+         */
         foreach ($allFields as $fieldName => $field) {
             // Match checkbox fields for this key (e.g., mauticform[interests][0], mauticform[interests][1])
             if (preg_match("/^mauticform\[{$key}\]\[\d+\]$/", $fieldName)) {
@@ -121,24 +130,6 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
             }
         }
     }
-
-    /**
-     * @return \Generator<string, array<string, mixed>>
-     */
-    public function testDataProvider(): \Generator
-    {
-        $contactNumber = 0;
-        yield 'Checkbox EQUALS exact value, should skip' => [
-            'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::EQUAL_TO, 'properties' => ['filter' => 'sales'], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
-            ],
-            'submissionData' => ['interests' => ['sales']],
-            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
-            'contactNumber'  => ++$contactNumber,
-        ];
-    }
-
-
 
     /**
      * @return \Generator<string, array<string, mixed>>
@@ -552,8 +543,78 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
             'contactNumber'  => ++$contactNumber,
         ];
 
+        // --- RADIO TEST CASES ---
 
+        yield 'Radio group EQUAL_TO exact value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::EQUAL_TO, 'properties' => ['filter' => 'email'], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
+            ],
+            'submissionData' => ['contact_preference' => 'email'],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Radio group EQUAL_TO different value, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::EQUAL_TO, 'properties' => ['filter' => 'email'], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
+            ],
+            'submissionData' => ['contact_preference' => 'phone'],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Radio group NOT_EQUAL_TO different value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_EQUAL_TO, 'properties' => ['filter' => 'email'], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
+            ],
+            'submissionData' => ['contact_preference' => 'sms'],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Radio group NOT_EQUAL_TO same value, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_EQUAL_TO, 'properties' => ['filter' => 'email'], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
+            ],
+            'submissionData' => ['contact_preference' => 'email'],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Radio group IN with matching value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['email', 'sms']], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
+            ],
+            'submissionData' => ['contact_preference' => 'email'],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Radio group IN with non-matching value, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['email', 'sms']], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
+            ],
+            'submissionData' => ['contact_preference' => 'phone'],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Radio group NOT_IN with non-matching value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['email', 'sms']], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
+            ],
+            'submissionData' => ['contact_preference' => 'phone'],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Radio group NOT_IN with matching value, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['email', 'sms']], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
+            ],
+            'submissionData' => ['contact_preference' => 'sms'],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
     }
-
-
 }
