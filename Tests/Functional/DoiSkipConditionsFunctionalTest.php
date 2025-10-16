@@ -57,17 +57,21 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
         $mauticFormValues = [];
         foreach ($submissionData as $key => $value) {
             if (is_array($value)) {
-                // Handle checkbox arrays - need to find checkboxes by their value, not by array index
-                $allFields = $formElement->all();
-                foreach ($allFields as $fieldName => $field) {
-                    // Match checkbox fields for this key (e.g., mauticform[interests][0], mauticform[interests][1])
-                    if (preg_match("/^mauticform\[{$key}\]\[\d+\]$/", $fieldName)) {
-                        // Check if this checkbox's value is in our desired values array
-                        $checkboxValue = $field->availableOptionValues()[0] ?? null;
-                        if ($checkboxValue && in_array($checkboxValue, $value, true)) {
-                            $field->tick();
-                        }
+                // Check if this is a multiselect field first
+                $multiselectFieldName = "mauticform[{$key}]";
+                if ($formElement->has($multiselectFieldName)) {
+                    $field = $formElement->get($multiselectFieldName);
+                    // Check if field is an object and has setValue method
+                    if (is_object($field) && method_exists($field, 'setValue')) {
+                        // For multiselect fields, we need to set the array of values directly
+                        $field->setValue($value);
+                    } else {
+                        // Fallback to checkbox handling if not a valid multiselect field
+                        $this->handleCheckboxValues($formElement, $key, $value);
                     }
+                } else {
+                    // Handle checkbox arrays - need to find checkboxes by their value, not by array index
+                    $this->handleCheckboxValues($formElement, $key, $value);
                 }
             } else {
                 // Handle regular form fields
@@ -77,6 +81,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
                 }
             }
         }
+
         $formElement->setValues($mauticFormValues);
         $this->client->submit($formElement);
         Assert::assertTrue($this->client->getResponse()->isOk());
@@ -99,6 +104,41 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
             Assert::assertNull($doiSubmission->getDateConfirmed(), 'DateConfirmed should be null for pending submissions.');
         }
     }
+
+    private function handleCheckboxValues($formElement, string $key, array $values): void
+    {
+        $allFields = $formElement->all();
+        foreach ($allFields as $fieldName => $field) {
+            // Match checkbox fields for this key (e.g., mauticform[interests][0], mauticform[interests][1])
+            if (preg_match("/^mauticform\[{$key}\]\[\d+\]$/", $fieldName)) {
+                // Check if this checkbox's value is in our desired values array
+                if (is_object($field) && method_exists($field, 'availableOptionValues')) {
+                    $checkboxValue = $field->availableOptionValues()[0] ?? null;
+                    if ($checkboxValue && in_array($checkboxValue, $values, true)) {
+                        $field->tick();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @return \Generator<string, array<string, mixed>>
+     */
+    public function testDataProvider(): \Generator
+    {
+        $contactNumber = 0;
+        yield 'Checkbox EQUALS exact value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::EQUAL_TO, 'properties' => ['filter' => 'sales'], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
+            ],
+            'submissionData' => ['interests' => ['sales']],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+    }
+
+
 
     /**
      * @return \Generator<string, array<string, mixed>>
@@ -204,6 +244,244 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
             ],
             'submissionData' => ['country' => 'Poland', 'companyname' => 'Acme Inc', 'source' => 'Other'],
             'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        // --- SELECT FIELD (COLORS) TEST CASES ---
+
+        yield 'Colors select EQUAL_TO exact value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::EQUAL_TO, 'properties' => ['filter' => 'red'], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['colors' => 'red'],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Colors select EQUAL_TO different value, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::EQUAL_TO, 'properties' => ['filter' => 'red'], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['colors' => 'blue'],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Colors select NOT_EQUAL_TO different value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_EQUAL_TO, 'properties' => ['filter' => 'red'], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['colors' => 'green'],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Colors select NOT_EQUAL_TO same value, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_EQUAL_TO, 'properties' => ['filter' => 'red'], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['colors' => 'red'],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Colors select EMPTY with empty value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::EMPTY, 'properties' => ['filter' => ''], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['colors' => ''],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Colors select EMPTY with non-empty value, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::EMPTY, 'properties' => ['filter' => ''], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['colors' => 'blue'],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Colors select NOT_EMPTY with non-empty value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_EMPTY, 'properties' => ['filter' => ''], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['colors' => 'green'],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Colors select NOT_EMPTY with empty value, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_EMPTY, 'properties' => ['filter' => ''], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['colors' => ''],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Colors select IN with matching value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['red', 'green']], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['colors' => 'red'],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Colors select IN with non-matching value, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['red', 'green']], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['colors' => 'blue'],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Colors select NOT_IN with non-matching value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['red', 'green']], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['colors' => 'blue'],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Colors select NOT_IN with matching value, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['red', 'green']], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['colors' => 'green'],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        // --- MULTISELECT FIELD (AVAILABLE_DAYS) TEST CASES ---
+
+        yield 'Available days multiselect EQUAL_TO exact value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::EQUAL_TO, 'properties' => ['filter' => 'monday'], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['available_days' => ['monday']],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Available days multiselect EQUAL_TO with multiple values, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::EQUAL_TO, 'properties' => ['filter' => 'monday'], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['available_days' => ['monday', 'tuesday']],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Available days multiselect NOT_EQUAL_TO different value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_EQUAL_TO, 'properties' => ['filter' => 'monday'], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['available_days' => ['tuesday', 'wednesday']],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Available days multiselect NOT_EQUAL_TO with matching value, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_EQUAL_TO, 'properties' => ['filter' => 'monday'], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['available_days' => ['monday']],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Available days multiselect EMPTY with empty value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::EMPTY, 'properties' => ['filter' => ''], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['available_days' => []],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Available days multiselect EMPTY with non-empty value, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::EMPTY, 'properties' => ['filter' => ''], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['available_days' => ['friday']],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Available days multiselect NOT_EMPTY with non-empty value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_EMPTY, 'properties' => ['filter' => ''], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['available_days' => ['saturday', 'sunday']],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Available days multiselect NOT_EMPTY with empty value, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_EMPTY, 'properties' => ['filter' => ''], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['available_days' => []],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Available days multiselect IN with one matching value, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['available_days' => ['tuesday', 'wednesday']],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Available days multiselect IN with multiple matching values, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['monday', 'wednesday', 'friday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['available_days' => ['monday', 'wednesday']],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Available days multiselect IN with no matching values, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['available_days' => ['tuesday', 'thursday']],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Available days multiselect NOT_IN with no matching values, should skip' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['available_days' => ['tuesday', 'thursday']],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Available days multiselect NOT_IN with one matching value, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['available_days' => ['monday', 'thursday']],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'Available days multiselect NOT_IN with all matching values, should be pending' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+            ],
+            'submissionData' => ['available_days' => ['monday', 'wednesday']],
+            'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
             'contactNumber'  => ++$contactNumber,
         ];
 
