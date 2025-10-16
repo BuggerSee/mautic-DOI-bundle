@@ -17,6 +17,7 @@ class FormDoiSubmission
     public const STATUS_CONFIRMED         = 'confirmed';
     public const STATUS_SKIPPED           = 'skipped';
     public const SKIP_REASON_COOKIE_MATCH = 'cookie_match';
+    public const SKIP_REASON_CONDITION_MATCH = 'condition_match';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

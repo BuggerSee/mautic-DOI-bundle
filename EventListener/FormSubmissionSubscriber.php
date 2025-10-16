@@ -56,6 +56,12 @@ class FormSubmissionSubscriber implements EventSubscriberInterface
             return;
         }
 
+        if ($this->ruleEvaluator->shouldSkipBasedOnConditions($doiConfig, $event->getSubmission(), $contact)) {
+            $this->handleSkippedVerification($event, FormDoiSubmission::SKIP_REASON_CONDITION_MATCH);
+
+            return;
+        }
+
         // Default behavior: send verification email
         $this->verificationEmailSender->send($event);
     }

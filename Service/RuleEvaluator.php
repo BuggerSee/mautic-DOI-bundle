@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerDoiBundle\Service;
 
+use Mautic\FormBundle\Entity\Submission;
+use Mautic\LeadBundle\Entity\CompanyLeadRepository;
+use Mautic\LeadBundle\Entity\Lead;
+use Mautic\LeadBundle\Exception\PrimaryCompanyNotFoundException;
+use Mautic\LeadBundle\Helper\PrimaryCompanyHelper;
+use Mautic\LeadBundle\Segment\OperatorOptions;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmissionRepository;
@@ -18,7 +24,9 @@ class RuleEvaluator
 
     public function __construct(
         private FormDoiSubmissionRepository $submissionRepository,
-        private RequestStack $requestStack
+        private RequestStack $requestStack,
+        private PrimaryCompanyHelper $primaryCompanyHelper,
+        private CompanyLeadRepository $companyLeadRepository
     ) {
     }
 
@@ -61,5 +69,182 @@ class RuleEvaluator
         }
 
         return true;
+    }
+
+    public function shouldSkipBasedOnConditions(FormDoiConfig $config, Submission $submission, Lead $contact): bool
+    {
+        // example: [{"glue":"and","operator":"endsWith","properties":{"filter":"example.com"},"field":"email","type":"email","object":"lead"},{"glue":"or","operator":"in","properties":{"filter":["Poland","Ukraine"]},"field":"country","type":"country","object":"lead"},{"glue":"and","operator":"=","properties":{"filter":"PB"},"field":"companyname","type":"text","object":"company"},{"glue":"or","operator":"=","properties":{"filter":"black"},"field":"color","type":"select","object":"form"}]
+        $skipConditions = $config->getSkipConditions();
+
+        // example: {"id":"36","are_you":0,"title":null,"firstname":"ana","lastname":null,"company":"pb","position":null,"email":"ana@example.com","mobile":null,"phone":null,"points":36,"fax":null,"address1":null,"address2":null,"city":null,"state":null,"zipcode":null,"country":"Albania","preferred_locale":null,"timezone":null,"last_active":"2025-10-16 08:33:18","attribution_date":null,"attribution":null,"website":null,"facebook":null,"foursquare":null,"instagram":null,"linkedin":null,"skype":null,"twitter":null}
+        $leadArray = $contact->getProfileFields();
+
+        // example: {"company_id":"2","date_associated":"2025-10-16 08:17:53","is_primary":"1","id":"2","owner_id":null,"is_published":"1","date_added":"2025-10-16 08:17:40","created_by":"1","created_by_user":"Admin Mautic","date_modified":null,"modified_by":null,"modified_by_user":null,"checked_out":"2025-10-16 08:17:40","checked_out_by":"1","checked_out_by_user":"Admin Mautic","social_cache":"a:0:{}","score":"0","companyemail":null,"companyaddress1":null,"companyaddress2":null,"companyphone":null,"companycity":null,"companystate":null,"companyzipcode":null,"companycountry":null,"companyname":"pb","companywebsite":null,"companyindustry":null,"companydescription":null,"companynumber_of_employees":null,"companyfax":null,"companyannual_revenue":null}
+        try {
+            $companyArray = $this->companyLeadRepository->getPrimaryCompanyByLeadId($contact->getId());
+        } catch (PrimaryCompanyNotFoundException) {
+            $companyArray = null;
+        }
+
+        // example: {"email":"ana@example.com","country":"Albania","color":"white","f_name":"ana","consent_group":"email_consent","radio":"a","date":"2025-10-16","multi":"u"}
+        $formArray = $submission->getResults();
+
+        if (empty($skipConditions)) {
+            return false;
+        }
+
+        $dataSources = [
+            'lead'    => $leadArray,
+            'company' => $companyArray,
+            'form'    => $formArray,
+        ];
+
+        $finalResult = false;
+        $isFirstRule = true;
+
+        foreach ($skipConditions as $rule) {
+            $objectType = $rule['object'] ?? null;
+            $dataSource = $dataSources[$objectType] ?? null;
+
+            $currentResult = false; // Default to false if a rule cannot be evaluated
+            if (null !== $dataSource && isset($rule['field'], $rule['operator'])) {
+                $field       = $rule['field'];
+                $actualValue = $dataSource[$field] ?? null;
+                $filterValue = $rule['properties']['filter'] ?? null;
+                $operator    = $rule['operator'];
+
+                $currentResult = $this->evaluateSingleCondition($operator, $actualValue, $filterValue);
+            }
+
+            if ($isFirstRule) {
+                $finalResult = $currentResult;
+                $isFirstRule = false;
+            } else {
+                $glue = $rule['glue'] ?? 'and'; // Default to 'and'
+                if ('and' === $glue) {
+                    $finalResult = $finalResult && $currentResult;
+                } elseif ('or' === $glue) {
+                    $finalResult = $finalResult || $currentResult;
+                }
+            }
+        }
+
+        return $finalResult;
+    }
+
+    /**
+     * Evaluates a single condition.
+     *
+     * @param string $operator    The comparison operator
+     * @param mixed  $actualValue The value from the contact/company/form
+     * @param mixed  $filterValue The value from the rule to compare against
+     *
+     * @return bool
+     */
+    private function evaluateSingleCondition(string $operator, mixed $actualValue, mixed $filterValue): bool
+    {
+        switch ($operator) {
+            case OperatorOptions::EQUAL_TO:
+                return strcasecmp((string) $actualValue, (string) $filterValue) === 0;
+
+            case OperatorOptions::NOT_EQUAL_TO:
+                return strcasecmp((string) $actualValue, (string) $filterValue) !== 0;
+
+            case OperatorOptions::GREATER_THAN:
+                if (!is_numeric($actualValue) || !is_numeric($filterValue)) {
+                    return false;
+                }
+                return (float) $actualValue > (float) $filterValue;
+
+            case OperatorOptions::GREATER_THAN_OR_EQUAL:
+                if (!is_numeric($actualValue) || !is_numeric($filterValue)) {
+                    return false;
+                }
+                return (float) $actualValue >= (float) $filterValue;
+
+            case OperatorOptions::LESS_THAN:
+                if (!is_numeric($actualValue) || !is_numeric($filterValue)) {
+                    return false;
+                }
+                return (float) $actualValue < (float) $filterValue;
+
+            case OperatorOptions::LESS_THAN_OR_EQUAL:
+                if (!is_numeric($actualValue) || !is_numeric($filterValue)) {
+                    return false;
+                }
+                return (float) $actualValue <= (float) $filterValue;
+
+            case OperatorOptions::EMPTY:
+                return empty($actualValue);
+
+            case OperatorOptions::NOT_EMPTY:
+                return !empty($actualValue);
+
+            case OperatorOptions::IN:
+                if (!is_array($filterValue)) {
+                    return false;
+                }
+                $lowerFilterValues = array_map(static fn ($val): string => strtolower((string) $val), $filterValue);
+
+                return in_array(strtolower((string) $actualValue), $lowerFilterValues, true);
+
+            case OperatorOptions::NOT_IN:
+                if (!is_array($filterValue)) {
+                    return true;
+                }
+                $lowerFilterValues = array_map(static fn ($val): string => strtolower((string) $val), $filterValue);
+
+                return !in_array(strtolower((string) $actualValue), $lowerFilterValues, true);
+
+            case OperatorOptions::REGEXP:
+                $pattern = (string) $filterValue;
+                $subject = (string) $actualValue;
+
+                return '' !== $pattern && @preg_match($pattern, $subject) === 1;
+
+            case OperatorOptions::NOT_REGEXP:
+                $pattern = (string) $filterValue;
+                if ('' === $pattern) {
+                    return true; // Does not match an empty (invalid) pattern
+                }
+                $subject = (string) $actualValue;
+
+                return @preg_match($pattern, $subject) !== 1;
+
+            case OperatorOptions::STARTS_WITH:
+                $search = (string) $filterValue;
+                $subject = (string) $actualValue;
+
+                return '' !== $search && str_starts_with(strtolower($subject), strtolower($search));
+
+            case OperatorOptions::ENDS_WITH:
+                $search = (string) $filterValue;
+                $subject = (string) $actualValue;
+
+                return '' !== $search && str_ends_with(strtolower($subject), strtolower($search));
+
+            case OperatorOptions::CONTAINS:
+                $search = (string) $filterValue;
+                $subject = (string) $actualValue;
+
+                return '' !== $search && stripos($subject, $search) !== false;
+
+            case OperatorOptions::LIKE:
+                $filterString = (string) $filterValue;
+                $actualString = (string) $actualValue;
+                $pattern      = '/^'.str_replace('%', '.*', preg_quote($filterString, '/')).'$/i';
+
+                return (bool) @preg_match($pattern, $actualString);
+
+            case OperatorOptions::NOT_LIKE:
+                $filterString = (string) $filterValue;
+                $actualString = (string) $actualValue;
+                $pattern      = '/^'.str_replace('%', '.*', preg_quote($filterString, '/')).'$/i';
+
+                return !@preg_match($pattern, $actualString);
+
+            default:
+                return false;
+        }
     }
 }
