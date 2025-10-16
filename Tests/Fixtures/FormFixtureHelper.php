@@ -332,10 +332,12 @@ final class FormFixtureHelper
             'postAction' => 'return',
         ];
 
-        $this->client->request('POST', '/api/forms/new', $formPayload);
-        $response = json_decode($this->client->getResponse()->getContent(), true);
-        $formId   = $response['form']['id'];
+        $this->client->request(Request::METHOD_POST, '/api/forms/new', $formPayload);
+        $clientResponse = $this->client->getResponse();
+        $response       = json_decode($clientResponse->getContent(), true);
+        $formId         = $response['form']['id'];
+        $repository     = $this->em->getRepository(Form::class);
 
-        return $this->em->getRepository(Form::class)->find($formId);
+        return $repository->find($formId);
     }
 }

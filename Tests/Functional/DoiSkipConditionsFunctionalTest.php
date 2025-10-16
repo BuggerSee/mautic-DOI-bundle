@@ -17,14 +17,12 @@ use Symfony\Component\HttpFoundation\Request;
 class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 {
     protected $useCleanupRollback = false;
+
     private FormFixtureHelper $formFixtureHelper;
 
     protected function setUp(): void
     {
         parent::setUp();
-        // Disabling rollback allows us to inspect the DB state after a failed test.
-        $this->configParams['use_cleanup_rollback'] = false;
-        $this->setUpSymfony();
 
         $pluginFixtureHelper = new PluginFixtureHelper($this->em);
         $pluginFixtureHelper->createAndEnablePlugin();
