@@ -46,6 +46,7 @@ final class FormFixtureHelper
         bool $skipOnCookie = false,
         ?string $skipPostAction = null,
         ?string $skipPostActionProperty = null,
+        array $skipConditions = [] // Add this parameter
     ): FormDoiConfig {
         $config = new FormDoiConfig();
         $config->setForm($form);
@@ -57,6 +58,7 @@ final class FormFixtureHelper
         $config->setSkipOnCookie($skipOnCookie);
         $config->setSkipPostAction($skipPostAction);
         $config->setSkipPostActionProperty($skipPostActionProperty);
+        $config->setSkipConditions($skipConditions); // Add this line
 
         $this->em->persist($config);
         $this->em->flush();
@@ -213,5 +215,73 @@ final class FormFixtureHelper
         $repository     = $this->em->getRepository(Form::class);
 
         return $repository->find($formId);
+    }
+
+    public function createComplexForm(string $name): Form
+    {
+        $formPayload = [
+            'name'        => $name,
+            'alias'       => str_replace(' ', '', strtolower($name)),
+            'description' => '',
+            'formType'    => 'standalone',
+            'isPublished' => true,
+            'fields'      => [
+                [
+                    'label'        => 'Email',
+                    'type'         => 'email',
+                    'alias'        => 'email',
+                    'leadField'    => 'email',
+                    'mappedField'  => 'email',
+                    'mappedObject' => 'contact',
+                ],
+                [
+                    'label'        => 'Country',
+                    'type'         => 'country',
+                    'alias'        => 'country',
+                    'leadField'    => 'country',
+                    'mappedField'  => 'country',
+                    'mappedObject' => 'contact',
+                ],
+                [
+                    'label'        => 'Company Name',
+                    'type'         => 'text',
+                    'alias'        => 'companyname',
+                    'leadField'    => 'company',
+                    'mappedField'  => 'companyname',
+                    'mappedObject' => 'company',
+                ],
+                [
+                    'label'       => 'Lead Source', // This field is NOT mapped to a contact/company field
+                    'type'        => 'text',
+                    'alias'       => 'source',
+                ],
+                [
+                    'label'      => 'Interests',
+                    'alias'      => 'interests',
+                    'type'       => 'checkboxgrp',
+                    'properties' => [
+                        'syncList'   => 0,
+                        'optionlist' => [
+                            'list' => [
+                                ['label' => 'Technology', 'value' => 'tech'],
+                                ['label' => 'Marketing', 'value' => 'marketing'],
+                                ['label' => 'Sales', 'value' => 'sales'],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'label' => 'Submit',
+                    'type'  => 'button',
+                ],
+            ],
+            'postAction' => 'return',
+        ];
+
+        $this->client->request('POST', '/api/forms/new', $formPayload);
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $formId   = $response['form']['id'];
+
+        return $this->em->getRepository(Form::class)->find($formId);
     }
 }
