@@ -104,6 +104,11 @@ class SkipConditionType extends AbstractType
                     $operator,
                     $field
                 );
+
+                // remove the performance alerts, as this doesn't apply to the condition builder
+                if ($filterPropertiesType->has('alert')) {
+                    $filterPropertiesType->remove('alert');
+                }
             }
         };
 
