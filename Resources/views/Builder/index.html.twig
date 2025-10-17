@@ -278,7 +278,7 @@ Variables
                                          data-doi-skip-prototype="{{ form_widget(form.doiConfig.skipConditions.vars.prototype)|e }}"
                                             data-doi-render-condition-properties="{{ path('mautic_doi_render_condition_action') }}"
                                          data-onload-callback="onFormDoiConditionsBuilder">
-                                        <select class="chosen form-control" id="available-conditions-list">
+                                        <select class="chosen form-control" id="available-conditions-list" data-new-fields-info="{{ 'mautic.plugin.doi.form.info.new_fields_added'|trans }}">
                                             <option value=""></option>
                                             {% for object, field in conditionChoiceFields %}
                                                 {% set icon = 'company' == object ? 'building' : 'user' %}

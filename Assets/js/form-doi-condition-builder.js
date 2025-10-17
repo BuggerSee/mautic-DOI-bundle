@@ -1,7 +1,5 @@
 (function (Mautic, mQuery){
     Mautic.onFormDoiConditionsBuilder = function() {
-        console.log('conditions builder init');
-
         mQuery('#available-conditions-list').on('change', function() {
             const value = mQuery(this).val()
             if (value) {
@@ -17,6 +15,7 @@
 
         initSortableForConditions();
         attachJsUiOnFilterForms();
+        formFieldChangesListener();
     };
 
     const addLeadListFilter = function (elId, elObj) {
@@ -124,7 +123,6 @@
             stop: function(e, ui) {
                 // Restore original overflow
                 mQuery('body').css(bodyOverflow);
-                console.log('sortable stop');
                 reorderSkipConditions();
             }
         });
@@ -242,9 +240,7 @@
         return mQuery('#doi-skip-condition-list').children('.skip-condition-panel').length;
     };
 
-    // reorderSkipConditions ~ reorderSegmentFilters
     const reorderSkipConditions = function() {
-        console.log('reorderSkipConditions');
         // Update the filter numbers sot that they are ordered correctly when processed and grouped server side
         let counter = 0;
         const $filters = mQuery('#doi-skip-condition-list .panel');
@@ -303,7 +299,6 @@
             ++counter;
         });
 
-        const $skipConditionPanels = mQuery('.skip-condition-panel');
         $filters.find('.panel-glue').removeClass('hide');
         $filters.first().find('.panel-glue').addClass('hide');
 
@@ -312,6 +307,28 @@
             mQuery(this).tooltip({html: true, container: 'body'});
         });
     };
+
+    const formFieldChangesListener = function() {
+        mQuery(document).ajaxComplete(function(event, xhr, settings) {
+            if (settings.url && settings.url.includes('forms/field/new')) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    // Check if this is a form field response
+                    if (response.mauticContent === 'formField' && response.success === 1) {
+                        const $select = mQuery('#available-conditions-list');
+                        const infoMessage = $select.data('new-fields-info');
+                        mQuery('option.new-field-notification', $select).remove();
+                        const infoOption = mQuery('<option class="new-field-notification" disabled>' + infoMessage + '</option>');
+                        mQuery('optgroup[label="form"]', $select).prepend(infoOption);
+                        $select.trigger('chosen:updated');
+                    }
+                } catch (e) {
+                    console.log('Error processing form field response:', e);
+                }
+            }
+        });
+    }
+
 
     Mautic.doiConvertLeadFilterInput = convertLeadFilterInput;
     Mautic.doiReorderSkipConditions = reorderSkipConditions;
