@@ -46,8 +46,8 @@ class SkipConditionType extends AbstractType
                     'mautic.lead.list.form.glue.or'  => 'or',
                 ],
                 'attr' => [
-                    'class'    => 'form-control not-chosen glue-select',
-                    'onchange' => 'Mautic.updateFilterPositioning(this)',
+                    'class'    => 'form-control input-sm not-chosen glue-select',
+                    'onchange' => 'Mautic.doiReorderSkipConditions(this)',
                 ],
             ]
         );

@@ -15,6 +15,7 @@
             attachEvents(mQuery(filter));
         });
 
+        initSortableForConditions();
         attachJsUiOnFilterForms();
     };
 
@@ -96,6 +97,38 @@
     const triggerOnPropertiesFormLoadedEvent = function(selector, filterValue) {
         mQuery('#doi-skip-condition-list').trigger('filter.properties.form.loaded', [selector, filterValue]);
     };
+
+    const initSortableForConditions = function() {
+        var bodyOverflow = {};
+        mQuery('#doi-skip-condition-list').sortable({
+            items: '.panel',
+            helper: function(e, ui) {
+                ui.children().each(function() {
+                    if (mQuery(this).is(":visible")) {
+                        mQuery(this).width(mQuery(this).width());
+                    }
+                });
+
+                // Fix body overflow that messes sortable up
+                bodyOverflow.overflowX = mQuery('body').css('overflow-x');
+                bodyOverflow.overflowY = mQuery('body').css('overflow-y');
+                mQuery('body').css({
+                    overflowX: 'visible',
+                    overflowY: 'visible'
+                });
+
+                return ui;
+            },
+            scroll: true,
+            axis: 'y',
+            stop: function(e, ui) {
+                // Restore original overflow
+                mQuery('body').css(bodyOverflow);
+                console.log('sortable stop');
+                reorderSkipConditions();
+            }
+        });
+    }
 
     const attachJsUiOnFilterForms = function() {
         mQuery('#doi-skip-condition-list').on('filter.properties.form.loaded', function(event, selector, filterValue) {
@@ -211,6 +244,7 @@
 
     // reorderSkipConditions ~ reorderSegmentFilters
     const reorderSkipConditions = function() {
+        console.log('reorderSkipConditions');
         // Update the filter numbers sot that they are ordered correctly when processed and grouped server side
         let counter = 0;
         const $filters = mQuery('#doi-skip-condition-list .panel');
@@ -269,11 +303,9 @@
             ++counter;
         });
 
-        const panelClass = idPrefix === 'mauticform_doiConfig' ? '.panel-glue' : '.panel-heading';
-        mQuery('#'+idPrefix+'_skipConditions '+panelClass).removeClass('hide');
-        const $firstPanel = $filters.first();
-        $firstPanel.find(panelClass).addClass('hide');
-        $firstPanel.find('.copy-filter-group').removeClass('hide');
+        const $skipConditionPanels = mQuery('.skip-condition-panel');
+        $filters.find('.panel-glue').removeClass('hide');
+        $filters.first().find('.panel-glue').addClass('hide');
 
         const $tooltips = $filters.find("*[data-toggle='tooltip']");
         $tooltips.each(function() {
@@ -282,4 +314,5 @@
     };
 
     Mautic.doiConvertLeadFilterInput = convertLeadFilterInput;
+    Mautic.doiReorderSkipConditions = reorderSkipConditions;
 }(Mautic, mQuery));

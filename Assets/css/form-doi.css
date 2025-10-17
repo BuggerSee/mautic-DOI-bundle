@@ -27,3 +27,57 @@
 .available-doi-skip-option-type--form::before {
     content: "\f1c7";
 }
+
+#doi-skip-condition-list .skip-condition-panel {
+    transition: none;
+}
+
+.skip-condition-panel .field-name {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.skip-condition-panel .object-icon {
+    margin-right: 5px;
+}
+
+.skip-condition-panel .glue-select {
+    border-radius: var(--border-radius-lg) 0 var(--border-radius-sm) 0;
+    line-height: 20px;
+    height: 24px;
+}
+
+.skip-condition-panel.in-group .glue-select {
+    border-radius: 0 0 var(--border-radius-sm) 0;
+}
+
+.skip-condition-panel.in-group {
+    border-radius: 0;
+}
+
+.skip-condition-panel:not(.in-group):has(+ .skip-condition-panel.in-group) {
+    border-bottom-right-radius: 0;
+}
+
+.skip-condition-panel.in-group:not(:has(+ .skip-condition-panel.in-group)) {
+    border-bottom-left-radius: var(--border-radius-lg);
+    border-bottom-right-radius: var(--border-radius-lg);
+}
+
+/* For a panel without .in-group that is followed by a panel with .in-group */
+.skip-condition-panel:not(.in-group) + .skip-condition-panel.in-group {
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+}
+
+#doi-skip-condition-list .skip-condition-panel.ui-sortable-helper {
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    border-color: var(--border-subtle-02);
+    border-top-width: 1px;
+    border-top-style: solid;
+}
+
+#doi-skip-condition-list .skip-condition-button {
+    margin-bottom: -10px;
+}
