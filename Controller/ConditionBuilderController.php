@@ -39,6 +39,11 @@ class ConditionBuilderController extends AbstractController
                 $operator,
                 $availableSkipOptions->getAvailableSkipOptions($formEntity, $search)[$fieldObject][$fieldAlias]
             );
+
+            // remove the performance alerts, as this doesn't apply to the condition builder
+            if ($form->has('alert')) {
+                $form->remove('alert');
+            }
         }
 
         $formHtml = $this->renderView(
