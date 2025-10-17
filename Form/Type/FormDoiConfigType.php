@@ -104,13 +104,24 @@ class FormDoiConfigType extends AbstractType
                         'groups'  => ['doi_config'],
                     ]),
                 ],
-            ])
+            ]);
+
+        $skipPostActionChoices = [
+            'mautic.form.form.postaction.return'   => 'return',
+            'mautic.form.form.postaction.message'  => 'message',
+            'mautic.form.form.postaction.redirect' => 'redirect',
+        ];
+
+        // add support for external post-action when it's available
+        $translationKey = 'mautic.form.form.postaction.hideform';
+        $translated     = $this->translator->trans($translationKey);
+        if ($translated !== $translationKey) {
+            $skipPostActionChoices[$translationKey] = 'hideform';
+        }
+
+        $builder
             ->add('skipPostAction', ChoiceType::class, [
-                'choices' => [
-                    'mautic.form.form.postaction.return'   => 'return',
-                    'mautic.form.form.postaction.message'  => 'message',
-                    'mautic.form.form.postaction.redirect' => 'redirect',
-                ],
+                'choices'           => $skipPostActionChoices,
                 'label'             => 'mautic.plugin.doi.form.field.skip_post_action',
                 'label_attr'        => ['class' => 'control-label'],
                 'attr'              => [

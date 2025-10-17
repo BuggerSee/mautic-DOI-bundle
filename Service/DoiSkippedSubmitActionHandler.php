@@ -8,12 +8,16 @@ use Mautic\FormBundle\Event\SubmissionEvent;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class DoiSkippedSubmitActionHandler
 {
     public function __construct(
-        private TranslatorInterface $translator
+        private TranslatorInterface $translator,
+        private UrlGeneratorInterface $urlGenerator,
+        private SessionInterface $session
     ) {
     }
 
@@ -43,6 +47,7 @@ class DoiSkippedSubmitActionHandler
             'redirect' => $this->createRedirectResponse($processedProperty),
             'message'  => $this->createMessageResponse($processedProperty, $asArrayPayload),
             'return'   => $this->createReturnResponse($processedProperty, $event),
+            'hideform' => $this->createHideResponse($processedProperty, $asArrayPayload),
             default    => null,
         };
 
@@ -85,7 +90,33 @@ class DoiSkippedSubmitActionHandler
             ];
         }
 
-        return new Response($message);
+        $this->session->set('mautic.emailbundle.message', ['message' => $message]);
+
+        return new RedirectResponse($this->urlGenerator->generate('mautic_form_postmessage'));
+    }
+
+    /**
+     * Support for external hideform post-action.
+     *
+     * @return Response|array<string, mixed>
+     */
+    private function createHideResponse(?string $message, bool $asArrayPayload): Response|array
+    {
+        if (empty($message)) {
+            $message = $this->translator->trans('leuchtfeuer.doi.verification_skipped.default_message');
+        }
+
+        if ($asArrayPayload) {
+            return [
+                'successMessage' => [],
+                'hideform_text'  => $message,
+                'hideform'       => true,
+            ];
+        }
+
+        $this->session->set('mautic.emailbundle.message', ['message' => $message]);
+
+        return new RedirectResponse($this->urlGenerator->generate('mautic_form_postmessage'));
     }
 
     /**

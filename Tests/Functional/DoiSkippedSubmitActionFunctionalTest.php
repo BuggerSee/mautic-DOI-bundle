@@ -23,6 +23,19 @@ class DoiSkippedSubmitActionFunctionalTest extends MauticMysqlTestCase
     private const CUSTOM_MESSAGE           = 'This is the custom skip message.';
     private const STANDARD_MESSAGE         = 'This is the standard message.';
 
+    private const SKIP_CONDITIONS          = [
+        [
+            'glue'       => 'and',
+            'operator'   => 'contains',
+            'properties' => [
+                'filter' => '@example.com',
+            ],
+            'field'  => 'email',
+            'type'   => 'email',
+            'object' => 'lead',
+        ],
+    ];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -50,13 +63,10 @@ class DoiSkippedSubmitActionFunctionalTest extends MauticMysqlTestCase
 
         $this->formFixtureHelper->createDoiConfig(
             form: $form,
-            skipOnCookie: true,
             skipPostAction: 'redirect',
-            skipPostActionProperty: self::CUSTOM_REDIRECT_URL
+            skipPostActionProperty: self::CUSTOM_REDIRECT_URL,
+            skipConditions: self::SKIP_CONDITIONS,
         );
-
-        // Phase 1: Go through the DOI process once to get the cookie.
-        $this->performInitialSubmissionAndVerification($form, $email);
 
         // 2. Act (Phase 2): Submit the form again with the cookie.
         $crawler     = $this->client->request(Request::METHOD_GET, "/form/{$form->getId()}");
@@ -87,13 +97,10 @@ class DoiSkippedSubmitActionFunctionalTest extends MauticMysqlTestCase
 
         $this->formFixtureHelper->createDoiConfig(
             form: $form,
-            skipOnCookie: true, // Required to enable skip logic
             skipPostAction: 'message',
-            skipPostActionProperty: self::CUSTOM_MESSAGE
+            skipPostActionProperty: self::CUSTOM_MESSAGE,
+            skipConditions: self::SKIP_CONDITIONS,
         );
-
-        // Phase 1: Get the cookie.
-        $this->performInitialSubmissionAndVerification($form, $email);
 
         // 2. Act (Phase 2): Submit the form
         $payload = [
@@ -134,10 +141,10 @@ class DoiSkippedSubmitActionFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
 
         // Note: skipPostAction is NOT set, enabling the fallback.
-        $this->formFixtureHelper->createDoiConfig(form: $form, skipOnCookie: true);
-
-        // Phase 1: Get the cookie. This request populates the state in the controller.
-        $this->performInitialSubmissionAndVerification($form, $email);
+        $this->formFixtureHelper->createDoiConfig(
+            form: $form,
+            skipConditions: self::SKIP_CONDITIONS,
+        );
 
         // 2. Act (Phase 2): Submit the form again with the cookie
         $crawler     = $this->client->request(Request::METHOD_GET, "/form/{$form->getId()}");
@@ -169,14 +176,11 @@ class DoiSkippedSubmitActionFunctionalTest extends MauticMysqlTestCase
 
         $this->formFixtureHelper->createDoiConfig(
             form: $form,
-            skipOnCookie: true,
             // But the skip action is a message
             skipPostAction: 'message',
-            skipPostActionProperty: self::CUSTOM_MESSAGE
+            skipPostActionProperty: self::CUSTOM_MESSAGE,
+            skipConditions: self::SKIP_CONDITIONS,
         );
-
-        // Phase 1: Get the cookie.
-        $this->performInitialSubmissionAndVerification($form, $email);
 
         // 2. Act (Phase 2): Submit the form via AJAX
         $payload = [
@@ -216,24 +220,5 @@ class DoiSkippedSubmitActionFunctionalTest extends MauticMysqlTestCase
         Assert::assertNull($postMessagePayload['redirect'], 'The "redirect" key should be null".');
         Assert::assertArrayHasKey('successMessage', $postMessagePayload, 'The "successMessage" key should be present.');
         Assert::assertSame(self::CUSTOM_MESSAGE, $postMessagePayload['successMessage'], 'The success message should be the custom skip message.');
-    }
-
-    /**
-     * Helper method to perform the initial submission and verification to get the browser proof cookie.
-     */
-    private function performInitialSubmissionAndVerification(Form $form, string $email): void
-    {
-        $doiSubmission = $this->formFixtureHelper->createDoiSubmission($form, $email, new \DateTime());
-
-        // 2. Simulate the email verification click
-        $hash  = $doiSubmission->getHash();
-        $token = base64_encode("{$form->getId()}:{$hash}");
-        $this->client->request(Request::METHOD_GET, "/email/verify/{$token}");
-
-        // 3. Verify cookie is now set on the client
-        Assert::assertNotNull(
-            $this->client->getCookieJar()->get('mautic_doi_receipt'),
-            'The mautic_doi_receipt cookie was not set after verification.'
-        );
     }
 }
