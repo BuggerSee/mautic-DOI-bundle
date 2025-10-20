@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace MauticPlugin\LeuchtfeuerDoiBundle\Service;
 
 use Mautic\FormBundle\Event\SubmissionEvent;
+use MauticPlugin\LeuchtfeuerDoiBundle\DoiEvents;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
@@ -17,7 +19,8 @@ class DoiSkippedSubmitActionHandler
     public function __construct(
         private TranslatorInterface $translator,
         private UrlGeneratorInterface $urlGenerator,
-        private SessionInterface $session
+        private SessionInterface $session,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -54,6 +57,8 @@ class DoiSkippedSubmitActionHandler
         if (null !== $response) {
             // Let Mautic handle this response
             $event->setPostSubmitResponse($response);
+            $this->eventDispatcher->dispatch($event, DoiEvents::DOI_ON_SET_SKIP_POST_ACTION_RESPONSE);
+
             // Stop propagation so the controller knows a custom response is set
             $event->stopPropagation();
         }
