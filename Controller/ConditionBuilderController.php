@@ -14,7 +14,6 @@ use Symfony\Component\HttpFoundation\Request;
 
 class ConditionBuilderController extends AbstractController
 {
-
     private const TMP_NAME = 'RENAME';
 
     public function renderConditionAction(
@@ -56,8 +55,8 @@ class ConditionBuilderController extends AbstractController
             ]
         );
 
-        $formHtml = str_replace('id="'. self::TMP_NAME, "id=\"mauticform_doiConfig_skipConditions_{$filterNum}_properties", $formHtml);
-        $formHtml = str_replace('name="'. self::TMP_NAME, "name=\"mauticform[doiConfig][skipConditions][{$filterNum}][properties]", $formHtml);
+        $formHtml = str_replace('id="'.self::TMP_NAME, "id=\"mauticform_doiConfig_skipConditions_{$filterNum}_properties", $formHtml);
+        $formHtml = str_replace('name="'.self::TMP_NAME, "name=\"mauticform[doiConfig][skipConditions][{$filterNum}][properties]", $formHtml);
 
         return new JsonResponse(
             [
