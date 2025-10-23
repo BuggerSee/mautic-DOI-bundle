@@ -132,7 +132,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
     /**
      * @return \Generator<string, array<string, mixed>>
      */
-    public function skipConditionsDataProvider(): \Generator
+    public static function skipConditionsDataProvider(): \Generator
     {
         $contactNumber = 0;
 
