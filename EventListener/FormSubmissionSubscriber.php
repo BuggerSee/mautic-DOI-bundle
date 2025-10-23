@@ -100,7 +100,7 @@ class FormSubmissionSubscriber implements EventSubscriberInterface
         // Register callback for custom skip action (executed BEFORE standard actions)
         if ($doiConfig->getSkipPostAction()) {
             $event->setPostSubmitCallback(
-                'doi.skip_action',
+                DoiSkippedSubmitActionSubscriber::DOI_SKIP_ACTION_POST_SUBMIT_CALLBACK,
                 [
                     'eventName' => DoiEvents::DOI_ON_SKIP_POST_ACTION,
                     'doiConfig' => $doiConfig,

@@ -11,6 +11,7 @@ use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmissionRepository;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiSubmissionManager;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiActionsDispatcher;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiTokenParser;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\RuleEvaluator;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Cookie;
@@ -100,7 +101,7 @@ class PublicController extends AbstractController
     private function createSuccessResponseWithCookie(FormDoiSubmission $submission, string $browserProofToken, Request $request): Response
     {
         $config = $this->configRepository->findOneBy(['form' => $submission->getForm()]);
-        $cookie = Cookie::create('mautic_doi_receipt')
+        $cookie = Cookie::create(RuleEvaluator::COOKIE_NAME)
             ->withValue($browserProofToken)
             ->withExpires(new \DateTime('+365 days'))
             ->withPath('/')

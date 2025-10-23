@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
  */
 class RuleEvaluator
 {
-    private const COOKIE_NAME = 'mautic_doi_receipt';
+    public const COOKIE_NAME = 'mautic_doi_receipt';
 
     public function __construct(
         private FormDoiSubmissionRepository $submissionRepository,
