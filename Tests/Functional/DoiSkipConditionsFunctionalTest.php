@@ -614,5 +614,43 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
             'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
             'contactNumber'  => ++$contactNumber,
         ];
+
+        // -- case-insensitive compare with UTF-8 chars
+
+        yield 'UTF8 case-insensitive compare EQUAL_TO' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::EQUAL_TO, 'properties' => ['filter' => 'ольга'], 'field' => 'companyname', 'type' => 'text', 'object' => 'company'],
+            ],
+            'submissionData' => ['companyname' => 'ОЛЬГА'],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'UTF8 case-insensitive compare STARTS_WITH' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::STARTS_WITH, 'properties' => ['filter' => 'Ол'], 'field' => 'companyname', 'type' => 'text', 'object' => 'company'],
+            ],
+            'submissionData' => ['companyname' => 'ОЛЬГА'],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'UTF8 case-insensitive compare ENDS_WITH' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::ENDS_WITH, 'properties' => ['filter' => 'га'], 'field' => 'companyname', 'type' => 'text', 'object' => 'company'],
+            ],
+            'submissionData' => ['companyname' => 'ОЛЬГА'],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
+
+        yield 'UTF8 case-insensitive compare CONTAINS' => [
+            'skipConditions' => [
+                ['glue' => 'and', 'operator' => OperatorOptions::CONTAINS, 'properties' => ['filter' => 'льг'], 'field' => 'companyname', 'type' => 'text', 'object' => 'company'],
+            ],
+            'submissionData' => ['companyname' => 'ОЛЬГА'],
+            'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
+            'contactNumber'  => ++$contactNumber,
+        ];
     }
 }
