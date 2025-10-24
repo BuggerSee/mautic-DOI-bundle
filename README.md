@@ -2,7 +2,7 @@
 
 Universal email verification plugin for Mautic, providing Double Opt-In (DOI) functionality with seamless form integration.
 
-## Features
+## Overview / Purpose / Features
 
 - **Form Action Management**: Separate actions for immediate submission vs. post-verification
 - **Email Verification**: Built-in DOI workflow with `{doi_link}` token support
@@ -11,8 +11,18 @@ Universal email verification plugin for Mautic, providing Double Opt-In (DOI) fu
 - **Security**: HMAC-based hash generation for verification links
 - **Console Commands**: Cron-compatible follow-up email sending
 
+## Requirements / Version Support
+- Mautic 5.2 
+- PHP 8.1 or higher
+
+
 ## Installation
 
+### Composer
+This plugin can be installed through composer.
+
+### Manual Installation
+Alternatively, it can be installed manually, following the usual steps:
 1. Extract to `plugins/LeuchtfeuerDoiBundle/`
 2. Run `php bin/console cache:clear`
 3. Run `php bin/console mautic:plugins:reload`
@@ -32,6 +42,7 @@ Universal email verification plugin for Mautic, providing Double Opt-In (DOI) fu
    - Follow-up email to send (optional)
    - Thank you page redirect URL (optional)
    - Verification error redirect URL (optional)
+   - Configure Conditions for skipping the verification (optional)
 
 ## Usage
 
@@ -41,7 +52,53 @@ Universal email verification plugin for Mautic, providing Double Opt-In (DOI) fu
 4. Users click verification link to confirm
 5. Post-verification actions execute automatically
 
-## Requirements
+## Known Issues
+/
 
-- Mautic 5.2
-- PHP 8.1+
+## Troubleshooting
+Make sure you have not only installed but also enabled the Plugin.
+If things are still funny, please try
+`php bin/console cache:clear`
+and
+`php bin/console mautic:assets:generate`
+## Change log
+- https://github.com/Leuchtfeuer/mautic-DOI-bundle/releases
+  
+## Future Ideas
+- Conditional actions: Update contact fields based on form field logic (currently doable via campaigns).
+- Campaign integration: Start campaign from form action with conditional contact updates (e.g. MOI=1).
+- Form submission handling: Persist form field status at submission (forms.cached_html → form_submissions.doi_formstatus).
+- Token expiry: Configurable setting for DOI token validity.
+- Missing email handling: Manage cases with empty or unmapped leads.email.
+- Form action – Update Marketing Opt-In: Convenience action to set MOI fields and audit values.
+- MOI data model: Fixed fields or dedicated table for bool + audit tracking.
+- MOI flavor support: Allow multiple brand-specific opt-in variants defined in plugin config.
+- Feedback pages: Support Mautic landing pages and generic preset URLs for thank-you/error redirects.
+- Multi-language support: Translated DOI emails, language-aware redirects and feedback pages.
+- Multi-brand support: URL-aware feedback pages per brand.
+- Form behaviour: Per-form follow-up wait time setting.
+- Housekeeping: Cleanup rules for unconfirmed DOIs (global or per-form timeout).
+- Honeypot support: NHI field awareness and handling.
+- DOI email restriction: Only show emails containing {doi_link} token.
+- Audit trail (future): Optional contact field audit log (leads.emailverifications_audit) for verification events.
+
+
+## Sponsoring & Commercial Support
+We are continuously improving our plugins. If you are requiring priority support or custom features, please contact us at mautic-plugins@leuchtfeuer.com.
+
+## Get Involved
+Feel free to open issues or submit pull requests on [GitHub](#). Follow the contribution guidelines in `CONTRIBUTING.md`.”
+
+## Credits
+@patrykgruszka
+@biozshock
+
+## Author
+Leuchtfeuer Digital Marketing GmbH
+Please raise any issues in GitHub.
+For all other things, please email mautic-plugins@Leuchtfeuer.com
+
+## License
+“This plugin is licensed under the MIT License. See the `LICENSE` file for more details.”
+
+
