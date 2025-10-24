@@ -47,7 +47,7 @@ class DoiSkippedSubmitActionHandler
         $processedProperty = $this->replaceTokens((string) $skipProperty, $event);
 
         $response = match ($skipAction) {
-            'redirect' => $this->createRedirectResponse($processedProperty),
+            'redirect' => $this->createRedirectResponse($processedProperty, $asArrayPayload),
             'message'  => $this->createMessageResponse($processedProperty, $asArrayPayload),
             'return'   => $this->createReturnResponse($processedProperty, $event),
             'hideform' => $this->createHideResponse($processedProperty, $asArrayPayload),
@@ -64,10 +64,28 @@ class DoiSkippedSubmitActionHandler
         }
     }
 
-    private function createRedirectResponse(?string $url): ?Response
+    /**
+     * Return array payload in AJAX/messenger mode to override default successMessage,
+     * otherwise return a Symfony Response for normal requests.
+     *
+     * @return Response|array<string, mixed>|null
+     */
+    private function createRedirectResponse(?string $url, bool $asArrayPayload): Response|array|null
     {
         if (empty($url)) {
             return null;
+        }
+
+        if ($asArrayPayload) {
+            // Payload merges into the controller's default response.
+            // Overwrite 'redirect' with null to stop redirect if form action was 'redirect'.
+            // successMessage must be an array for implode().
+            return [
+                'successMessage' => [],
+                'hideform_text'  => '',
+                'hideform'       => false,
+                'redirect'       => $url,
+            ];
         }
 
         return new RedirectResponse($url);
