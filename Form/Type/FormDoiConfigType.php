@@ -6,16 +6,30 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Form\Type;
 
 use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;
 use Mautic\EmailBundle\Form\Type\EmailListType;
+use Mautic\FormBundle\Entity\Form;
+use Mautic\LeadBundle\Form\DataTransformer\FieldFilterTransformer;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\AvailableSkipOptions;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Url;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class FormDoiConfigType extends AbstractType
 {
+    public function __construct(
+        private TranslatorInterface $translator,
+        private AvailableSkipOptions $availableSkipOptions,
+    ) {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -24,6 +38,13 @@ class FormDoiConfigType extends AbstractType
                 'attr'  => [
                     'class'   => 'form-control',
                     'tooltip' => 'mautic.plugin.doi.form.field.enabled.tooltip',
+                ],
+            ])
+            ->add('skipOnCookie', YesNoButtonGroupType::class, [
+                'label' => 'mautic.plugin.doi.form.field.skip_on_cookie',
+                'attr'  => [
+                    'class'   => 'form-control',
+                    'tooltip' => 'mautic.plugin.doi.form.field.skip_on_cookie.tooltip',
                 ],
             ])
             ->add('verificationEmailId', EmailListType::class, [
@@ -84,6 +105,71 @@ class FormDoiConfigType extends AbstractType
                     ]),
                 ],
             ]);
+
+        $skipPostActionChoices = [
+            'mautic.form.form.postaction.return'   => 'return',
+            'mautic.form.form.postaction.message'  => 'message',
+            'mautic.form.form.postaction.redirect' => 'redirect',
+        ];
+
+        // add support for external post-action when it's available
+        $translationKey = 'mautic.form.form.postaction.hideform';
+        $translated     = $this->translator->trans($translationKey);
+        if ($translated !== $translationKey) {
+            $skipPostActionChoices[$translationKey] = 'hideform';
+        }
+
+        $builder
+            ->add('skipPostAction', ChoiceType::class, [
+                'choices'           => $skipPostActionChoices,
+                'label'             => 'mautic.plugin.doi.form.field.skip_post_action',
+                'label_attr'        => ['class' => 'control-label'],
+                'attr'              => [
+                    'class'    => 'form-control',
+                    'tooltip'  => 'mautic.plugin.doi.form.field.skip_post_action.tooltip',
+                ],
+                'required'    => false,
+                'placeholder' => false,
+            ])
+            ->add('skipPostActionProperty', TextType::class, [
+                'label'      => 'mautic.plugin.doi.form.field.skip_post_action_property',
+                'label_attr' => ['class' => 'control-label'],
+                'attr'       => [
+                    'class'         => 'form-control',
+                    'tooltip'       => 'mautic.plugin.doi.form.field.skip_post_action_property.tooltip',
+                ],
+                'required'   => false,
+            ]);
+
+        if (isset($options['mautic_form'])) {
+            $builder->setAttribute('mautic_form', $options['mautic_form']);
+        }
+
+        $filterModalTransformer = new FieldFilterTransformer($this->translator, ['object' => 'lead']);
+        $builder->add(
+            $builder->create(
+                'skipConditions',
+                CollectionType::class,
+                [
+                    'entry_type'     => SkipConditionType::class,
+                    'entry_options'  => [
+                        'mautic_form' => $options['mautic_form'] ?? null,
+                    ],
+                    'error_bubbling' => false,
+                    'mapped'         => true,
+                    'allow_add'      => true,
+                    'allow_delete'   => true,
+                    'label'          => false,
+                    'block_prefix'   => '_doiconfig_skipconditions',
+                ]
+            )->addModelTransformer($filterModalTransformer)
+        );
+    }
+
+    public function buildView(FormView $view, FormInterface $form, array $options): void
+    {
+        $formEntity           = $form->getConfig()->getAttribute('mautic_form');
+        $view->vars['fields'] = $this->availableSkipOptions->getAvailableSkipOptions($formEntity);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -99,7 +185,10 @@ class FormDoiConfigType extends AbstractType
 
                 return $groups;
             },
-            'data_class' => null, // Allow array data
+            'data_class'  => null, // Allow array data
+            'mautic_form' => null,
         ]);
+
+        $resolver->setAllowedTypes('mautic_form', ['null', Form::class]);
     }
 }

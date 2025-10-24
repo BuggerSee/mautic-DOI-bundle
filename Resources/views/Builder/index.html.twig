@@ -14,6 +14,10 @@ Variables
   - inBuilder
   - mappedFields
 #}
+{% form_theme form with [
+    '@LeuchtfeuerDoi/FormTheme/SkipCondition/form_doiconfig_skipconditions_widget.html.twig',
+    '@LeuchtfeuerDoi/FormTheme/SkipCondition/form_doiconfig_skipcondition_widget.html.twig',
+] %}
 {% extends '@MauticCore/Default/content.html.twig' %}
 
 {% block mauticContent %}form{% endblock %}
@@ -28,6 +32,7 @@ Variables
 
 {% block content %}
     {{ includeScript('plugins/LeuchtfeuerDoiBundle/Assets/js/form-doi.js') }}
+    {{ includeScript('plugins/LeuchtfeuerDoiBundle/Assets/js/form-doi-condition-builder.js') }}
     {{ includeStylesheet('plugins/LeuchtfeuerDoiBundle/Assets/css/form-doi.css') }}
     {% set formId = form.sessionId.vars.data %}
     {% set inBuilder = inBuilder|default(false) %}
@@ -265,6 +270,53 @@ Variables
                                 <div class="col-md-6">
                                     {{ form_row(form.doiConfig.followUpEmailId) }}
                                     {{ form_row(form.doiConfig.errorRedirectUrl) }}
+                                </div>
+
+                                <div class="col-md-12 mb-xl">
+                                    <h3 class="mt-md mb-md">{{ 'mautic.plugin.doi.form.tab.skipping_conditions.header'|trans }}</h3>
+                                    <div class="available-filters mb-md pl-0 col-md-4"
+                                         data-doi-skip-prototype="{{ form_widget(form.doiConfig.skipConditions.vars.prototype)|e }}"
+                                            data-doi-render-condition-properties="{{ path('mautic_doi_render_condition_action') }}"
+                                         data-onload-callback="onFormDoiConditionsBuilder">
+                                        <select class="chosen form-control" id="available-conditions-list" data-new-fields-info="{{ 'mautic.plugin.doi.form.info.new_fields_added'|trans }}">
+                                            <option value=""></option>
+                                            {% for object, field in conditionChoiceFields %}
+                                                {% set icon = 'company' == object ? 'building' : 'user' %}
+                                                {% set header = translatorHasId('mautic.lead.' ~ object) ? ('mautic.lead.' ~ object)|trans : object|trans %}
+                                                <optgroup label="{{ header }}">
+                                                    {% for value, params in field %}
+                                                        {% set operators = params.operators is not empty ? params.operators|json_encode() : '{}' %}
+                                                        <option value="{{ value|e }}"
+                                                                id="available-doi-skip-option_{{ object }}_{{ value }}"
+                                                                data-field-object="{{ object }}"
+                                                                data-field-type="{{ params.properties.type }}"
+                                                                data-field-operators="{{ operators|e }}"
+                                                                class="available-doi-skip-option-type--{{ object }}">
+                                                            {{ params.label|trans }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </optgroup>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="selected-filters" id="doi-skip-condition-list">
+                                        {% if formContainsErrors(form.doiConfig.skipConditions) %}
+                                            <div class="alert alert-danger has-error">
+                                                {{ form_errors(form.doiConfig.skipConditions) }}
+                                            </div>
+                                        {% endif %}
+                                        {{ form_widget(form.doiConfig.skipConditions) }}
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    {{ form_row(form.doiConfig.skipOnCookie) }}
+                                </div>
+                                <div class="col-md-10">
+                                    {{ form_row(form.doiConfig.skipPostAction) }}
+                                </div>
+                                <div class="col-md-10">
+                                    {{ form_row(form.doiConfig.skipPostActionProperty) }}
                                 </div>
                             </div>
                         </div>

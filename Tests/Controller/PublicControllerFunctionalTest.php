@@ -3,10 +3,9 @@
 namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Controller;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
-use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\Submission;
-use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
+use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\FormFixtureHelper;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,6 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 class PublicControllerFunctionalTest extends MauticMysqlTestCase
 {
     protected $useCleanupRollback = false;
+    private FormFixtureHelper $formFixtureHelper;
 
     protected function setUp(): void
     {
@@ -22,6 +22,7 @@ class PublicControllerFunctionalTest extends MauticMysqlTestCase
 
         $pluginFixtureHelper = new PluginFixtureHelper($this->em);
         $pluginFixtureHelper->createAndEnablePlugin();
+        $this->formFixtureHelper = new FormFixtureHelper($this->em, $this->client);
     }
 
     /**
@@ -29,8 +30,12 @@ class PublicControllerFunctionalTest extends MauticMysqlTestCase
      */
     public function testVerifyEmailActionWithSuccessRedirectUrl(): void
     {
-        $form = $this->createForm('Test DOI Form');
-        $this->createDoiConfig($form, 'https://example.com/success', 'https://example.com/error');
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Form');
+        $this->formFixtureHelper->createDoiConfig(
+            form: $form,
+            successRedirectUrl: 'https://example.com/success',
+            errorRedirectUrl: 'https://example.com/error'
+        );
 
         // Submit the form:
         $crawler     = $this->client->request(Request::METHOD_GET, "/form/{$form->getId()}");
@@ -80,63 +85,20 @@ class PublicControllerFunctionalTest extends MauticMysqlTestCase
      */
     public function testVerifyEmailActionWithErrorRedirectUrl(): void
     {
-        $form = $this->createForm('Test DOI Form Error');
-        $this->createDoiConfig($form, 'https://example.com/success', 'https://example.com/error');
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Form Error');
+        $this->formFixtureHelper->createDoiConfig(
+            form: $form,
+            successRedirectUrl: 'https://example.com/success',
+            errorRedirectUrl: 'https://example.com/error'
+        );
 
         // Create an invalid token with valid form ID but invalid hash
         $invalidToken = base64_encode($form->getId().':invalid_hash');
 
-        // Call the verification endpoint with invalid token
+        // Call the verification endpoint with an invalid token
         $verificationResponse = $this->client->request(Request::METHOD_GET, "/email/verify/{$invalidToken}");
 
         // Verify redirect to error URL
         $this->assertSame('https://example.com/error', $verificationResponse->getUri());
-    }
-
-    private function createForm(string $name): Form
-    {
-        $formPayload = [
-            'name'        => $name,
-            'description' => 'Form created via submission test',
-            'formType'    => 'standalone',
-            'isPublished' => true,
-            'fields'      => [
-                [
-                    'label'        => 'Email',
-                    'type'         => 'email',
-                    'alias'        => 'email',
-                    'leadField'    => 'email',
-                    'mappedField'  => 'email',
-                    'mappedObject' => 'contact',
-                ],
-                [
-                    'label' => 'Submit',
-                    'type'  => 'button',
-                ],
-            ],
-            'postAction'  => 'return',
-        ];
-
-        // Create the form
-        $this->client->request(Request::METHOD_POST, '/api/forms/new', $formPayload);
-        $clientResponse = $this->client->getResponse();
-        $response       = json_decode($clientResponse->getContent(), true);
-        $formId         = $response['form']['id'];
-        $repository     = $this->em->getRepository(Form::class);
-
-        return $repository->find($formId);
-    }
-
-    private function createDoiConfig(Form $form, ?string $successUrl, ?string $errorUrl): FormDoiConfig
-    {
-        $config = new FormDoiConfig();
-        $config->setForm($form);
-        $config->setEnabled(true);
-        $config->setSuccessRedirectUrl($successUrl);
-        $config->setErrorRedirectUrl($errorUrl);
-        $this->em->persist($config);
-        $this->em->flush();
-
-        return $config;
     }
 }

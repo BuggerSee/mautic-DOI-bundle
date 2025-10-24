@@ -11,9 +11,12 @@ use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmissionRepository;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiSubmissionManager;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiActionsDispatcher;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiTokenParser;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\RuleEvaluator;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -32,7 +35,7 @@ class PublicController extends AbstractController
     ) {
     }
 
-    public function verifyEmailAction(string $token): Response
+    public function verifyEmailAction(string $token, Request $request): Response
     {
         $tokenData = $this->doiTokenParser->decode($token);
 
@@ -73,10 +76,15 @@ class PublicController extends AbstractController
         }
 
         $submission->confirm();
+
+        // Generate and store browser proof token
+        $browserProofToken = bin2hex(random_bytes(32));
+        $submission->setBrowserProofToken($browserProofToken);
+
         $this->submissionManager->save($submission);
         $this->doiActionsDispatcher->executePostEmailVerificationActions($submission);
 
-        return $this->createSuccessResponse($submission);
+        return $this->createSuccessResponseWithCookie($submission, $browserProofToken, $request);
     }
 
     private function createSuccessResponse(FormDoiSubmission $submission): Response
@@ -88,6 +96,30 @@ class PublicController extends AbstractController
         }
 
         return new Response($this->translator->trans('mautic.plugin.doi.verification.success'), Response::HTTP_OK);
+    }
+
+    private function createSuccessResponseWithCookie(FormDoiSubmission $submission, string $browserProofToken, Request $request): Response
+    {
+        $config = $this->configRepository->findOneBy(['form' => $submission->getForm()]);
+        $cookie = Cookie::create(RuleEvaluator::COOKIE_NAME)
+            ->withValue($browserProofToken)
+            ->withExpires(new \DateTime('+365 days'))
+            ->withPath('/')
+            ->withSecure($request->isSecure())
+            ->withHttpOnly()
+            ->withSameSite(Cookie::SAMESITE_LAX);
+
+        if ($config && $config->getSuccessRedirectUrl()) {
+            $response = new RedirectResponse($config->getSuccessRedirectUrl());
+            $response->headers->setCookie($cookie);
+
+            return $response;
+        }
+
+        $response = new Response($this->translator->trans('mautic.plugin.doi.verification.success'), Response::HTTP_OK);
+        $response->headers->setCookie($cookie);
+
+        return $response;
     }
 
     private function createErrorResponse(?Form $form = null): Response

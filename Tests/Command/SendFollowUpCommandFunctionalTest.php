@@ -6,11 +6,10 @@ use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\EmailBundle\Entity\Email;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\Submission;
-use Mautic\LeadBundle\Entity\Lead;
 use MauticPlugin\LeuchtfeuerDoiBundle\DTO\DoiTokenData;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
-use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiTokenParser;
+use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\FormFixtureHelper;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -22,21 +21,23 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
     protected $useCleanupRollback = false;
 
     private PluginFixtureHelper $pluginFixtureHelper;
+    private FormFixtureHelper $formFixtureHelper;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->pluginFixtureHelper = new PluginFixtureHelper($this->em);
         $this->pluginFixtureHelper->createAndEnablePlugin();
+        $this->formFixtureHelper = new FormFixtureHelper($this->em, $this->client);
     }
 
     public function testCommandWithoutLimit(): void
     {
-        $form = $this->createForm('Test DOI Form');
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Form');
         $this->createDoiConfig($form);
 
-        $oldSubmission    = $this->createDoiSubmission($form, 'old@example.com', new \DateTime('-25 hours'));
-        $recentSubmission = $this->createDoiSubmission($form, 'recent@example.com', new \DateTime('-1 hour'));
+        $oldSubmission    = $this->formFixtureHelper->createDoiSubmission($form, 'old@example.com', new \DateTime('-25 hours'));
+        $recentSubmission = $this->formFixtureHelper->createDoiSubmission($form, 'recent@example.com', new \DateTime('-1 hour'));
 
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:send-followup');
 
@@ -76,11 +77,11 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
 
     public function testDifferentContactsGetIndividualLinks(): void
     {
-        $form = $this->createForm('Test DOI Form');
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Form');
         $this->createDoiConfig($form);
 
-        $submission1 = $this->createDoiSubmission($form, 'contact1@example.com', new \DateTime('-25 hours'));
-        $submission2 = $this->createDoiSubmission($form, 'contact2@example.com', new \DateTime('-26 hours'));
+        $submission1 = $this->formFixtureHelper->createDoiSubmission($form, 'contact1@example.com', new \DateTime('-25 hours'));
+        $submission2 = $this->formFixtureHelper->createDoiSubmission($form, 'contact2@example.com', new \DateTime('-26 hours'));
 
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:send-followup');
 
@@ -140,12 +141,12 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
 
     public function testCommandWithCustomLimit(): void
     {
-        $form = $this->createForm('Test DOI Form');
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Form');
         $this->createDoiConfig($form);
 
-        $this->createDoiSubmission($form, 'test1@example.com', new \DateTime('-25 hours'));
-        $this->createDoiSubmission($form, 'test2@example.com', new \DateTime('-26 hours'));
-        $this->createDoiSubmission($form, 'test3@example.com', new \DateTime('-27 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test1@example.com', new \DateTime('-25 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test2@example.com', new \DateTime('-26 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test3@example.com', new \DateTime('-27 hours'));
 
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:send-followup', ['--limit' => '2']);
 
@@ -163,11 +164,11 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
 
     public function testCommandRespectsWaitTime(): void
     {
-        $form = $this->createForm('Test DOI Form');
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Form');
         $this->createDoiConfig($form);
 
-        $notReadySubmission = $this->createDoiSubmission($form, 'notready@example.com', new \DateTime('-23 hours'));
-        $readySubmission    = $this->createDoiSubmission($form, 'ready@example.com', new \DateTime('-25 hours'));
+        $notReadySubmission = $this->formFixtureHelper->createDoiSubmission($form, 'notready@example.com', new \DateTime('-23 hours'));
+        $readySubmission    = $this->formFixtureHelper->createDoiSubmission($form, 'ready@example.com', new \DateTime('-25 hours'));
 
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:send-followup');
 
@@ -187,15 +188,15 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
 
     public function testCommandWithBatchSize(): void
     {
-        $form = $this->createForm('Test DOI Form');
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Form');
         $this->createDoiConfig($form);
 
         // Create 5 submissions that are due for follow-up
-        $this->createDoiSubmission($form, 'test1@example.com', new \DateTime('-25 hours'));
-        $this->createDoiSubmission($form, 'test2@example.com', new \DateTime('-26 hours'));
-        $this->createDoiSubmission($form, 'test3@example.com', new \DateTime('-27 hours'));
-        $this->createDoiSubmission($form, 'test4@example.com', new \DateTime('-28 hours'));
-        $this->createDoiSubmission($form, 'test5@example.com', new \DateTime('-29 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test1@example.com', new \DateTime('-25 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test2@example.com', new \DateTime('-26 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test3@example.com', new \DateTime('-27 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test4@example.com', new \DateTime('-28 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test5@example.com', new \DateTime('-29 hours'));
 
         // Process with batch size of 2 - should process all 5 in 3 batches (2+2+1)
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:send-followup', ['--batch' => '2']);
@@ -213,17 +214,17 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
 
     public function testCommandWithBatchSizeAndLimit(): void
     {
-        $form = $this->createForm('Test DOI Form');
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Form');
         $this->createDoiConfig($form);
 
         // Create 7 submissions that are due for follow-up
-        $this->createDoiSubmission($form, 'test1@example.com', new \DateTime('-25 hours'));
-        $this->createDoiSubmission($form, 'test2@example.com', new \DateTime('-26 hours'));
-        $this->createDoiSubmission($form, 'test3@example.com', new \DateTime('-27 hours'));
-        $this->createDoiSubmission($form, 'test4@example.com', new \DateTime('-28 hours'));
-        $this->createDoiSubmission($form, 'test5@example.com', new \DateTime('-29 hours'));
-        $this->createDoiSubmission($form, 'test6@example.com', new \DateTime('-30 hours'));
-        $this->createDoiSubmission($form, 'test7@example.com', new \DateTime('-31 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test1@example.com', new \DateTime('-25 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test2@example.com', new \DateTime('-26 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test3@example.com', new \DateTime('-27 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test4@example.com', new \DateTime('-28 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test5@example.com', new \DateTime('-29 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test6@example.com', new \DateTime('-30 hours'));
+        $this->formFixtureHelper->createDoiSubmission($form, 'test7@example.com', new \DateTime('-31 hours'));
 
         // Process with batch size of 3 and limit of 5 - should process 5 total (3+2)
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:send-followup', [
@@ -258,13 +259,13 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         // Modify the followup wait time to 12 hours instead of the default 24 hours
         $this->pluginFixtureHelper->modifyFollowupWaitTime(12);
 
-        $form = $this->createForm('Test DOI Form');
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Form');
         $this->createDoiConfig($form);
 
         // Create a submission that should be ready with 12h wait time but not with 24h wait time
-        $readySubmission = $this->createDoiSubmission($form, 'ready@example.com', new \DateTime('-13 hours'));
+        $readySubmission = $this->formFixtureHelper->createDoiSubmission($form, 'ready@example.com', new \DateTime('-13 hours'));
         // Create a submission that should not be ready even with 12h wait time
-        $notReadySubmission = $this->createDoiSubmission($form, 'notready@example.com', new \DateTime('-11 hours'));
+        $notReadySubmission = $this->formFixtureHelper->createDoiSubmission($form, 'notready@example.com', new \DateTime('-11 hours'));
 
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:send-followup');
 
@@ -289,13 +290,13 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
 
     public function testVerboseOutputAggregatedContactIds(): void
     {
-        $form = $this->createForm('Test DOI Form');
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Form');
         $this->createDoiConfig($form);
 
         // Two due submissions and one recent (not due)
-        $due1   = $this->createDoiSubmission($form, 'due1@example.com', new \DateTime('-25 hours'));
-        $due2   = $this->createDoiSubmission($form, 'due2@example.com', new \DateTime('-26 hours'));
-        $recent = $this->createDoiSubmission($form, 'recent@example.com', new \DateTime('-1 hour'));
+        $due1   = $this->formFixtureHelper->createDoiSubmission($form, 'due1@example.com', new \DateTime('-25 hours'));
+        $due2   = $this->formFixtureHelper->createDoiSubmission($form, 'due2@example.com', new \DateTime('-26 hours'));
+        $recent = $this->formFixtureHelper->createDoiSubmission($form, 'recent@example.com', new \DateTime('-1 hour'));
 
         $kernel        = static::getContainer()->get('kernel');
         $application   = new Application($kernel);
@@ -333,11 +334,11 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
 
     public function testVeryVerboseOutputPerSubmissionLines(): void
     {
-        $form = $this->createForm('Test DOI Form');
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Form');
         $this->createDoiConfig($form);
 
-        $due1 = $this->createDoiSubmission($form, 'vv1@example.com', new \DateTime('-25 hours'));
-        $due2 = $this->createDoiSubmission($form, 'vv2@example.com', new \DateTime('-26 hours'));
+        $due1 = $this->formFixtureHelper->createDoiSubmission($form, 'vv1@example.com', new \DateTime('-25 hours'));
+        $due2 = $this->formFixtureHelper->createDoiSubmission($form, 'vv2@example.com', new \DateTime('-26 hours'));
 
         $kernel        = static::getContainer()->get('kernel');
         $application   = new Application($kernel);
@@ -363,37 +364,6 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         Assert::assertStringContainsString('Processed: 2 | Sent: 2', $output);
     }
 
-    private function createForm(string $name): Form
-    {
-        $formPayload = [
-            'name'        => $name,
-            'description' => 'Form created via command test',
-            'formType'    => 'standalone',
-            'isPublished' => true,
-            'fields'      => [
-                [
-                    'label'        => 'Email',
-                    'type'         => 'email',
-                    'alias'        => 'email',
-                    'leadField'    => 'email',
-                    'mappedField'  => 'email',
-                    'mappedObject' => 'contact',
-                ],
-                [
-                    'label' => 'Submit',
-                    'type'  => 'button',
-                ],
-            ],
-            'postAction'  => 'return',
-        ];
-
-        $this->client->request('POST', '/api/forms/new', $formPayload);
-        $response = json_decode($this->client->getResponse()->getContent(), true);
-        $formId   = $response['form']['id'];
-
-        return $this->em->getRepository(Form::class)->find($formId);
-    }
-
     private function createDoiConfig(Form $form): FormDoiConfig
     {
         $followUpEmail = $this->createEmail('Follow-up Email');
@@ -408,31 +378,6 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
 
         return $config;
-    }
-
-    private function createDoiSubmission(Form $form, string $email, \DateTime $dateSubmitted): FormDoiSubmission
-    {
-        $lead = $this->createLead($email);
-
-        $submission = new Submission();
-        $submission->setForm($form);
-        $submission->setDateSubmitted($dateSubmitted);
-        $submission->setReferer('https://example.com/');
-        $submission->setLead($lead);
-        $this->em->persist($submission);
-
-        $doiSubmission = new FormDoiSubmission();
-        $doiSubmission->setForm($form);
-        $doiSubmission->setFormSubmission($submission);
-        $doiSubmission->setLead($lead);
-        $doiSubmission->setEmail($email);
-        $doiSubmission->setStatus('pending');
-        $doiSubmission->setHash(hash('sha256', $email.time()));
-        $doiSubmission->setDateCreated($dateSubmitted);
-        $this->em->persist($doiSubmission);
-        $this->em->flush();
-
-        return $doiSubmission;
     }
 
     private function createEmail(string $name): Email
@@ -450,18 +395,5 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         $emailId  = $response['email']['id'];
 
         return $this->em->getRepository(Email::class)->find($emailId);
-    }
-
-    private function createLead(string $email): Lead
-    {
-        $leadPayload = [
-            'email' => $email,
-        ];
-
-        $this->client->request('POST', '/api/contacts/new', $leadPayload);
-        $response = json_decode($this->client->getResponse()->getContent(), true);
-        $leadId   = $response['contact']['id'];
-
-        return $this->em->getRepository(Lead::class)->find($leadId);
     }
 }

@@ -1,0 +1,11 @@
+{% block _doiconfig_skipconditions_widget %}
+    {% for i, filter in form %}
+        {% set isPrototype = '__name__' == filter.vars.name %}
+        {% for object, objectfields in form.parent.vars.fields %}
+            {% set isField = objectfields[filter.vars.value.field] is defined %}
+            {% if (isPrototype or isField) and not filter.isRendered %}
+                {{ form_widget(filter, {'first': (0 == i)}) }}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+{% endblock %}

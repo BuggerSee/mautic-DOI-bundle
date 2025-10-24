@@ -35,7 +35,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
      */
     public function testSaveDoiConfigWhenEnabled(): void
     {
-        $form              = $this->createForm('Test DOI Form', 'test_doi_form');
+        $form              = $this->formFixtureHelper->createForm('Test DOI Form', 'test_doi_form');
         $verificationEmail = $this->createEmail('DOI Verification Email');
         $followUpEmail     = $this->createEmail('DOI Follow-up Email');
 
@@ -45,6 +45,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
         $formElement->setValues([
             'mauticform[doiConfig][enabled]'             => '1',
+            'mauticform[doiConfig][skipOnCookie]'        => '1',
             'mauticform[doiConfig][verificationEmailId]' => $verificationEmail->getId(),
             'mauticform[doiConfig][followUpEmailId]'     => $followUpEmail->getId(),
             'mauticform[doiConfig][successRedirectUrl]'  => 'https://example.com/success',
@@ -58,6 +59,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $savedDoiConfig = $this->doiConfigManager->getFormDoiConfig($form);
         $this->assertNotNull($savedDoiConfig);
         $this->assertTrue($savedDoiConfig->isEnabled());
+        $this->assertTrue($savedDoiConfig->isSkipOnCookie());
         $this->assertEquals($verificationEmail->getId(), $savedDoiConfig->getVerificationEmail()->getId());
         $this->assertEquals($followUpEmail->getId(), $savedDoiConfig->getFollowUpEmail()->getId());
         $this->assertEquals('https://example.com/success', $savedDoiConfig->getSuccessRedirectUrl());
@@ -69,7 +71,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
      */
     public function testSaveDoiConfigWhenDisabled(): void
     {
-        $form = $this->createForm('Test DOI Form Disabled', 'test_doi_form_disabled');
+        $form = $this->formFixtureHelper->createForm('Test DOI Form Disabled', 'test_doi_form_disabled');
 
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
         $this->assertTrue($this->client->getResponse()->isOk());
@@ -93,7 +95,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
      */
     public function testValidationFailsWhenEnabledWithoutVerificationEmail(): void
     {
-        $form = $this->createForm('Test DOI Validation', 'test_doi_validation');
+        $form = $this->formFixtureHelper->createForm('Test DOI Validation', 'test_doi_validation');
 
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
         $this->assertTrue($this->client->getResponse()->isOk());
@@ -119,7 +121,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
      */
     public function testValidationPassesWhenDisabledWithoutVerificationEmail(): void
     {
-        $form = $this->createForm('Test DOI Disabled Validation', 'test_doi_disabled_validation');
+        $form = $this->formFixtureHelper->createForm('Test DOI Disabled Validation', 'test_doi_disabled_validation');
 
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
         $this->assertTrue($this->client->getResponse()->isOk());
@@ -144,13 +146,14 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
      */
     public function testExistingDoiConfigIsLoadedInForm(): void
     {
-        $form              = $this->createForm('Test Existing DOI Config', 'test_existing_doi_config');
+        $form              = $this->formFixtureHelper->createForm('Test Existing DOI Config', 'test_existing_doi_config');
         $verificationEmail = $this->createEmail('Existing Verification Email');
 
         // Create DOI config directly
         $doiConfig = new FormDoiConfig();
         $doiConfig->setForm($form);
         $doiConfig->setEnabled(true);
+        $doiConfig->setSkipOnCookie(true);
         $doiConfig->setVerificationEmail($verificationEmail);
         $doiConfig->setSuccessRedirectUrl('https://example.com/existing-success');
         $this->em->persist($doiConfig);
@@ -162,6 +165,9 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         // Verify that existing values are loaded
         $enabledField = $crawler->filter('input[name="mauticform[doiConfig][enabled]"]:checked');
         $this->assertEquals('1', $enabledField->attr('value'));
+
+        $skipOnCookieField = $crawler->filter('input[name="mauticform[doiConfig][skipOnCookie]"]:checked');
+        $this->assertEquals('1', $skipOnCookieField->attr('value'));
 
         $verificationEmailField = $crawler->filter('select[name="mauticform[doiConfig][verificationEmailId]"] option:selected');
         $this->assertEquals($verificationEmail->getId(), $verificationEmailField->attr('value'));
@@ -176,7 +182,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
     public function testUpdateExistingDoiConfig(): void
     {
         // Create initial form and emails
-        $form                     = $this->createForm('Test DOI Update Form', 'test_doi_update_form');
+        $form                     = $this->formFixtureHelper->createForm('Test DOI Update Form', 'test_doi_update_form');
         $initialVerificationEmail = $this->createEmail('Initial Verification Email');
         $initialFollowUpEmail     = $this->createEmail('Initial Follow-up Email');
 
@@ -184,6 +190,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $initialDoiConfig = new FormDoiConfig();
         $initialDoiConfig->setForm($form);
         $initialDoiConfig->setEnabled(true);
+        $initialDoiConfig->setSkipOnCookie(true);
         $initialDoiConfig->setVerificationEmail($initialVerificationEmail);
         $initialDoiConfig->setFollowUpEmail($initialFollowUpEmail);
         $initialDoiConfig->setSuccessRedirectUrl('https://example.com/initial-success');
@@ -203,6 +210,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
         $formElement->setValues([
             'mauticform[doiConfig][enabled]'             => '1',
+            'mauticform[doiConfig][skipOnCookie]'        => '0',
             'mauticform[doiConfig][verificationEmailId]' => $newVerificationEmail->getId(),
             'mauticform[doiConfig][followUpEmailId]'     => $newFollowUpEmail->getId(),
             'mauticform[doiConfig][successRedirectUrl]'  => 'https://example.com/updated-success',
@@ -222,6 +230,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         // Assert that the config was updated correctly
         $this->assertNotNull($updatedDoiConfig);
         $this->assertTrue($updatedDoiConfig->isEnabled());
+        $this->assertFalse($updatedDoiConfig->isSkipOnCookie());
         $this->assertEquals($newVerificationEmail->getId(), $updatedDoiConfig->getVerificationEmail()->getId());
         $this->assertEquals($newFollowUpEmail->getId(), $updatedDoiConfig->getFollowUpEmail()->getId());
         $this->assertEquals('https://example.com/updated-success', $updatedDoiConfig->getSuccessRedirectUrl());
@@ -238,7 +247,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
     {
         $this->pluginFixtureHelper->disablePlugin();
 
-        $form = $this->createForm('Test DOI Disabled - Fields Hidden', 'test_doi_fields_hidden_when_disabled');
+        $form = $this->formFixtureHelper->createForm('Test DOI Disabled - Fields Hidden', 'test_doi_fields_hidden_when_disabled');
 
         // Load the form edit page
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
@@ -246,27 +255,16 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Assert DOI fields are not present
         $this->assertCount(0, $crawler->filter('input[name="mauticform[doiConfig][enabled]"]'), 'Enabled field should not be present');
+        $this->assertCount(0, $crawler->filter('input[name="mauticform[doiConfig][skipOnCookie]"]'), 'Skip on cookie field should not be present');
         $this->assertCount(0, $crawler->filter('select[name="mauticform[doiConfig][verificationEmailId]"]'), 'Verification email field should not be present');
         $this->assertCount(0, $crawler->filter('select[name="mauticform[doiConfig][followUpEmailId]"]'), 'Follow-up email field should not be present');
         $this->assertCount(0, $crawler->filter('input[name="mauticform[doiConfig][successRedirectUrl]"]'), 'Success redirect URL field should not be present');
         $this->assertCount(0, $crawler->filter('input[name="mauticform[doiConfig][errorRedirectUrl]"]'), 'Error redirect URL field should not be present');
     }
 
-    private function createForm(string $name, string $alias): Form
-    {
-        $form = new Form();
-        $form->setName($name);
-        $form->setAlias($alias);
-        $form->setPostActionProperty('Success');
-        $this->em->persist($form);
-        $this->em->flush();
-
-        return $form;
-    }
-
     public function testSaveFormWithDoiActions(): void
     {
-        $form              = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
+        $form              = $this->formFixtureHelper->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
         $verificationEmail = $this->createEmail('DOI Verification Email');
         $sessionId         = (string) $form->getId();
 
@@ -306,7 +304,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
     public function testEditFormDoiAction(): void
     {
-        $form              = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
+        $form              = $this->formFixtureHelper->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
         $verificationEmail = $this->createEmail('DOI Verification Email');
         $sessionId         = (string) $form->getId();
 
@@ -371,7 +369,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
     public function testRemoveFormDoiAction(): void
     {
-        $form              = $this->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
+        $form              = $this->formFixtureHelper->createForm('Test DOI Form with Actions', 'test_doi_form_with_actions');
         $verificationEmail = $this->createEmail('DOI Verification Email');
         $sessionId         = (string) $form->getId();
 
@@ -441,7 +439,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
     public function testCloneFormPersistsDoiConfigAndActions(): void
     {
-        $form = $this->createForm('Original DOI Clone Form', 'original_doi_clone_form');
+        $form = $this->formFixtureHelper->createForm('Original DOI Clone Form', 'original_doi_clone_form');
 
         $verificationEmail = $this->formFixtureHelper->createEmail('Clone Verification Email', '<p>Verification</p>');
         $followUpEmail     = $this->formFixtureHelper->createEmail('Clone Follow-up Email', '<p>Follow-up</p>');
@@ -454,6 +452,8 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
             'https://example.com/original-success',
             'https://example.com/original-error'
         );
+        $originalConfig->setSkipOnCookie(true);
+        $this->em->flush();
 
         $originalAction = $this->formFixtureHelper->createDoiAction(
             $form,
@@ -488,6 +488,10 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $enabledField = $crawler->filter('input[name="mauticform[doiConfig][enabled]"]:checked');
         $this->assertGreaterThan(0, $enabledField->count(), 'Enabled field should be checked on cloned form.');
         $this->assertSame('1', $enabledField->attr('value'));
+
+        $skipOnCookieField = $crawler->filter('input[name="mauticform[doiConfig][skipOnCookie]"]:checked');
+        $this->assertGreaterThan(0, $skipOnCookieField->count(), 'Skip on cookie field should be checked on cloned form.');
+        $this->assertSame('1', $skipOnCookieField->attr('value'));
 
         $selectedVerificationEmail = $crawler->filter('select[name="mauticform[doiConfig][verificationEmailId]"] option:selected');
         $this->assertGreaterThan(0, $selectedVerificationEmail->count(), 'Verification email should be preselected.');
@@ -530,6 +534,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $this->assertNotNull($clonedConfig, 'Cloned form should have DOI config.');
         $this->assertNotSame($originalConfigId, $clonedConfig->getId(), 'Cloned config should be a new entity.');
         $this->assertTrue($clonedConfig->isEnabled());
+        $this->assertTrue($clonedConfig->isSkipOnCookie());
         $this->assertSame($verificationEmailId, $clonedConfig->getVerificationEmail()->getId());
         $this->assertSame($followUpEmailId, $clonedConfig->getFollowUpEmail()->getId());
         $this->assertSame('https://example.com/original-success', $clonedConfig->getSuccessRedirectUrl());
