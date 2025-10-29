@@ -62,28 +62,19 @@ class SubmissionEventRecreator
                         // Sort valid options by string length, descending.
                         usort($validOptionValues, fn ($a, $b) => strlen($b) <=> strlen($a));
 
-                        $matchedValues     = [];
-                        $remainingValueStr = $leadValue;
+                        $matchedValues   = [];
+                        $remainingStr    = $leadValue;
 
-                        while ('' !== $remainingValueStr) {
-                            $matchFoundInIteration = false;
-                            foreach ($validOptionValues as $option) {
-                                if (str_starts_with($remainingValueStr, $option)) {
-                                    $matchedValues[]       = $option;
-                                    $remainingValueStr     = substr($remainingValueStr, strlen($option));
-                                    $remainingValueStr     = ltrim($remainingValueStr, ', ');
-                                    $matchFoundInIteration = true;
-                                    // Restart the inner loop with the now-shortened string.
-                                    break;
-                                }
-                            }
-
-                            // Safety break: exit to prevent an infinite loop.
-                            if (!$matchFoundInIteration) {
-                                break;
+                        foreach ($validOptionValues as $option) {
+                            if (str_contains($remainingStr, $option)) {
+                                $matchedValues[] = $option;
+                                // Remove the found option so it can't be part of another match.
+                                $remainingStr = str_replace($option, '', $remainingStr);
                             }
                         }
-                        $finalValue = $matchedValues;
+
+                        // Re-index keys to be sequential (0, 1, 2...).
+                        $finalValue = array_values($matchedValues);
                     }
                 }
 
