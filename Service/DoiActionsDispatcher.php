@@ -4,12 +4,11 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Service;
 
 use Mautic\FormBundle\Entity\SubmissionRepository;
 use Mautic\FormBundle\Event\SubmissionEvent;
-use Mautic\FormBundle\FormEvents;
+use Mautic\FormBundle\Model\FormModel;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionRepository;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\LeuchtfeuerDoiBundle\Mapper\FormDoiActionMapper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\HttpFoundation\Request;
 
 class DoiActionsDispatcher
 {
@@ -18,6 +17,8 @@ class DoiActionsDispatcher
         private FormDoiActionRepository $formDoiActionRepository,
         private FormDoiActionMapper $formDoiActionMapper,
         private SubmissionRepository $submissionRepository,
+        private FormModel $formModel,
+        private SubmissionEventRecreator $submissionEventRecreator
     ) {
     }
 
@@ -27,28 +28,26 @@ class DoiActionsDispatcher
         $formSubmissionId = $doiSubmission->getFormSubmission()->getId();
         $formSubmission   = $this->submissionRepository->getEntity($formSubmissionId); // loads entity with results
         $doiActions       = $this->formDoiActionRepository->findBy(['form' => $form]);
+        $customComponents = $this->formModel->getCustomComponents();
+        $availableActions = $customComponents['actions'] ?? [];
 
         // Recreate the submission context as much as possible
-        $results = $formSubmission->getResults() ?: [];
-        $post    = $results; // Use the stored results as POST data
-
+        $results             = $formSubmission->getResults() ?: [];
+        $post                = $results; // Use the stored results as POST data
+        $contactFieldMatches = $this->submissionEventRecreator->getContactFieldMatches($form, $results);
         // Recreate server array with available information
-        $server = [
-            'HTTP_REFERER' => $formSubmission->getReferer() ?: '',
-            /** @phpstan-ignore-next-line IpAddress can be null  */
-            'REMOTE_ADDR' => $formSubmission->getIpAddress()?->getIpAddress() ?: '',
-        ];
-
-        // Create a minimal request object
-        $request = new Request($post, [], [], [], [], $server);
+        $server  = $this->submissionEventRecreator->getServerData($formSubmission);
+        $request = $this->submissionEventRecreator->getRequest($post, $server);
 
         foreach ($doiActions as $doiAction) {
             $submissionEvent = new SubmissionEvent($formSubmission, $post, $server, $request);
             $submissionEvent->setResults($results);
+            $submissionEvent->setContactFieldMatches($contactFieldMatches);
             $submissionEvent->setContext($doiAction->getType());
             $submissionEvent->setAction($this->formDoiActionMapper->mapToAction($doiAction));
+            $actionEvent = $availableActions[$doiAction->getType()]['eventName'];
 
-            $this->eventDispatcher->dispatch($submissionEvent, FormEvents::ON_EXECUTE_SUBMIT_ACTION);
+            $this->eventDispatcher->dispatch($submissionEvent, $actionEvent);
         }
     }
 }
