@@ -198,10 +198,10 @@ class DoiActionController extends AbstractStandardFormController
             $passthroughVars['actionId'] = $keyId;
 
             // prevent undefined errors
-            $entity     = new FormDoiAction();
-            $blank      = $entity->convertToArray();
-            $formAction = array_merge($blank, $formAction);
-            $template   = '@LeuchtfeuerDoi/Action/_generic.html.twig';
+            $entity                        = new FormDoiAction();
+            $blank                         = $entity->convertToArray();
+            $formAction                    = array_merge($blank, $formAction);
+            $template                      = '@LeuchtfeuerDoi/Action/_generic.html.twig';
             $passthroughVars['actionHtml'] = $this->renderView($template, [
                 'inForm' => true,
                 'action' => $formAction,
