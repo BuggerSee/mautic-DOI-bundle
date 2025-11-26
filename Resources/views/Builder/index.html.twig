@@ -232,7 +232,7 @@ Variables
                                 <div class="drop-here">
                                     {% if formDoiActions is defined and formDoiActions is not empty %}
                                         {% for action in formDoiActions %}
-                                            {% set template = actionSettings[action.type].template|default('@LeuchtfeuerDoi/Action/_generic.html.twig') %}
+                                            {% set template = '@LeuchtfeuerDoi/Action/_generic.html.twig' %}
                                             {% set action = action|merge({
                                                 'settings': actionSettings[action.type],
                                             }) %}
