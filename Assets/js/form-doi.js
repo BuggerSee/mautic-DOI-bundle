@@ -1,6 +1,7 @@
 (function (Mautic, mQuery){
     Mautic.onFormDoiActionsBuilder = function() {
         Mautic.initHideItemButton('#mauticforms-doi-verified-actions');
+        formDeleteDoiActionListener();
     };
     
     Mautic.onFormDoiBuilder = function() {
@@ -81,4 +82,25 @@
 
         mQuery('#form-doi-action-placeholder').remove();
     }
+
+    const formDeleteDoiActionListener = function() {
+        mQuery(document).ajaxComplete(function(event, xhr, settings) {
+            if (settings.url && settings.url.includes('forms-doi/action/delete')) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    console.log('Form action response:', response);
+                    if (response.mauticContent === 'formDoiAction') {
+                        const urlPath = settings.url.split('?')[0];
+                        const urlParts = urlPath.split('/');
+                        const actionId = urlParts[urlParts.length - 1];
+                        const $action = mQuery('div[data-doi-action="' + actionId + '"]');
+                        $action.hide('fast');
+                    }
+                } catch (e) {
+                    console.log('Error processing form action response:', e);
+                }
+            }
+        });
+    };
+
 }(Mautic, mQuery));

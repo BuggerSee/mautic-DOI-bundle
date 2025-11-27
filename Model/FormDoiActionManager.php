@@ -7,13 +7,15 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Model;
 use Doctrine\ORM\EntityManagerInterface;
 use Mautic\FormBundle\Entity\Form;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiAction;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionConditionRepository;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionRepository;
 
 class FormDoiActionManager
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private FormDoiActionRepository $formDoiActionRepository
+        private FormDoiActionRepository $formDoiActionRepository,
+        private FormDoiActionConditionRepository $formDoiActionConditionRepository
     ) {
     }
 
@@ -76,6 +78,10 @@ class FormDoiActionManager
 
         // Remove actions that are no longer present
         foreach ($existingActionMap as $actionToRemove) {
+            $condition = $this->formDoiActionConditionRepository->findOneBy(['action' => $actionToRemove]);
+            if ($condition) {
+                $this->entityManager->remove($condition);
+            }
             $this->entityManager->remove($actionToRemove);
         }
 
