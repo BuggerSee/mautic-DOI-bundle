@@ -8,9 +8,12 @@ use Doctrine\ORM\EntityManagerInterface;
 use Mautic\EmailBundle\Entity\Email;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\Submission;
+use Mautic\LeadBundle\Entity\Company;
+use Mautic\LeadBundle\Entity\CompanyLead;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Entity\LeadList;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiAction;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionCondition;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -22,6 +25,27 @@ final class FormFixtureHelper
         private EntityManagerInterface $em,
         private KernelBrowser $client
     ) {
+    }
+
+    public function createCompany(string $name): Company
+    {
+        $company = new Company();
+        $company->setName($name);
+        $this->em->persist($company);
+
+        return $company;
+    }
+
+    public function addContactToCompany(Lead $lead, Company $company, \DateTime $dateAdded = null, bool $isPrimary = true): CompanyLead
+    {
+        $companyLead = new CompanyLead();
+        $companyLead->setCompany($company);
+        $companyLead->setLead($lead);
+        $companyLead->setDateAdded($dateAdded ?? new \DateTime());
+        $companyLead->setPrimary($isPrimary);
+        $this->em->persist($companyLead);
+
+        return $companyLead;
     }
 
     public function createForm(string $name, string $alias): Form
@@ -71,8 +95,9 @@ final class FormFixtureHelper
 
     /**
      * @param array<string,mixed> $properties
+     * @param array<int,mixed>    $conditions
      */
-    public function createDoiAction(Form $form, string $name, string $type, array $properties): FormDoiAction
+    public function createDoiAction(Form $form, string $name, string $type, array $properties, ?array $conditions = []): FormDoiAction
     {
         $action = new FormDoiAction();
         $action->setForm($form);
@@ -83,6 +108,14 @@ final class FormFixtureHelper
 
         $this->em->persist($action);
         $this->em->flush();
+
+        if (null !== $conditions) {
+            $condition = new FormDoiActionCondition();
+            $condition->setAction($action);
+            $condition->setConditions($conditions);
+            $this->em->persist($condition);
+            $this->em->flush();
+        }
 
         return $action;
     }

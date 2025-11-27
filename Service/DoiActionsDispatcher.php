@@ -5,6 +5,8 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Service;
 use Mautic\FormBundle\Entity\SubmissionRepository;
 use Mautic\FormBundle\Event\SubmissionEvent;
 use Mautic\FormBundle\Model\FormModel;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionExecutionLog;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionExecutionLogRepository;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionRepository;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\LeuchtfeuerDoiBundle\Mapper\FormDoiActionMapper;
@@ -18,7 +20,9 @@ class DoiActionsDispatcher
         private FormDoiActionMapper $formDoiActionMapper,
         private SubmissionRepository $submissionRepository,
         private FormModel $formModel,
-        private SubmissionEventRecreator $submissionEventRecreator
+        private SubmissionEventRecreator $submissionEventRecreator,
+        private RuleEvaluator $ruleEvaluator,
+        private FormDoiActionExecutionLogRepository $formDoiActionExecutionLogRepository
     ) {
     }
 
@@ -40,6 +44,23 @@ class DoiActionsDispatcher
         $request = $this->submissionEventRecreator->getRequest($post, $server);
 
         foreach ($doiActions as $doiAction) {
+            $shouldExecute = $this->ruleEvaluator->shouldExecuteAction(
+                $doiAction,
+                $formSubmission,
+                $formSubmission->getLead()
+            );
+
+            if (!$shouldExecute) {
+                $this->formDoiActionExecutionLogRepository->logExecution(
+                    $formSubmission,
+                    $doiSubmission,
+                    $doiAction,
+                    false,
+                    FormDoiActionExecutionLog::DETAILS_CONDITIONS_NOT_MET
+                );
+                continue;
+            }
+
             $submissionEvent = new SubmissionEvent($formSubmission, $post, $server, $request);
             $submissionEvent->setResults($results);
             $submissionEvent->setContactFieldMatches($contactFieldMatches);
@@ -47,7 +68,26 @@ class DoiActionsDispatcher
             $submissionEvent->setAction($this->formDoiActionMapper->mapToAction($doiAction));
             $actionEvent = $availableActions[$doiAction->getType()]['eventName'];
 
-            $this->eventDispatcher->dispatch($submissionEvent, $actionEvent);
+            try {
+                $this->eventDispatcher->dispatch($submissionEvent, $actionEvent);
+
+                $this->formDoiActionExecutionLogRepository->logExecution(
+                    $formSubmission,
+                    $doiSubmission,
+                    $doiAction,
+                    true,
+                    FormDoiActionExecutionLog::DETAILS_CONDITIONS_MET
+                );
+            } catch (\Throwable $e) {
+                $this->formDoiActionExecutionLogRepository->logExecution(
+                    $formSubmission,
+                    $doiSubmission,
+                    $doiAction,
+                    true,
+                    FormDoiActionExecutionLog::DETAILS_ERROR
+                );
+                throw $e;
+            }
         }
     }
 }
