@@ -16,33 +16,64 @@ class ConditionBuilderController extends AbstractController
 {
     private const TMP_NAME = 'RENAME';
 
-    public function renderConditionAction(
+    public function __construct(private FormFactoryInterface $formFactory, private FormAdjustmentsProviderInterface $formAdjustmentsProvider, private AvailableSkipOptions $availableSkipOptions, private FormModel $formModel)
+    {
+    }
+
+    public function renderSkipConditionAction(Request $request): JsonResponse
+    {
+        $filterNum = (int) $request->get('filterNum');
+
+        // Define the specific HTML ID/Name patterns for this action
+        $newId   = "id=\"mauticform_doiConfig_skipConditions_{$filterNum}_properties";
+        $newName = "name=\"mauticform[doiConfig][skipConditions][{$filterNum}][properties]";
+
+        return $this->processConditionForm($request, $newId, $newName);
+    }
+
+    public function renderDoiActionConditionAction(Request $request): JsonResponse
+    {
+        $actionId     = InputHelper::clean($request->get('actionId'));
+        $conditionNum = (int) $request->get('conditionNum');
+
+        // Define the specific HTML ID/Name patterns for this action
+        $newId   = "id=\"mauticform_doiActionConditionsConfig_actionConditions_{$actionId}_conditions_{$conditionNum}_properties";
+        $newName = "name=\"mauticform[doiActionConditionsConfig][actionConditions][{$actionId}][conditions][{$conditionNum}][properties]";
+
+        return $this->processConditionForm($request, $newId, $newName);
+    }
+
+    /**
+     * Central logic to handle form adjusting and rendering.
+     */
+    private function processConditionForm(
         Request $request,
-        FormFactoryInterface $formFactory,
-        FormAdjustmentsProviderInterface $formAdjustmentsProvider,
-        AvailableSkipOptions $availableSkipOptions,
-        FormModel $formModel
+        string $targetIdString,
+        string $targetNameString,
     ): JsonResponse {
         $fieldAlias  = InputHelper::clean($request->get('fieldAlias'));
         $fieldObject = InputHelper::clean($request->get('fieldObject'));
         $operator    = InputHelper::clean($request->get('operator'));
         $search      = InputHelper::clean($request->get('search'));
         $formId      = InputHelper::clean($request->get('formId'));
-        $filterNum   = (int) $request->get('filterNum');
 
-        $formEntity = $formModel->getEntity($formId);
-        $form       = $formFactory->createNamed(self::TMP_NAME, FilterPropertiesType::class);
+        $formEntity = $this->formModel->getEntity($formId);
+        $form       = $this->formFactory->createNamed(self::TMP_NAME, FilterPropertiesType::class);
 
         if ($fieldAlias && $operator) {
-            $formAdjustmentsProvider->adjustForm(
+            $options = $this->availableSkipOptions->getAvailableSkipOptions($formEntity, $search);
+
+            // Validate options exist to prevent error
+            $specificOptions = $options[$fieldObject][$fieldAlias] ?? [];
+
+            $this->formAdjustmentsProvider->adjustForm(
                 $form,
                 $fieldAlias,
                 $fieldObject,
                 $operator,
-                $availableSkipOptions->getAvailableSkipOptions($formEntity, $search)[$fieldObject][$fieldAlias]
+                $specificOptions
             );
 
-            // remove the performance alerts, as this doesn't apply to the condition builder
             if ($form->has('alert')) {
                 $form->remove('alert');
             }
@@ -55,15 +86,13 @@ class ConditionBuilderController extends AbstractController
             ]
         );
 
-        $formHtml = str_replace('id="'.self::TMP_NAME, "id=\"mauticform_doiConfig_skipConditions_{$filterNum}_properties", $formHtml);
-        $formHtml = str_replace('name="'.self::TMP_NAME, "name=\"mauticform[doiConfig][skipConditions][{$filterNum}][properties]", $formHtml);
+        $formHtml = str_replace('id="'.self::TMP_NAME, $targetIdString, $formHtml);
+        $formHtml = str_replace('name="'.self::TMP_NAME, $targetNameString, $formHtml);
 
-        return new JsonResponse(
-            [
-                'viewParameters' => [
-                    'form' => $formHtml,
-                ],
-            ]
-        );
+        return new JsonResponse([
+            'viewParameters' => [
+                'form' => $formHtml,
+            ],
+        ]);
     }
 }

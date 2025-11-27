@@ -2,15 +2,20 @@
 
 namespace MauticPlugin\LeuchtfeuerDoiBundle\Form\Extension;
 
+use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Form\Type\FormType;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
+use MauticPlugin\LeuchtfeuerDoiBundle\Form\Type\FormDoiActionConditionsConfigType;
 use MauticPlugin\LeuchtfeuerDoiBundle\Form\Type\FormDoiConfigType;
 use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiActionConditionManager;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiConfigManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiActionManager;
 use Symfony\Component\Form\AbstractTypeExtension;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 class FormTypeExtension extends AbstractTypeExtension
@@ -18,7 +23,9 @@ class FormTypeExtension extends AbstractTypeExtension
     public function __construct(
         private DoiConfigManager $doiConfigManager,
         private Config $pluginConfig,
-        private RequestStack $requestStack
+        private RequestStack $requestStack,
+        private DoiActionConditionManager $doiActionConditionManager,
+        private FormDoiActionManager $formDoiActionManager,
     ) {
     }
 
@@ -33,9 +40,19 @@ class FormTypeExtension extends AbstractTypeExtension
 
     public function onPreSetData(FormEvent $event): void
     {
+        if (!$this->pluginConfig->isPublished()) {
+            return;
+        }
+
         $form   = $event->getForm();
         $entity = $event->getData();
 
+        $this->addDoiConfig($form, $entity);
+        $this->addDoiActionConditions($form, $entity);
+    }
+
+    private function addDoiConfig(FormInterface $form, Form $entity): void
+    {
         if ($entity->getId()) {
             // This is an existing form, load its config
             $doiConfig = $this->doiConfigManager->getFormDoiConfig($entity) ?? new FormDoiConfig();
@@ -71,6 +88,41 @@ class FormTypeExtension extends AbstractTypeExtension
             'data'        => $formData,
             'mapped'      => false,
             'mautic_form' => $entity,
+        ]);
+    }
+
+    private function addDoiActionConditions(FormInterface $symfonyForm, Form $mauticForm): void
+    {
+        $actionConditionsData = [];
+
+        if ($mauticForm->getId()) {
+            // Existing form - load conditions for all actions
+            $actions          = $this->formDoiActionManager->getFormDoiActionEntities($mauticForm);
+            $actionConditions = $this->doiActionConditionManager->getFormActionConditions($mauticForm);
+
+            foreach ($actions as $action) {
+                $actionId  = $action->getId();
+                $condition = $actionConditions[$actionId] ?? null;
+
+                $actionConditionsData[$actionId] = [
+                    'actionId'   => $actionId,
+                    'conditions' => $condition?->getConditions() ?? [],
+                ];
+            }
+        } elseif ($this->isCloneRequest()) {
+            $mainRequest  = $this->requestStack->getMainRequest();
+            $sourceFormId = (int) $mainRequest?->attributes->get('objectId');
+
+            // todo clone variant
+        }
+
+        $symfonyForm->add('doiActionConditionsConfig', FormDoiActionConditionsConfigType::class, [
+            'data' => [
+                'actionConditions' => $actionConditionsData,
+            ],
+            'mapped'      => false,
+            'mautic_form' => $mauticForm,
+            'label'       => false,
         ]);
     }
 

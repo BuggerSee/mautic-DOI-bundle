@@ -1,0 +1,132 @@
+{% block conditional_doi_action_condition_widget %}
+    {% set isPrototype = ('__name__' == form.vars.name) %}
+    {% set filterType = form.field.vars.value %}
+    {% set inGroup = form.vars.data is defined and form.vars.data.glue is defined and 'and' == form.vars.data.glue and false == first %}
+
+    {% set object = (form.vars.data.object is defined) ? form.vars.data.object : 'lead' %}
+    {% set iconClassesMap = {
+        'lead': 'ri-user-6-fill',
+        'company': 'ri-building-2-line',
+        'form': 'ri-survey-line'
+    } %}
+    {% set iconClass = iconClassesMap[object] is defined ? iconClassesMap[object] : iconClassesMap['lead'] %}
+
+    {% if isPrototype or fields[object][filterType].label is defined %}
+        <div class="doi-condition-panel{% if inGroup %} in-group{% endif %}" id="{{ id }}">
+            <div class="panel-heading pl-0 pr-0">
+                <div class="panel-glue col-sm-2 pl-0{% if '0' == form.vars.name %} hide{% endif %}">
+                    {{ form_widget(form.glue) }}
+                </div>
+                <div class="col-sm-2 pr-0 pull-right">
+                    <div class="doi-condition-button d-flex jc-end btn-group btn-group-xs pull-right" role="group">
+                        {% include '@MauticCore/Helper/button.html.twig' with {
+                            buttons: [
+                                {
+                                    label: 'mautic.lead_list.filter.label.removefilter',
+                                    variant: 'ghost',
+                                    icon_only: true,
+                                    size: 'sm',
+                                    danger: 'true',
+                                    icon: 'ri-delete-bin-line',
+                                    href: 'javascript: void(0);',
+                                    attributes: {
+                                    'class': 'remove-selected',
+                                },
+                                }
+                            ]
+                        } %}
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="col-xs-6 col-sm-3 field-name">
+                    <span><i class="object-icon {{ iconClass }}"
+                             aria-hidden="true"></i> {% if isPrototype %}__label__{% else %}{{ fields[object][filterType]['label'] }}{% endif %}</span>
+                </div>
+
+                <div class="col-xs-6 col-sm-3 padding-none">
+                    {{ form_widget(form.operator) }}
+                </div>
+
+                {% set hasErrors = (form.properties.vars.errors|length > 0) %}
+                <div class="col-xs-12 col-sm-6 padding-none {% if hasErrors %}has-error{% endif %}">
+                    <div class="properties-form">
+                        {{ form_widget(form.properties) }}
+                    </div>
+                    {{ form_errors(form.properties) }}
+                </div>
+                {{ form_widget(form.field) }}
+                {{ form_widget(form.type) }}
+                {{ form_widget(form.object) }}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{# Override the conditions collection to wrap all conditions in a container #}
+{% block _mauticform_doiActionConditionsConfig_actionConditions_entry_conditions_widget %}
+    <div class="doi-conditions-list" id="{{ id }}" data-conditions-container>
+        {% for i, filter in form %}
+            {% set isPrototype = '__name__' == filter.vars.name %}
+            {% for object, objectfields in form.parent.vars.fields %}
+                {% set isField = objectfields[filter.vars.value.field] is defined %}
+                {% if (isPrototype or isField) and not filter.isRendered %}
+                    {{ form_widget(filter, {'first': (0 == i)}) }}
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </div>
+{% endblock %}
+
+{# Override to prevent row wrapper on conditions collection #}
+{% block _mauticform_doiActionConditionsConfig_actionConditions_entry_conditions_row %}
+    {{ form_widget(form) }}
+{% endblock %}
+
+{# Override actionConditions collection #}
+{% block _mauticform_doiActionConditionsConfig_actionConditions_widget %}
+    {% for entry in form %}
+        {{ form_widget(entry) }}
+    {% endfor %}
+{% endblock %}
+
+
+{% block doi_action_conditions_config_widget %}
+    {% set conditionPrototype = form_widget(form.actionConditions.vars.prototype.conditions.vars.prototype) %}
+    {% set conditionPrototype = conditionPrototype|replace({
+        '[actionConditions][__name__][conditions][__name__]': '[actionConditions][__actionId__][conditions][__conditionIndex__]',
+        '_actionConditions___name___conditions___name__': '_actionConditions___actionId___conditions___conditionIndex__'
+    }) %}
+
+    <div class="hide" data-onload-callback="onFormDoiActionConditionsBuilder">
+        <select class="chosen form-control"
+                data-placeholder="{{ 'mautic.plugin.doi.form.available_conditions_list.placeholder'|trans }}"
+                data-doi-action-available-conditions-list
+                data-doi-condition-prototype="{{ conditionPrototype|e }}"
+                data-doi-render-action-condition-properties="{{ path('mautic_doi_render_doi_action_condition_action') }}"
+                data-new-fields-info="{{ 'mautic.plugin.doi.form.info.new_fields_added'|trans }}">
+            <option value=""></option>
+            {% for object, field in conditionChoiceFields %}
+                {% set icon = 'company' == object ? 'building' : 'user' %}
+                {% set header = translatorHasId('mautic.lead.' ~ object) ? ('mautic.lead.' ~ object)|trans : object|trans %}
+                <optgroup label="{{ header }}">
+                    {% for value, params in field %}
+                        {% set operators = params.operators is not empty ? params.operators|json_encode() : '{}' %}
+                        <option value="{{ value|e }}"
+                                data-field-id="available-action-skip-option_{{ object }}_{{ value }}"
+                                data-field-object="{{ object }}"
+                                data-field-type="{{ params.properties.type }}"
+                                data-field-operators="{{ operators|e }}"
+                                class="available-action-skip-option-type--{{ object }}">
+                            {{ params.label|trans }}
+                        </option>
+                    {% endfor %}
+                </optgroup>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="hide">
+        {{ form_widget(form.actionConditions) }}
+        {{ form_rest(form) }}
+    </div>
+{% endblock %}

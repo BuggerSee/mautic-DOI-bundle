@@ -37,14 +37,18 @@ class FormDoiActionManager
 
     /**
      * @param array<int, array<string, mixed>> $newActions
+     *
+     * @return array<string|int, FormDoiAction> Map of [id => action] for matching new action IDs
      */
-    public function saveActions(Form $form, array $newActions): void
+    public function saveActions(Form $form, array $newActions): array
     {
         $existingActions   = $this->formDoiActionRepository->findBy(['form' => $form]);
         $existingActionMap = [];
         foreach ($existingActions as $action) {
             $existingActionMap[$action->getId()] = $action;
         }
+
+        $resultMap = [];
 
         foreach ($newActions as $newAction) {
             if (isset($newAction['id']) && isset($existingActionMap[$newAction['id']])) {
@@ -64,6 +68,10 @@ class FormDoiActionManager
             $action->setOrder($newAction['order'] ?? 0);
 
             $this->entityManager->persist($action);
+
+            if (isset($newAction['id'])) {
+                $resultMap[$newAction['id']] = $action;
+            }
         }
 
         // Remove actions that are no longer present
@@ -72,5 +80,7 @@ class FormDoiActionManager
         }
 
         $this->entityManager->flush();
+
+        return $resultMap;
     }
 }

@@ -17,6 +17,7 @@ Variables
 {% form_theme form with [
     '@LeuchtfeuerDoi/FormTheme/SkipCondition/form_doiconfig_skipconditions_widget.html.twig',
     '@LeuchtfeuerDoi/FormTheme/SkipCondition/form_doiconfig_skipcondition_widget.html.twig',
+    '@LeuchtfeuerDoi/FormTheme/conditional_doi_action_conditions.html.twig',
 ] %}
 {% extends '@MauticCore/Default/content.html.twig' %}
 
@@ -32,7 +33,8 @@ Variables
 
 {% block content %}
     {{ includeScript('plugins/LeuchtfeuerDoiBundle/Assets/js/form-doi.js') }}
-    {{ includeScript('plugins/LeuchtfeuerDoiBundle/Assets/js/form-doi-condition-builder.js') }}
+    {{ includeScript('plugins/LeuchtfeuerDoiBundle/Assets/js/form-doi-skip-condition-builder.js') }}
+    {{ includeScript('plugins/LeuchtfeuerDoiBundle/Assets/js/form-doi-action-condition-builder.js') }}
     {{ includeStylesheet('plugins/LeuchtfeuerDoiBundle/Assets/css/form-doi.css') }}
     {% set formId = form.sessionId.vars.data %}
     {% set inBuilder = inBuilder|default(false) %}
@@ -276,7 +278,7 @@ Variables
                                     <h3 class="mt-md mb-md">{{ 'mautic.plugin.doi.form.tab.skipping_conditions.header'|trans }}</h3>
                                     <div class="available-filters mb-md pl-0 col-md-4"
                                          data-doi-skip-prototype="{{ form_widget(form.doiConfig.skipConditions.vars.prototype)|e }}"
-                                            data-doi-render-condition-properties="{{ path('mautic_doi_render_condition_action') }}"
+                                            data-doi-render-skip-condition-properties="{{ path('mautic_doi_render_skip_condition_action') }}"
                                          data-onload-callback="onFormDoiConditionsBuilder">
                                         <select class="chosen form-control" id="available-conditions-list" data-new-fields-info="{{ 'mautic.plugin.doi.form.info.new_fields_added'|trans }}">
                                             <option value=""></option>
