@@ -4,6 +4,7 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Form\Extension;
 
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Form\Type\FormType;
+use Mautic\FormBundle\Model\FormModel;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\LeuchtfeuerDoiBundle\Form\Type\FormDoiActionConditionsConfigType;
 use MauticPlugin\LeuchtfeuerDoiBundle\Form\Type\FormDoiConfigType;
@@ -11,6 +12,7 @@ use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiActionConditionManager;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiConfigManager;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiActionManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\FormDoiActionSessionManager;
 use Symfony\Component\Form\AbstractTypeExtension;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
@@ -26,6 +28,8 @@ class FormTypeExtension extends AbstractTypeExtension
         private RequestStack $requestStack,
         private DoiActionConditionManager $doiActionConditionManager,
         private FormDoiActionManager $formDoiActionManager,
+        private FormDoiActionSessionManager $formDoiActionSessionManager,
+        private FormModel $formModel
     ) {
     }
 
@@ -48,7 +52,10 @@ class FormTypeExtension extends AbstractTypeExtension
         $entity = $event->getData();
 
         $this->addDoiConfig($form, $entity);
-        $this->addDoiActionConditions($form, $entity);
+        if ($this->isCloneRequest()) {
+            $clonedActions = $this->handleFormClone($form);
+        }
+        $this->addDoiActionConditions($form, $entity, $clonedActions ?? []);
     }
 
     private function addDoiConfig(FormInterface $form, Form $entity): void
@@ -91,7 +98,10 @@ class FormTypeExtension extends AbstractTypeExtension
         ]);
     }
 
-    private function addDoiActionConditions(FormInterface $symfonyForm, Form $mauticForm): void
+    /**
+     * @param array<int, array<string, mixed>> $clonedActions
+     */
+    private function addDoiActionConditions(FormInterface $symfonyForm, Form $mauticForm, array $clonedActions): void
     {
         $actionConditionsData = [];
 
@@ -113,7 +123,17 @@ class FormTypeExtension extends AbstractTypeExtension
             $mainRequest  = $this->requestStack->getMainRequest();
             $sourceFormId = (int) $mainRequest?->attributes->get('objectId');
 
-            // todo clone variant
+            if ($sourceFormId) {
+                $actionConditions = $this->doiActionConditionManager->getFormActionConditionsByFormId($sourceFormId);
+
+                foreach ($clonedActions as $index => $action) {
+                    $condition                           = $actionConditions[$index] ?? null;
+                    $actionConditionsData[$action['id']] = [
+                        'actionId'   => $action['id'],
+                        'conditions' => $condition?->getConditions() ?? [],
+                    ];
+                }
+            }
         }
 
         $symfonyForm->add('doiActionConditionsConfig', FormDoiActionConditionsConfigType::class, [
@@ -124,6 +144,45 @@ class FormTypeExtension extends AbstractTypeExtension
             'mautic_form' => $mauticForm,
             'label'       => false,
         ]);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function handleFormClone(FormInterface $symfonyForm): array
+    {
+        $mainRequest  = $this->requestStack->getMainRequest();
+        $sourceFormId = (int) $mainRequest?->attributes->get('objectId');
+
+        if (!$sourceFormId) {
+            return [];
+        }
+
+        $actionUrl = $symfonyForm->getConfig()->getAction();
+        $path      = parse_url($actionUrl, PHP_URL_PATH);
+        $sessionId = basename((string) $path);
+
+        if (!$sessionId || !str_starts_with($sessionId, 'mautic_')) {
+            return [];
+        }
+
+        $sourceForm = $this->formModel->getEntity($sourceFormId);
+        if (!$sourceForm) {
+            return [];
+        }
+
+        $actionMap  = [];
+        $doiActions = $this->formDoiActionManager->getFormDoiActions($sourceForm);
+        foreach ($doiActions as &$action) {
+            $sourceId             = $action['id'];
+            $action['id']         = 'new'.hash('sha1', uniqid((string) mt_rand()));
+            $action['form']       = null;
+            $actionMap[$sourceId] = $action;
+        }
+
+        $this->formDoiActionSessionManager->loadActionsIntoSession($sessionId, $doiActions);
+
+        return $actionMap;
     }
 
     private function isCloneRequest(): bool
