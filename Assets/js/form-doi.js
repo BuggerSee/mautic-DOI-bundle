@@ -23,10 +23,16 @@
         const actionSelector = `#mauticform_doi-action_${actionId}`;
         const $action = mQuery(actionSelector);
         const isNewField = $action.length === 0;
+        const $newHtml = mQuery(actionHtml);
 
-        updateActionHtml($action, actionHtml, isNewField);
-        initializeActionFunctionality(actionSelector);
-        updateUIAfterAction(isNewField);
+        if (isNewField) {
+            updateActionHtml($action, actionHtml, isNewField);
+            initializeActionFunctionality(actionSelector);
+            updateUIAfterAction(isNewField);
+        } else {
+            const title = $newHtml.find('.action-label').text();
+            $action.find('.action-label').text(title);
+        }
     };
 
     function updateActionHtml($action, actionHtml, isNewField) {
