@@ -9,6 +9,8 @@ use Mautic\LeadBundle\Entity\CompanyLeadRepository;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Exception\PrimaryCompanyNotFoundException;
 use Mautic\LeadBundle\Segment\OperatorOptions;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiAction;
+use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionConditionRepository;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmissionRepository;
@@ -24,7 +26,8 @@ class RuleEvaluator
     public function __construct(
         private FormDoiSubmissionRepository $submissionRepository,
         private RequestStack $requestStack,
-        private CompanyLeadRepository $companyLeadRepository
+        private CompanyLeadRepository $companyLeadRepository,
+        private FormDoiActionConditionRepository $formDoiActionConditionRepository,
     ) {
     }
 
@@ -71,35 +74,75 @@ class RuleEvaluator
 
     public function shouldSkipBasedOnConditions(FormDoiConfig $config, Submission $submission, Lead $contact): bool
     {
-        $skipConditions = $config->getSkipConditions();
-        $leadArray      = $contact->getProfileFields();
+        $conditions = $config->getSkipConditions();
 
+        if (empty($conditions)) {
+            return false;
+        }
+
+        $dataSources = $this->gatherDataSources($submission, $contact);
+
+        return $this->evaluateConditions($conditions, $dataSources);
+    }
+
+    public function shouldExecuteAction(FormDoiAction $action, Submission $submission, Lead $contact): bool
+    {
+        $conditionEntity = $this->formDoiActionConditionRepository->findByActionId($action->getId());
+
+        if (null === $conditionEntity) {
+            // execute the action if there are no conditions
+            return true;
+        }
+
+        $conditions = $conditionEntity->getConditions();
+
+        if (empty($conditions)) {
+            return true;
+        }
+
+        $dataSources = $this->gatherDataSources($submission, $contact);
+
+        return $this->evaluateConditions($conditions, $dataSources);
+    }
+
+    /**
+     * @return array<string, mixed[]|null>
+     */
+    private function gatherDataSources(Submission $submission, Lead $contact): array
+    {
         try {
             $companyArray = $this->companyLeadRepository->getPrimaryCompanyByLeadId($contact->getId());
         } catch (PrimaryCompanyNotFoundException) {
             $companyArray = null;
         }
 
-        $formArray = $submission->getResults();
-
-        if (empty($skipConditions)) {
-            return false;
-        }
-
-        $dataSources = [
-            'lead'    => $leadArray,
+        return [
+            'lead'    => $contact->getProfileFields(),
             'company' => $companyArray,
-            'form'    => $formArray,
+            'form'    => $submission->getResults(),
         ];
+    }
 
+    /**
+     * @param array<int|string, array{
+     *     object?: string,
+     *     field?: string,
+     *     operator?: string,
+     *     glue?: string,
+     *     properties?: array{filter?: mixed}
+     * }> $conditions
+     * @param array<string, mixed[]|null> $dataSources
+     */
+    private function evaluateConditions(array $conditions, array $dataSources): bool
+    {
         $finalResult = false;
         $isFirstRule = true;
 
-        foreach ($skipConditions as $rule) {
-            $objectType = $rule['object'] ?? null;
-            $dataSource = $dataSources[$objectType] ?? null;
+        foreach ($conditions as $rule) {
+            $objectType    = $rule['object'] ?? null;
+            $dataSource    = $dataSources[$objectType] ?? null;
+            $currentResult = false;
 
-            $currentResult = false; // Default to false if a rule cannot be evaluated
             if (null !== $dataSource && isset($rule['field'], $rule['operator'])) {
                 $field       = $rule['field'];
                 $actualValue = $dataSource[$field] ?? null;
@@ -113,7 +156,7 @@ class RuleEvaluator
                 $finalResult = $currentResult;
                 $isFirstRule = false;
             } else {
-                $glue = $rule['glue'] ?? 'and'; // Default to 'and'
+                $glue = $rule['glue'] ?? 'and';
                 if ('and' === $glue) {
                     $finalResult = $finalResult && $currentResult;
                 } elseif ('or' === $glue) {
