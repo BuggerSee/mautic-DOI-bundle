@@ -67,7 +67,7 @@
     };
 
     const setupAddConditionsButton = function(actionId, $action) {
-        const $button = $action.find('[data-add-conditions-button="' + actionId + '"]');
+        const $button = $action.find('[data-add-doi-conditions-button="' + actionId + '"]');
 
         $button.on('click', function(e) {
             e.preventDefault();
@@ -77,14 +77,14 @@
 
     const showConditionsBuilder = function(actionId, $action) {
         const $buttonWrapper = $action.find('[data-add-doi-conditions-button-wrapper="' + actionId + '"]');
-        const $builderWrapper = $action.find('[data-action-condition-builder-wrapper="' + actionId + '"]');
+        const $builderWrapper = $action.find('[data-doi-action-condition-builder-wrapper="' + actionId + '"]');
         $buttonWrapper.hide();
         $builderWrapper.show();
     };
 
     const hideConditionsBuilder = function(actionId, $action) {
         const $buttonWrapper = $action.find('[data-add-doi-conditions-button-wrapper="' + actionId + '"]');
-        const $builderWrapper = $action.find('[data-action-condition-builder-wrapper="' + actionId + '"]');
+        const $builderWrapper = $action.find('[data-doi-action-condition-builder-wrapper="' + actionId + '"]');
         $builderWrapper.hide();
         $buttonWrapper.show();
     };
