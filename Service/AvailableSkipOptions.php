@@ -49,6 +49,14 @@ class AvailableSkipOptions
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public function getAvailableOptions(?Form $form = null, string $search = ''): array
+    {
+        return $this->getAvailableSkipOptions($form, $search);
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     private function createFieldEntry(Field $field): ?array

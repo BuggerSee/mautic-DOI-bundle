@@ -2,15 +2,22 @@
 
 namespace MauticPlugin\LeuchtfeuerDoiBundle\Form\Extension;
 
+use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Form\Type\FormType;
+use Mautic\FormBundle\Model\FormModel;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
+use MauticPlugin\LeuchtfeuerDoiBundle\Form\Type\FormDoiActionConditionsConfigType;
 use MauticPlugin\LeuchtfeuerDoiBundle\Form\Type\FormDoiConfigType;
 use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiActionConditionManager;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiConfigManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiActionManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\FormDoiActionSessionManager;
 use Symfony\Component\Form\AbstractTypeExtension;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 class FormTypeExtension extends AbstractTypeExtension
@@ -18,7 +25,11 @@ class FormTypeExtension extends AbstractTypeExtension
     public function __construct(
         private DoiConfigManager $doiConfigManager,
         private Config $pluginConfig,
-        private RequestStack $requestStack
+        private RequestStack $requestStack,
+        private DoiActionConditionManager $doiActionConditionManager,
+        private FormDoiActionManager $formDoiActionManager,
+        private FormDoiActionSessionManager $formDoiActionSessionManager,
+        private FormModel $formModel
     ) {
     }
 
@@ -33,9 +44,22 @@ class FormTypeExtension extends AbstractTypeExtension
 
     public function onPreSetData(FormEvent $event): void
     {
+        if (!$this->pluginConfig->isPublished()) {
+            return;
+        }
+
         $form   = $event->getForm();
         $entity = $event->getData();
 
+        $this->addDoiConfig($form, $entity);
+        if ($this->isCloneRequest()) {
+            $clonedActions = $this->handleFormClone($form);
+        }
+        $this->addDoiActionConditions($form, $entity, $clonedActions ?? []);
+    }
+
+    private function addDoiConfig(FormInterface $form, Form $entity): void
+    {
         if ($entity->getId()) {
             // This is an existing form, load its config
             $doiConfig = $this->doiConfigManager->getFormDoiConfig($entity) ?? new FormDoiConfig();
@@ -72,6 +96,93 @@ class FormTypeExtension extends AbstractTypeExtension
             'mapped'      => false,
             'mautic_form' => $entity,
         ]);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $clonedActions
+     */
+    private function addDoiActionConditions(FormInterface $symfonyForm, Form $mauticForm, array $clonedActions): void
+    {
+        $actionConditionsData = [];
+
+        if ($mauticForm->getId()) {
+            // Existing form - load conditions for all actions
+            $actions          = $this->formDoiActionManager->getFormDoiActionEntities($mauticForm);
+            $actionConditions = $this->doiActionConditionManager->getFormActionConditions($mauticForm);
+
+            foreach ($actions as $action) {
+                $actionId  = $action->getId();
+                $condition = $actionConditions[$actionId] ?? null;
+
+                $actionConditionsData[$actionId] = [
+                    'actionId'   => $actionId,
+                    'conditions' => $condition?->getConditions() ?? [],
+                ];
+            }
+        } elseif ($this->isCloneRequest()) {
+            $mainRequest  = $this->requestStack->getMainRequest();
+            $sourceFormId = (int) $mainRequest?->attributes->get('objectId');
+
+            if ($sourceFormId) {
+                $actionConditions = $this->doiActionConditionManager->getFormActionConditionsByFormId($sourceFormId);
+
+                foreach ($clonedActions as $index => $action) {
+                    $condition                           = $actionConditions[$index] ?? null;
+                    $actionConditionsData[$action['id']] = [
+                        'actionId'   => $action['id'],
+                        'conditions' => $condition?->getConditions() ?? [],
+                    ];
+                }
+            }
+        }
+
+        $symfonyForm->add('doiActionConditionsConfig', FormDoiActionConditionsConfigType::class, [
+            'data' => [
+                'actionConditions' => $actionConditionsData,
+            ],
+            'mapped'      => false,
+            'mautic_form' => $mauticForm,
+            'label'       => false,
+        ]);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function handleFormClone(FormInterface $symfonyForm): array
+    {
+        $mainRequest  = $this->requestStack->getMainRequest();
+        $sourceFormId = (int) $mainRequest?->attributes->get('objectId');
+
+        if (!$sourceFormId) {
+            return [];
+        }
+
+        $actionUrl = $symfonyForm->getConfig()->getAction();
+        $path      = parse_url($actionUrl, PHP_URL_PATH);
+        $sessionId = basename((string) $path);
+
+        if (!$sessionId || !str_starts_with($sessionId, 'mautic_')) {
+            return [];
+        }
+
+        $sourceForm = $this->formModel->getEntity($sourceFormId);
+        if (!$sourceForm) {
+            return [];
+        }
+
+        $actionMap  = [];
+        $doiActions = $this->formDoiActionManager->getFormDoiActions($sourceForm);
+        foreach ($doiActions as &$action) {
+            $sourceId             = $action['id'];
+            $action['id']         = 'new'.hash('sha1', uniqid((string) mt_rand()));
+            $action['form']       = null;
+            $actionMap[$sourceId] = $action;
+        }
+
+        $this->formDoiActionSessionManager->loadActionsIntoSession($sessionId, $doiActions);
+
+        return $actionMap;
     }
 
     private function isCloneRequest(): bool

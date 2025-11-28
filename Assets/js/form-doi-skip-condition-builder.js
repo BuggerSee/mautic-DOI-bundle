@@ -191,7 +191,7 @@
     };
 
     const loadFilterForm = function(formId, filterNum, fieldObject, fieldAlias, operator, resultHtml, search = null) {
-        const url = mQuery('[data-doi-render-condition-properties]').data('doi-render-condition-properties');
+        const url = mQuery('[data-doi-render-skip-condition-properties]').data('doi-render-skip-condition-properties');
         mQuery.ajax({
             showLoadingBar: true,
             url: url,

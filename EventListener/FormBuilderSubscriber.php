@@ -8,6 +8,7 @@ use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Event\FormEvent;
 use Mautic\FormBundle\FormEvents;
 use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
+use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiActionConditionManager;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\DoiConfigManager;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiActionManager;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\FormDoiActionSessionManager;
@@ -16,13 +17,15 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 class FormBuilderSubscriber implements EventSubscriberInterface
 {
-    private const SESSION_ID_KEY = 'sessionId';
-    private const DOI_CONFIG_KEY = 'doiConfig';
+    private const SESSION_ID_KEY                   = 'sessionId';
+    private const DOI_CONFIG_KEY                   = 'doiConfig';
+    private const DOI_ACTION_CONDITIONS_CONFIG_KEY = 'doiActionConditionsConfig';
 
     public function __construct(
         private FormDoiActionManager $formDoiActionManager,
         private FormDoiActionSessionManager $formDoiActionSessionManager,
         private DoiConfigManager $doiConfigManager,
+        private DoiActionConditionManager $doiActionConditionManager,
         private RequestStack $requestStack,
         private Config $pluginConfig
     ) {
@@ -49,17 +52,23 @@ class FormBuilderSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $sessionId = $mauticForm[self::SESSION_ID_KEY] ?? '';
-        $doiConfig = $mauticForm[self::DOI_CONFIG_KEY] ?? [];
+        $sessionId                  = $mauticForm[self::SESSION_ID_KEY] ?? '';
+        $doiConfig                  = $mauticForm[self::DOI_CONFIG_KEY] ?? [];
+        $doiActionsConditionsConfig = $mauticForm[self::DOI_ACTION_CONDITIONS_CONFIG_KEY] ?? [];
 
-        $this->handleSaveDoiActions($form, $sessionId);
+        $this->handleSaveDoiActions($form, $sessionId, $doiActionsConditionsConfig);
         $this->handleSaveDoiConfig($form, $doiConfig);
     }
 
-    private function handleSaveDoiActions(Form $form, string $sessionId): void
+    /**
+     * @param array<string, mixed> $doiActionsConditionsConfig
+     */
+    private function handleSaveDoiActions(Form $form, string $sessionId, array $doiActionsConditionsConfig): void
     {
-        $actions = $this->formDoiActionSessionManager->getActionsFromSession($sessionId);
-        $this->formDoiActionManager->saveActions($form, $actions);
+        $actions                = $this->formDoiActionSessionManager->getActionsFromSession($sessionId);
+        $actionsMap             = $this->formDoiActionManager->saveActions($form, $actions);
+        $actionConditionsData   = $doiActionsConditionsConfig['actionConditions'] ?? [];
+        $this->doiActionConditionManager->saveActionConditions($form, $actionsMap, $actionConditionsData);
     }
 
     /**

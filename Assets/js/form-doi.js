@@ -1,6 +1,7 @@
 (function (Mautic, mQuery){
     Mautic.onFormDoiActionsBuilder = function() {
         Mautic.initHideItemButton('#mauticforms-doi-verified-actions');
+        formDeleteDoiActionListener();
     };
     
     Mautic.onFormDoiBuilder = function() {
@@ -23,10 +24,16 @@
         const actionSelector = `#mauticform_doi-action_${actionId}`;
         const $action = mQuery(actionSelector);
         const isNewField = $action.length === 0;
+        const $newHtml = mQuery(actionHtml);
 
-        updateActionHtml($action, actionHtml, isNewField);
-        initializeActionFunctionality(actionSelector);
-        updateUIAfterAction(isNewField);
+        if (isNewField) {
+            updateActionHtml($action, actionHtml, isNewField);
+            initializeActionFunctionality(actionSelector);
+            updateUIAfterAction(isNewField);
+        } else {
+            const title = $newHtml.find('.action-label').text();
+            $action.find('.action-label').text(title);
+        }
     };
 
     function updateActionHtml($action, actionHtml, isNewField) {
@@ -75,4 +82,25 @@
 
         mQuery('#form-doi-action-placeholder').remove();
     }
+
+    const formDeleteDoiActionListener = function() {
+        mQuery(document).ajaxComplete(function(event, xhr, settings) {
+            if (settings.url && settings.url.includes('forms-doi/action/delete')) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    console.log('Form action response:', response);
+                    if (response.mauticContent === 'formDoiAction') {
+                        const urlPath = settings.url.split('?')[0];
+                        const urlParts = urlPath.split('/');
+                        const actionId = urlParts[urlParts.length - 1];
+                        const $action = mQuery('div[data-doi-action="' + actionId + '"]');
+                        $action.hide('fast');
+                    }
+                } catch (e) {
+                    console.log('Error processing form action response:', e);
+                }
+            }
+        });
+    };
+
 }(Mautic, mQuery));

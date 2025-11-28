@@ -58,6 +58,13 @@ class FormDoiAction
         return $this->id;
     }
 
+    public function setId(?int $id): self
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
     public function setOrder(int $order): self
     {
         $this->order = $order;

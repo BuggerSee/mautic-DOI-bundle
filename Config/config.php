@@ -5,7 +5,7 @@ declare(strict_types=1);
 return [
     'name'        => 'Email Verification and Double Opt-In (DOI) by Leuchtfeuer',
     'description' => 'Universal email verification for Mautic, including Double Opt-In (DOI)',
-    'version'     => '1.1.2',
+    'version'     => '1.2.0',
     'author'      => 'Leuchtfeuer Digital Marketing GmbH',
     'routes'      => [
         'main' => [
@@ -13,9 +13,13 @@ return [
                 'path'       => '/forms-doi/action/{objectAction}/{objectId}',
                 'controller' => 'MauticPlugin\LeuchtfeuerDoiBundle\Controller\DoiActionController::executeAction',
             ],
-            'mautic_doi_render_condition_action' => [
-                'path'       => '/forms-doi/render-condition',
-                'controller' => 'MauticPlugin\LeuchtfeuerDoiBundle\Controller\ConditionBuilderController::renderConditionAction',
+            'mautic_doi_render_skip_condition_action' => [
+                'path'       => '/forms-doi/render-skip-condition',
+                'controller' => 'MauticPlugin\LeuchtfeuerDoiBundle\Controller\ConditionBuilderController::renderSkipConditionAction',
+            ],
+            'mautic_doi_render_doi_action_condition_action' => [
+                'path'       => '/forms-doi/render-doi-action-condition',
+                'controller' => 'MauticPlugin\LeuchtfeuerDoiBundle\Controller\ConditionBuilderController::renderDoiActionConditionAction',
             ],
         ],
         'public' => [
