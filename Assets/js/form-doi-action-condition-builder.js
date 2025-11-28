@@ -495,7 +495,7 @@
             if (settings.url && settings.url.includes('forms-doi/action/new')) {
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    if (response.mauticContent === 'formAction' && response.success === 1) {
+                    if (response.mauticContent === 'formDoiAction') {
                         const actionId = response.actionId;
                         const $action = mQuery('div[data-doi-action="' + actionId + '"]');
                         const $templateSelect = mQuery('[data-onload-callback="onFormDoiActionConditionsBuilder"]')
