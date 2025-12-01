@@ -53,7 +53,7 @@ Alternatively, it can be installed manually, following the usual steps:
 5. Post-verification actions execute automatically
 
 ## Known Issues
-/
+- Campaign Forms do not withhold the contact from the campaign until the email-verification has been successful, but instead start the campaign immediately
 
 ## Troubleshooting
 Make sure you have not only installed but also enabled the Plugin.
