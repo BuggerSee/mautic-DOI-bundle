@@ -46,6 +46,8 @@
 
         if (fieldObject === 'company') {
             $prototype.find(".object-icon").removeClass('ri-user-6-fill').addClass('ri-building-2-line');
+        } else if (fieldObject === 'form') {
+            $prototype.find(".object-icon").removeClass('ri-user-6-fill').addClass('ri-survey-line');
         } else {
             $prototype.find(".object-icon").removeClass('ri-building-2-line').addClass('ri-user-6-fill');
         }
