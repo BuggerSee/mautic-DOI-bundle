@@ -11,6 +11,7 @@ use Mautic\PluginBundle\Entity\Integration;
 class Config
 {
     public const DEFAULT_FOLLOWUP_WAIT_TIME = 24;
+    public const DEFAULT_DOI_LINK_TIMEOUT   = 48;
 
     public function __construct(
         private IntegrationsHelper $integrationsHelper
@@ -43,6 +44,24 @@ class Config
             return self::DEFAULT_FOLLOWUP_WAIT_TIME;
         } catch (IntegrationNotFoundException) {
             return self::DEFAULT_FOLLOWUP_WAIT_TIME;
+        }
+    }
+
+    public function getDoiLinkTimeout(): int
+    {
+        try {
+            $integrationSettings = $this->getIntegrationEntity()->getFeatureSettings();
+            assert(is_array($integrationSettings));
+
+            $timeout = $integrationSettings['integration']['doi_link_timeout'] ?? null;
+
+            if (is_numeric($timeout) && (int) $timeout >= 1) {
+                return (int) $timeout;
+            }
+
+            return self::DEFAULT_DOI_LINK_TIMEOUT;
+        } catch (IntegrationNotFoundException) {
+            return self::DEFAULT_DOI_LINK_TIMEOUT;
         }
     }
 
