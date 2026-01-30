@@ -15,13 +15,14 @@ class PublicControllerFunctionalTest extends MauticMysqlTestCase
 {
     protected $useCleanupRollback = false;
     private FormFixtureHelper $formFixtureHelper;
+    private PluginFixtureHelper $pluginFixtureHelper;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $pluginFixtureHelper = new PluginFixtureHelper($this->em);
-        $pluginFixtureHelper->createAndEnablePlugin();
+        $this->pluginFixtureHelper = new PluginFixtureHelper($this->em);
+        $this->pluginFixtureHelper->createAndEnablePlugin();
         $this->formFixtureHelper = new FormFixtureHelper($this->em, $this->client);
     }
 
@@ -100,5 +101,119 @@ class PublicControllerFunctionalTest extends MauticMysqlTestCase
 
         // Verify redirect to error URL
         $this->assertSame('https://example.com/error', $verificationResponse->getUri());
+    }
+
+    /**
+     * Test that an expired DOI link redirects to error URL and sets status to timeout.
+     */
+    public function testVerifyEmailActionWithExpiredLinkRedirectsToErrorUrl(): void
+    {
+        // Set timeout to 1 hour for testing
+        $this->pluginFixtureHelper->modifyDoiLinkTimeout(1);
+
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Timeout Form');
+        $this->formFixtureHelper->createDoiConfig(
+            form: $form,
+            successRedirectUrl: 'https://example.com/success',
+            errorRedirectUrl: 'https://example.com/timeout-error'
+        );
+
+        // Create a DOI submission that was created 2 hours ago (expired)
+        $expiredDate    = (new \DateTime())->modify('-2 hours');
+        $doiSubmission  = $this->formFixtureHelper->createDoiSubmission($form, 'expired@example.com', $expiredDate);
+
+        Assert::assertSame('pending', $doiSubmission->getStatus());
+
+        // Create the token
+        $formId    = $form->getId();
+        $hash      = $doiSubmission->getHash();
+        $tokenData = "{$formId}:{$hash}";
+        $token     = base64_encode($tokenData);
+
+        // Call the verification endpoint with the expired token
+        $verificationResponse = $this->client->request(Request::METHOD_GET, "/email/verify/{$token}");
+
+        // Verify redirect to error URL
+        $this->assertSame('https://example.com/timeout-error', $verificationResponse->getUri());
+
+        // Refresh and verify status is now timeout
+        $this->em->refresh($doiSubmission);
+        Assert::assertSame(FormDoiSubmission::STATUS_TIMEOUT, $doiSubmission->getStatus());
+    }
+
+    /**
+     * Test that a valid (non-expired) DOI link still works correctly.
+     */
+    public function testVerifyEmailActionWithNonExpiredLinkSucceeds(): void
+    {
+        // Set timeout to 24 hours
+        $this->pluginFixtureHelper->modifyDoiLinkTimeout(24);
+
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Valid Form');
+        $this->formFixtureHelper->createDoiConfig(
+            form: $form,
+            successRedirectUrl: 'https://example.com/success',
+            errorRedirectUrl: 'https://example.com/error'
+        );
+
+        // Create a DOI submission that was created 1 hour ago (not expired with 24 hour timeout)
+        $recentDate     = (new \DateTime())->modify('-1 hour');
+        $doiSubmission  = $this->formFixtureHelper->createDoiSubmission($form, 'valid@example.com', $recentDate);
+
+        Assert::assertSame('pending', $doiSubmission->getStatus());
+
+        // Create the token
+        $formId    = $form->getId();
+        $hash      = $doiSubmission->getHash();
+        $tokenData = "{$formId}:{$hash}";
+        $token     = base64_encode($tokenData);
+
+        // Call the verification endpoint
+        $verificationResponse = $this->client->request(Request::METHOD_GET, "/email/verify/{$token}");
+
+        // Verify redirect to success URL
+        $this->assertSame('https://example.com/success', $verificationResponse->getUri());
+
+        // Refresh and verify status is confirmed
+        $this->em->refresh($doiSubmission);
+        Assert::assertSame(FormDoiSubmission::STATUS_CONFIRMED, $doiSubmission->getStatus());
+        Assert::assertNotNull($doiSubmission->getDateConfirmed());
+    }
+
+    /**
+     * Test that an already timed-out submission returns error without rechecking expiration.
+     */
+    public function testVerifyEmailActionWithAlreadyTimedOutSubmissionReturnsError(): void
+    {
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Already Timeout Form');
+        $this->formFixtureHelper->createDoiConfig(
+            form: $form,
+            successRedirectUrl: 'https://example.com/success',
+            errorRedirectUrl: 'https://example.com/already-timeout'
+        );
+
+        // Create a DOI submission and manually set it to timeout status
+        $doiSubmission = $this->formFixtureHelper->createDoiSubmission($form, 'timeout@example.com', new \DateTime());
+        $doiSubmission->timeout();
+        $this->em->persist($doiSubmission);
+        $this->em->flush();
+
+        Assert::assertSame(FormDoiSubmission::STATUS_TIMEOUT, $doiSubmission->getStatus());
+
+        // Create the token
+        $formId    = $form->getId();
+        $hash      = $doiSubmission->getHash();
+        $tokenData = "{$formId}:{$hash}";
+        $token     = base64_encode($tokenData);
+
+        // Call the verification endpoint
+        $verificationResponse = $this->client->request(Request::METHOD_GET, "/email/verify/{$token}");
+
+        // Verify redirect to error URL
+        $this->assertSame('https://example.com/already-timeout', $verificationResponse->getUri());
+
+        // Status should still be timeout
+        $this->em->refresh($doiSubmission);
+        Assert::assertSame(FormDoiSubmission::STATUS_TIMEOUT, $doiSubmission->getStatus());
     }
 }

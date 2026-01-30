@@ -16,6 +16,7 @@ class FormDoiSubmission
     public const STATUS_PENDING              = 'pending';
     public const STATUS_CONFIRMED            = 'confirmed';
     public const STATUS_SKIPPED              = 'skipped';
+    public const STATUS_TIMEOUT              = 'timeout';
     public const SKIP_REASON_COOKIE_MATCH    = 'cookie_match';
     public const SKIP_REASON_CONDITION_MATCH = 'condition_match';
 
@@ -250,5 +251,20 @@ class FormDoiSubmission
         $this->skipReason          = $reason;
 
         return $this;
+    }
+
+    /**
+     * Marks the submission as timed out.
+     */
+    public function timeout(): self
+    {
+        $this->status = self::STATUS_TIMEOUT;
+
+        return $this;
+    }
+
+    public function isTimedOut(): bool
+    {
+        return self::STATUS_TIMEOUT === $this->status;
     }
 }
