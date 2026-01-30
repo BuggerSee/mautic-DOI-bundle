@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Command;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
-use Mautic\FormBundle\Entity\Form;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
-use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\FormFixtureHelper;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
@@ -92,7 +90,7 @@ class UpdateTimeoutCommandFunctionalTest extends MauticMysqlTestCase
         $form = $this->formFixtureHelper->createFormViaApi('Test DOI Form');
 
         // Create a submission that should be expired with 12h timeout but not with 48h timeout
-        $expiredSubmission   = $this->formFixtureHelper->createDoiSubmission($form, 'expired@example.com', new \DateTime('-13 hours'));
+        $expiredSubmission    = $this->formFixtureHelper->createDoiSubmission($form, 'expired@example.com', new \DateTime('-13 hours'));
         $notExpiredSubmission = $this->formFixtureHelper->createDoiSubmission($form, 'notexpired@example.com', new \DateTime('-11 hours'));
 
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:update-timeout');
