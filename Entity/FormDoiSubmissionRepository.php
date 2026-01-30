@@ -37,4 +37,27 @@ class FormDoiSubmissionRepository extends CommonRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    /**
+     * Find pending submissions that have exceeded the expiration threshold.
+     *
+     * @return list<FormDoiSubmission>
+     */
+    public function findPendingExpired(
+        \DateTimeInterface $expirationThreshold,
+        ?int $limit = null
+    ): array {
+        $qb = $this->createQueryBuilder('s')
+            ->andWhere('s.status = :pending')
+            ->andWhere('s.dateCreated < :threshold')
+            ->setParameter('pending', FormDoiSubmission::STATUS_PENDING)
+            ->setParameter('threshold', $expirationThreshold)
+            ->orderBy('s.id', Criteria::ASC);
+
+        if (null !== $limit) {
+            $qb->setMaxResults($limit);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
 }
