@@ -79,15 +79,16 @@ class FormTypeExtension extends AbstractTypeExtension
 
         // Convert entities to IDs for the form
         $formData = [
-            'verificationEmailId'     => $doiConfig->getVerificationEmail()?->getId(),
-            'followUpEmailId'         => $doiConfig->getFollowUpEmail()?->getId(),
-            'successRedirectUrl'      => $doiConfig->getSuccessRedirectUrl(),
-            'errorRedirectUrl'        => $doiConfig->getErrorRedirectUrl(),
-            'enabled'                 => $doiConfig->isEnabled(),
-            'skipOnCookie'            => $doiConfig->isSkipOnCookie(),
-            'skipPostAction'          => $doiConfig->getSkipPostAction(),
-            'skipPostActionProperty'  => $doiConfig->getSkipPostActionProperty(),
-            'skipConditions'          => $doiConfig->getSkipConditions(),
+            'verificationEmailId'      => $doiConfig->getVerificationEmail()?->getId(),
+            'followUpEmailId'          => $doiConfig->getFollowUpEmail()?->getId(),
+            'successRedirectUrl'       => $doiConfig->getSuccessRedirectUrl(),
+            'errorRedirectUrl'         => $doiConfig->getErrorRedirectUrl(),
+            'enabled'                  => $doiConfig->isEnabled(),
+            'skipOnCookie'             => $doiConfig->isSkipOnCookie(),
+            'skipPostAction'           => $doiConfig->getSkipPostAction(),
+            'skipPostActionProperty'   => $doiConfig->getSkipPostActionProperty(),
+            'skipConditions'           => $doiConfig->getSkipConditions(),
+            'deleteAfterTimeoutDays'   => $doiConfig->getDeleteAfterTimeoutDays(),
         ];
 
         // Add DOI config fields with ID data

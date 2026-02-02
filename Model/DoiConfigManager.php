@@ -61,6 +61,7 @@ class DoiConfigManager
         $doiConfig->setSkipPostAction($formData['skipPostAction'] ?? null);
         $doiConfig->setSkipPostActionProperty($formData['skipPostActionProperty'] ?? null);
         $doiConfig->setSkipConditions($formData['skipConditions'] ?? null);
+        $doiConfig->setDeleteAfterTimeoutDays(is_numeric($formData['deleteAfterTimeoutDays'] ?? null) ? (int) $formData['deleteAfterTimeoutDays'] : null);
 
         $doiConfig->setForm($form);
         $doiConfig->setUpdatedAt(new \DateTime());

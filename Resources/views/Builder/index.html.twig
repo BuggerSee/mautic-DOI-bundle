@@ -273,6 +273,9 @@ Variables
                                     {{ form_row(form.doiConfig.followUpEmailId) }}
                                     {{ form_row(form.doiConfig.errorRedirectUrl) }}
                                 </div>
+                                <div class="col-md-6">
+                                    {{ form_row(form.doiConfig.deleteAfterTimeoutDays) }}
+                                </div>
 
                                 <div class="col-md-12 mb-xl">
                                     <h3 class="mt-md mb-md">{{ 'mautic.plugin.doi.form.tab.skipping_conditions.header'|trans }}</h3>

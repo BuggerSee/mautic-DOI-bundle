@@ -59,6 +59,9 @@ class FormDoiConfig
     #[ORM\Column(name: 'skip_post_action_property', type: 'text', nullable: true)]
     private ?string $skipPostActionProperty = null;
 
+    #[ORM\Column(name: 'delete_after_timeout_days', type: 'integer', nullable: true)]
+    private ?int $deleteAfterTimeoutDays = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
@@ -230,6 +233,18 @@ class FormDoiConfig
     public function setSkipPostActionProperty(?string $skipPostActionProperty): self
     {
         $this->skipPostActionProperty = $skipPostActionProperty;
+
+        return $this;
+    }
+
+    public function getDeleteAfterTimeoutDays(): ?int
+    {
+        return $this->deleteAfterTimeoutDays;
+    }
+
+    public function setDeleteAfterTimeoutDays(?int $deleteAfterTimeoutDays): self
+    {
+        $this->deleteAfterTimeoutDays = $deleteAfterTimeoutDays;
 
         return $this;
     }

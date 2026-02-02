@@ -141,6 +141,30 @@ class FormDoiConfigType extends AbstractType
                 'required'   => false,
             ]);
 
+        // Build choices array: Never + 1-30 days (with singular/plural)
+        $deleteAfterTimeoutChoices = [
+            $this->translator->trans('mautic.plugin.doi.form.field.delete_after_timeout_days.never') => 'never',
+        ];
+        for ($i = 1; $i <= 30; ++$i) {
+            $label = $this->translator->trans(
+                'mautic.plugin.doi.form.field.delete_after_timeout_days.day_count',
+                ['%count%' => $i]
+            );
+            $deleteAfterTimeoutChoices[$label] = $i;
+        }
+
+        $builder->add('deleteAfterTimeoutDays', ChoiceType::class, [
+            'choices'     => $deleteAfterTimeoutChoices,
+            'label'       => 'mautic.plugin.doi.form.field.delete_after_timeout_days',
+            'label_attr'  => ['class' => 'control-label'],
+            'attr'        => [
+                'class'   => 'form-control',
+                'tooltip' => 'mautic.plugin.doi.form.field.delete_after_timeout_days.tooltip',
+            ],
+            'required'    => false,
+            'placeholder' => false,
+        ]);
+
         if (isset($options['mautic_form'])) {
             $builder->setAttribute('mautic_form', $options['mautic_form']);
         }
