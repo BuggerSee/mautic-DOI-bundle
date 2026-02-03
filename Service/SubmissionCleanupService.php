@@ -8,6 +8,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Mautic\FormBundle\Entity\Submission;
 use Mautic\FormBundle\Helper\FormUploader;
+use Mautic\LeadBundle\Entity\Lead;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfigRepository;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
@@ -89,6 +90,10 @@ class SubmissionCleanupService
     /**
      * Delete a single DOI submission and all related data.
      *
+     * If the contact was created by this submission (new contact), the contact
+     * is also deleted. If the contact existed before the submission (previously known),
+     * only the submission is deleted and the contact remains.
+     *
      * @return bool True if deleted, false if skipped
      */
     public function deleteSubmission(FormDoiSubmission $doiSubmission): bool
@@ -115,6 +120,10 @@ class SubmissionCleanupService
         $formAlias = $form->getAlias();
         $conn      = $this->getConnection();
 
+        // Determine if contact should be deleted (new contact created by this submission)
+        $lead                = $doiSubmission->getLead();
+        $shouldDeleteContact = $this->shouldDeleteContact($lead, $doiSubmission);
+
         try {
             $conn->beginTransaction();
 
@@ -127,6 +136,12 @@ class SubmissionCleanupService
 
             // delete core Submission entity (cascades to FormDoiSubmission via FK)
             $this->entityManager->remove($coreSubmission);
+
+            // Delete contact if it was created by this submission
+            if ($shouldDeleteContact && null !== $lead) {
+                $this->entityManager->remove($lead);
+            }
+
             $this->entityManager->flush();
 
             $conn->commit();
@@ -160,6 +175,30 @@ class SubmissionCleanupService
 
             return false;
         }
+    }
+
+    /**
+     * Determine if a contact should be deleted along with the submission.
+     *
+     * A contact is considered "new" (created by this submission) if the contact's
+     * dateAdded matches the submission's dateCreated. If the contact existed before
+     * the submission was created, it is considered "previously known" and should not be deleted.
+     */
+    private function shouldDeleteContact(?Lead $lead, FormDoiSubmission $doiSubmission): bool
+    {
+        if (null === $lead) {
+            return false;
+        }
+
+        $contactDateAdded      = $lead->getDateAdded();
+        $submissionDateCreated = $doiSubmission->getDateCreated();
+
+        if (null === $contactDateAdded) {
+            return false;
+        }
+
+        // Contact is considered "new" if it was created at the same time as the submission
+        return $contactDateAdded->getTimestamp() === $submissionDateCreated->getTimestamp();
     }
 
     /**
