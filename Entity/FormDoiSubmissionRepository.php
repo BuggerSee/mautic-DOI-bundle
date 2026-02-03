@@ -88,4 +88,23 @@ class FormDoiSubmissionRepository extends CommonRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    /**
+     * Check if a lead has other pending DOI submissions besides the given one.
+     */
+    public function hasOtherPendingSubmissionsForLead(int $leadId, int $excludeSubmissionId): bool
+    {
+        $count = $this->createQueryBuilder('s')
+            ->select('COUNT(s.id)')
+            ->where('s.lead = :leadId')
+            ->andWhere('s.status = :pending')
+            ->andWhere('s.id != :excludeId')
+            ->setParameter('leadId', $leadId)
+            ->setParameter('pending', FormDoiSubmission::STATUS_PENDING)
+            ->setParameter('excludeId', $excludeSubmissionId)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $count > 0;
+    }
 }

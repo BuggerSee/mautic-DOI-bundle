@@ -181,8 +181,10 @@ class SubmissionCleanupService
      * Determine if a contact should be deleted along with the submission.
      *
      * A contact is considered "new" (created by this submission) if the contact's
-     * dateAdded matches the submission's dateCreated. If the contact existed before
+     * dateIdentified matches the submission's dateCreated. If the contact existed before
      * the submission was created, it is considered "previously known" and should not be deleted.
+     *
+     * Additionally, if the contact has other pending DOI submissions, it should not be deleted.
      */
     private function shouldDeleteContact(?Lead $lead, FormDoiSubmission $doiSubmission): bool
     {
@@ -190,15 +192,27 @@ class SubmissionCleanupService
             return false;
         }
 
-        $contactDateAdded      = $lead->getDateIdentified();
-        $submissionDateCreated = $doiSubmission->getDateCreated();
+        $leadId       = $lead->getId();
+        $submissionId = $doiSubmission->getId();
 
-        if (null === $contactDateAdded) {
+        if (null === $leadId || null === $submissionId) {
             return false;
         }
 
-        // Contact is considered "new" if it was created at the same time as the submission
-        return $contactDateAdded->getTimestamp() === $submissionDateCreated->getTimestamp();
+        // Don't delete if contact has other pending DOI submissions
+        if ($this->submissionRepository->hasOtherPendingSubmissionsForLead($leadId, $submissionId)) {
+            return false;
+        }
+
+        $contactDateIdentified = $lead->getDateIdentified();
+        $submissionDateCreated = $doiSubmission->getDateCreated();
+
+        if (null === $contactDateIdentified) {
+            return false;
+        }
+
+        // Contact is considered "new" if it was identified at the same time as the submission
+        return $contactDateIdentified->getTimestamp() === $submissionDateCreated->getTimestamp();
     }
 
     /**

@@ -221,6 +221,58 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         Assert::assertSame('knowncontact@example.com', $existingContactReloaded->getEmail());
     }
 
+    /**
+     * If contact has other pending DOI submissions, the contact should NOT be deleted
+     * even if it was created by this submission.
+     */
+    public function testContactWithOtherPendingSubmissionsIsNotDeleted(): void
+    {
+        $form1 = $this->formFixtureHelper->createFormViaApi('Form One');
+        $form2 = $this->formFixtureHelper->createFormViaApi('Form Two');
+
+        $this->createDoiConfigWithCleanup($form1, 7);
+        $this->createDoiConfigWithCleanup($form2, 7);
+
+        // Create a NEW contact with an expired submission on form1
+        $expiredDate = new \DateTime('-8 days');
+        $expiredSubmission = $this->createDoiSubmissionWithNewContact(
+            $form1,
+            'multisubmit@example.com',
+            $expiredDate
+        );
+        $contact   = $expiredSubmission->getLead();
+        $contactId = $contact->getId();
+        $expiredSubmissionId = $expiredSubmission->getId();
+
+        // Create a second PENDING submission on form2 for the same contact (not expired)
+        $recentSubmission = $this->createDoiSubmissionForExistingContact(
+            $form2,
+            $contact,
+            new \DateTime('-5 days')
+        );
+        $recentSubmissionId = $recentSubmission->getId();
+
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:cleanup-submissions');
+        $output        = $commandTester->getDisplay();
+
+        // Only the expired submission should be deleted
+        Assert::assertStringContainsString('Submissions deleted: 1', $output);
+
+        // Verify expired submission is deleted
+        $this->em->clear();
+        $deletedSubmission = $this->em->getRepository(FormDoiSubmission::class)->find($expiredSubmissionId);
+        Assert::assertNull($deletedSubmission, 'Expired DOI submission should be deleted');
+
+        // Verify recent submission still exists
+        $existingSubmission = $this->em->getRepository(FormDoiSubmission::class)->find($recentSubmissionId);
+        Assert::assertNotNull($existingSubmission, 'Recent pending submission should still exist');
+
+        // Verify contact is NOT deleted (has other pending submission)
+        $existingContact = $this->em->getRepository(Lead::class)->find($contactId);
+        Assert::assertNotNull($existingContact, 'Contact with other pending submissions should NOT be deleted');
+        Assert::assertSame('multisubmit@example.com', $existingContact->getEmail());
+    }
+
     // =========================================================================
     // Command options tests
     // =========================================================================
