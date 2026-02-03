@@ -37,13 +37,34 @@ final class FeatureSettingsType extends AbstractType
             ]
         );
 
+        $builder->add(
+            'doi_link_timeout',
+            IntegerType::class,
+            [
+                'label'       => 'mautic.plugin.doi.config.doi_link_timeout',
+                'attr'        => [
+                    'tooltip' => 'mautic.plugin.doi.config.doi_link_timeout_tooltip',
+                    'class'   => 'form-control',
+                ],
+                'constraints' => [
+                    new GreaterThan([
+                        'value'   => 0,
+                        'message' => 'mautic.plugin.doi.config.doi_link_timeout.positive',
+                    ]),
+                ],
+            ]
+        );
+
         $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event): void {
             $data = $event->getData();
             if (null === $data || (is_array($data) && !isset($data['followup_wait_time']))) {
                 $data                       = $data ?: [];
                 $data['followup_wait_time'] = Config::DEFAULT_FOLLOWUP_WAIT_TIME;
-                $event->setData($data);
             }
+            if (is_array($data) && !isset($data['doi_link_timeout'])) {
+                $data['doi_link_timeout'] = Config::DEFAULT_DOI_LINK_TIMEOUT;
+            }
+            $event->setData($data);
         });
     }
 }

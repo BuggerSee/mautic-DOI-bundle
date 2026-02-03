@@ -28,6 +28,7 @@ final class PluginFixtureHelper
         $integration->setName('LeuchtfeuerDoi');
         $integration->setFeatureSettings(['integration' => [
             'followup_wait_time' => Config::DEFAULT_FOLLOWUP_WAIT_TIME,
+            'doi_link_timeout'   => Config::DEFAULT_DOI_LINK_TIMEOUT,
         ]]);
         $this->em->persist($integration);
         $this->em->flush();
@@ -54,6 +55,21 @@ final class PluginFixtureHelper
 
         $featureSettings                                      = $integration->getFeatureSettings();
         $featureSettings['integration']['followup_wait_time'] = $waitTime;
+
+        $integration->setFeatureSettings($featureSettings);
+        $this->em->persist($integration);
+        $this->em->flush();
+    }
+
+    public function modifyDoiLinkTimeout(int $timeout): void
+    {
+        $integration = $this->em->getRepository(Integration::class)->findOneBy(['name' => 'LeuchtfeuerDoi']);
+        if (null === $integration) {
+            return;
+        }
+
+        $featureSettings                                    = $integration->getFeatureSettings();
+        $featureSettings['integration']['doi_link_timeout'] = $timeout;
 
         $integration->setFeatureSettings($featureSettings);
         $this->em->persist($integration);

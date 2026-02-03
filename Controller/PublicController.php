@@ -8,6 +8,7 @@ use Mautic\LeadBundle\Tracker\ContactTracker;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfigRepository;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmissionRepository;
+use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiSubmissionManager;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiActionsDispatcher;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiTokenParser;
@@ -31,7 +32,8 @@ class PublicController extends AbstractController
         private TranslatorInterface $translator,
         private LoggerInterface $logger,
         private DoiActionsDispatcher $doiActionsDispatcher,
-        private ContactTracker $contactTracker
+        private ContactTracker $contactTracker,
+        private Config $config
     ) {
     }
 
@@ -67,6 +69,20 @@ class PublicController extends AbstractController
 
         if ($submission->isConfirmed()) {
             return $this->createSuccessResponse($submission);
+        }
+
+        if ($submission->isTimedOut()) {
+            $this->logger->info('DOI submission already timed out', ['hash' => $hash, 'formId' => $formId]);
+
+            return $this->createErrorResponse($form);
+        }
+
+        if ($submission->isPending() && $this->isSubmissionExpired($submission)) {
+            $this->logger->info('DOI submission has expired', ['hash' => $hash, 'formId' => $formId]);
+            $submission->timeout();
+            $this->submissionManager->save($submission);
+
+            return $this->createErrorResponse($form);
         }
 
         if (!$submission->isPending()) {
@@ -132,5 +148,13 @@ class PublicController extends AbstractController
         }
 
         return new Response($this->translator->trans('mautic.plugin.doi.verification.error'), Response::HTTP_BAD_REQUEST);
+    }
+
+    private function isSubmissionExpired(FormDoiSubmission $submission): bool
+    {
+        $timeoutHours    = $this->config->getDoiLinkTimeout();
+        $expirationTime  = (clone $submission->getDateCreated())->modify("+{$timeoutHours} hours");
+
+        return new \DateTime() > $expirationTime;
     }
 }

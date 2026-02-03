@@ -7,9 +7,10 @@ Universal email verification plugin for Mautic, providing Double Opt-In (DOI) fu
 - **Form Action Management**: Separate actions for immediate submission vs. post-verification
 - **Email Verification**: Built-in DOI workflow with `{doi_link}` token support
 - **Follow-up Emails**: Automated reminders for unconfirmed submissions
+- **Link Expiration**: Configurable timeout for DOI verification links
 - **Flexible Redirects**: Configurable success/error pages after verification
 - **Security**: HMAC-based hash generation for verification links
-- **Console Commands**: Cron-compatible follow-up email sending
+- **Console Commands**: Cron-compatible follow-up email sending and timeout processing
 
 ## Requirements / Version Support
 - Mautic 5.2 
@@ -31,8 +32,13 @@ Alternatively, it can be installed manually, following the usual steps:
 ## Configuration
 
 ### Plugin Settings
-- **Follow-up wait time**: Hours before sending reminder emails
-- Set up cron job: `php bin/console leuchtfeuer:doi:send-followup`
+- **Follow-up wait time**: Hours before sending reminder emails (default: 24 hours)
+- **DOI link timeout**: Hours after which verification links expire (default: 48 hours)
+
+### Cron Jobs
+Set up the following cron jobs for automated processing:
+- `php bin/console leuchtfeuer:doi:send-followup` - Send follow-up reminder emails
+- `php bin/console leuchtfeuer:doi:update-timeout` - Mark expired pending submissions as timed out
 
 ### Form Configuration
 1. **Actions Tab**: Configure immediate vs. post-verification actions
@@ -68,7 +74,6 @@ and
 - Conditional actions: Update contact fields based on form field logic (currently doable via campaigns).
 - Campaign integration: Start campaign from form action with conditional contact updates (e.g. MOI=1).
 - Form submission handling: Persist form field status at submission (forms.cached_html → form_submissions.doi_formstatus).
-- Token expiry: Configurable setting for DOI token validity.
 - Missing email handling: Manage cases with empty or unmapped leads.email.
 - Form action – Update Marketing Opt-In: Convenience action to set MOI fields and audit values.
 - MOI data model: Fixed fields or dedicated table for bool + audit tracking.
