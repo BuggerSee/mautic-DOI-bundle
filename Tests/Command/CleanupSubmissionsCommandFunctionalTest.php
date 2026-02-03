@@ -234,14 +234,14 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         $this->createDoiConfigWithCleanup($form2, 7);
 
         // Create a NEW contact with an expired submission on form1
-        $expiredDate = new \DateTime('-8 days');
+        $expiredDate       = new \DateTime('-8 days');
         $expiredSubmission = $this->createDoiSubmissionWithNewContact(
             $form1,
             'multisubmit@example.com',
             $expiredDate
         );
-        $contact   = $expiredSubmission->getLead();
-        $contactId = $contact->getId();
+        $contact             = $expiredSubmission->getLead();
+        $contactId           = $contact->getId();
         $expiredSubmissionId = $expiredSubmission->getId();
 
         // Create a second PENDING submission on form2 for the same contact (not expired)

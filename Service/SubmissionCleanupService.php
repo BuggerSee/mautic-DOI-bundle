@@ -18,6 +18,12 @@ use Psr\Log\LoggerInterface;
 class SubmissionCleanupService
 {
     /**
+     * The maximum difference in seconds allowed between Contact create date
+     * and Submission create date to consider them "created together".
+     */
+    private const DATE_MATCH_DELTA = 2;
+
+    /**
      * Cache for table existence checks to avoid repeated schema queries.
      *
      * @var array<string, bool>
@@ -195,7 +201,7 @@ class SubmissionCleanupService
         $leadId       = $lead->getId();
         $submissionId = $doiSubmission->getId();
 
-        if (null === $leadId || null === $submissionId) {
+        if (0 === $leadId || null === $submissionId) {
             return false;
         }
 
@@ -212,7 +218,7 @@ class SubmissionCleanupService
         }
 
         // Contact is considered "new" if it was identified at the same time as the submission
-        return $contactDateIdentified->getTimestamp() === $submissionDateCreated->getTimestamp();
+        return abs($contactDateIdentified->getTimestamp() - $submissionDateCreated->getTimestamp()) <= self::DATE_MATCH_DELTA;
     }
 
     /**
