@@ -13,6 +13,34 @@ use Mautic\CoreBundle\Entity\CommonRepository;
 class FormDoiSubmissionRepository extends CommonRepository
 {
     /**
+     * Find expired pending submissions for a specific form.
+     *
+     * @return list<FormDoiSubmission>
+     */
+    public function findExpiredPendingSubmissions(
+        int $formId,
+        \DateTimeInterface $threshold,
+        ?int $limit = null
+    ): array {
+        $qb = $this->createQueryBuilder('s')
+            ->innerJoin('s.form', 'f')
+            ->innerJoin('s.formSubmission', 'fs')
+            ->where('s.status = :pending')
+            ->andWhere('s.dateCreated < :threshold')
+            ->andWhere('f.id = :formId')
+            ->setParameter('pending', FormDoiSubmission::STATUS_PENDING)
+            ->setParameter('threshold', $threshold)
+            ->setParameter('formId', $formId)
+            ->orderBy('s.id', Criteria::ASC);
+
+        if (null !== $limit) {
+            $qb->setMaxResults($limit);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * @return list<FormDoiSubmission>
      */
     public function findPendingDueForFollowup(
