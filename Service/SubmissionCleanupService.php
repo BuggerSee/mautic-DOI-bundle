@@ -190,7 +190,7 @@ class SubmissionCleanupService
             return false;
         }
 
-        $contactDateAdded      = $lead->getDateAdded();
+        $contactDateAdded      = $lead->getDateIdentified();
         $submissionDateCreated = $doiSubmission->getDateCreated();
 
         if (null === $contactDateAdded) {

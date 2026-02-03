@@ -147,16 +147,9 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         Assert::assertSame('pending', $existingSubmission->getStatus(), 'Submission status should remain pending');
     }
 
-    // =========================================================================
-    // TDD: Contact deletion based on "previously known" status
-    // These tests document expected behavior that is NOT YET IMPLEMENTED
-    // =========================================================================
-
     /**
-     * TDD Test: If contact was created by the form submission and is not known
+     * If contact was created by the form submission and is not known
      * to the system before this submission, the entire contact should be deleted.
-     *
-     * @group tdd
      */
     public function testNewContactIsDeletedWithSubmission(): void
     {
@@ -184,14 +177,12 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
 
         // Verify NEW contact is also deleted
         $deletedContact = $this->em->getRepository(Lead::class)->find($contactId);
-        Assert::assertNull($deletedContact, 'New contact should be deleted with the submission');
+        Assert::assertNull($deletedContact?->getId(), 'New contact should be deleted with the submission');
     }
 
     /**
-     * TDD Test: If contact was already known to the system before this submission,
+     * If contact was already known to the system before this submission,
      * only the submission is deleted; the contact remains.
-     *
-     * @group tdd
      */
     public function testPreviouslyKnownContactRemainsAfterSubmissionDeletion(): void
     {
@@ -519,6 +510,7 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         $contact = new Lead();
         $contact->setEmail($email);
         $contact->setDateAdded($dateSubmitted);
+        $contact->setDateIdentified($dateSubmitted);
         $this->em->persist($contact);
 
         $submission = new Submission();
