@@ -267,10 +267,16 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     }
 
     /**
-     * If contact has other pending DOI submissions, the contact should NOT be deleted
+     * If contact has other active DOI submissions (pending or confirmed), the contact should NOT be deleted
      * even if it was created by this submission.
+     *
+     * Scenario: Contact submits form1, doesn't confirm, times out. During the cleanup grace period,
+     * contact submits form2. When cleanup runs, only the timed-out submission should be deleted;
+     * the contact should remain because they have another active submission.
+     *
+     * @dataProvider provideOtherSubmissionStatuses
      */
-    public function testContactWithOtherPendingSubmissionsIsNotDeleted(): void
+    public function testContactWithOtherActiveSubmissionsIsNotDeleted(string $otherStatus): void
     {
         $form1 = $this->formFixtureHelper->createFormViaApi('Form One');
         $form2 = $this->formFixtureHelper->createFormViaApi('Form Two');
@@ -282,20 +288,27 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         $timedOutSubmission = $this->createTimedOutDoiSubmissionWithNewContact(
             $form1,
             'multisubmit@example.com',
-            new \DateTime('-30 days'), // Created 30 days ago
-            new \DateTime('-8 days')   // Timed out 8 days ago
+            new \DateTime('-30 days'), // Created 30 days ago - this sets the contact's dateIdentified
+            new \DateTime('-8 days')   // Timed out 8 days ago (past 7-day cleanup threshold)
         );
         $contact              = $timedOutSubmission->getLead();
         $contactId            = $contact->getId();
         $timedOutSubmissionId = $timedOutSubmission->getId();
 
-        // Create a second PENDING submission on form2 for the same contact (not timed out)
-        $pendingSubmission = $this->createDoiSubmissionForExistingContact(
+        // Create a second submission on form2 for the same contact
+        $otherSubmission = $this->createDoiSubmissionForExistingContact(
             $form2,
             $contact,
             new \DateTime('-5 days')
         );
-        $pendingSubmissionId = $pendingSubmission->getId();
+
+        if (FormDoiSubmission::STATUS_CONFIRMED === $otherStatus) {
+            $otherSubmission->confirm();
+            $this->em->persist($otherSubmission);
+            $this->em->flush();
+        }
+
+        $otherSubmissionId = $otherSubmission->getId();
 
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:cleanup-submissions');
         $output        = $commandTester->getDisplay();
@@ -308,14 +321,24 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         $deletedSubmission = $this->em->getRepository(FormDoiSubmission::class)->find($timedOutSubmissionId);
         Assert::assertNull($deletedSubmission, 'Timed-out DOI submission should be deleted');
 
-        // Verify pending submission still exists
-        $existingSubmission = $this->em->getRepository(FormDoiSubmission::class)->find($pendingSubmissionId);
-        Assert::assertNotNull($existingSubmission, 'Pending submission should still exist');
+        // Verify other submission still exists
+        $existingSubmission = $this->em->getRepository(FormDoiSubmission::class)->find($otherSubmissionId);
+        Assert::assertNotNull($existingSubmission, ucfirst($otherStatus).' submission should still exist');
+        Assert::assertSame($otherStatus, $existingSubmission->getStatus());
 
-        // Verify contact is NOT deleted (has other pending submission)
+        // Verify contact is NOT deleted (has other active submission)
         $existingContact = $this->em->getRepository(Lead::class)->find($contactId);
-        Assert::assertNotNull($existingContact, 'Contact with other pending submissions should NOT be deleted');
+        Assert::assertNotNull($existingContact, "Contact with {$otherStatus} submission should NOT be deleted");
         Assert::assertSame('multisubmit@example.com', $existingContact->getEmail());
+    }
+
+    /**
+     * @return \Generator<string, array{string}>
+     */
+    public static function provideOtherSubmissionStatuses(): \Generator
+    {
+        yield 'pending' => [FormDoiSubmission::STATUS_PENDING];
+        yield 'confirmed' => [FormDoiSubmission::STATUS_CONFIRMED];
     }
 
     // =========================================================================

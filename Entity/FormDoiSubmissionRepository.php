@@ -93,17 +93,20 @@ class FormDoiSubmissionRepository extends CommonRepository
     }
 
     /**
-     * Check if a lead has other pending DOI submissions besides the given one.
+     * Check if a lead has other active DOI submissions (pending or confirmed) besides the given one.
      */
-    public function hasOtherPendingSubmissionsForLead(int $leadId, int $excludeSubmissionId): bool
+    public function hasOtherActiveSubmissionsForLead(int $leadId, int $excludeSubmissionId): bool
     {
         $count = $this->createQueryBuilder('s')
             ->select('COUNT(s.id)')
             ->where('s.lead = :leadId')
-            ->andWhere('s.status = :pending')
+            ->andWhere('s.status IN (:activeStatuses)')
             ->andWhere('s.id != :excludeId')
             ->setParameter('leadId', $leadId)
-            ->setParameter('pending', FormDoiSubmission::STATUS_PENDING)
+            ->setParameter('activeStatuses', [
+                FormDoiSubmission::STATUS_PENDING,
+                FormDoiSubmission::STATUS_CONFIRMED,
+            ])
             ->setParameter('excludeId', $excludeSubmissionId)
             ->getQuery()
             ->getSingleScalarResult();

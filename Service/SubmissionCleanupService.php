@@ -195,7 +195,8 @@ class SubmissionCleanupService
      * dateIdentified matches the submission's dateCreated. If the contact existed before
      * the submission was created, it is considered "previously known" and should not be deleted.
      *
-     * Additionally, if the contact has other pending DOI submissions, it should not be deleted.
+     * Additionally, if the contact has other active DOI submissions (pending or confirmed),
+     * it should not be deleted.
      */
     private function shouldDeleteContact(?Lead $lead, FormDoiSubmission $doiSubmission): bool
     {
@@ -210,8 +211,8 @@ class SubmissionCleanupService
             return false;
         }
 
-        // Don't delete if contact has other pending DOI submissions
-        if ($this->submissionRepository->hasOtherPendingSubmissionsForLead($leadId, $submissionId)) {
+        // Don't delete if contact has other active DOI submissions (pending or confirmed)
+        if ($this->submissionRepository->hasOtherActiveSubmissionsForLead($leadId, $submissionId)) {
             return false;
         }
 
