@@ -17,7 +17,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'leuchtfeuer:doi:cleanup-submissions',
-    description: 'Delete expired pending DOI form submissions based on form-level timeout settings'
+    description: 'Delete timed-out DOI form submissions after the configured retention period'
 )]
 class CleanupSubmissionsCommand extends Command
 {
@@ -129,7 +129,7 @@ class CleanupSubmissionsCommand extends Command
             $formId       = $form->getId();
             $formName     = $form->getName();
             $timeoutDays  = $config->getDeleteAfterTimeoutDays();
-            $threshold    = $this->cleanupService->getExpiryThreshold($config);
+            $threshold    = $this->cleanupService->getCleanupThreshold($config);
 
             $io->text(sprintf(
                 'Processing form "%s" (ID: %d, timeout: %d days, threshold: %s)...',
@@ -152,7 +152,7 @@ class CleanupSubmissionsCommand extends Command
                     break;
                 }
 
-                $submissions    = $this->cleanupService->findExpiredSubmissions($config, $remainingBatch);
+                $submissions    = $this->cleanupService->findSubmissionsForCleanup($config, $remainingBatch);
                 $batchProcessed = 0;
 
                 foreach ($submissions as $submission) {

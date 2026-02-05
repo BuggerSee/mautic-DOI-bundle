@@ -10,7 +10,7 @@ Universal email verification plugin for Mautic, providing Double Opt-In (DOI) fu
 - **Link Expiration**: Configurable timeout for DOI verification links
 - **Flexible Redirects**: Configurable success/error pages after verification
 - **Security**: HMAC-based hash generation for verification links
-- **Console Commands**: Cron-compatible follow-up email sending, timeout processing, and optional cleanup of expired pending submissions
+- **Console Commands**: Cron-compatible follow-up email sending, timeout processing, and optional cleanup of expired submissions
 
 ## Requirements / Version Support
 - Mautic 5.2 

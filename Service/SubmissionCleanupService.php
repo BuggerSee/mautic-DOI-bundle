@@ -58,9 +58,12 @@ class SubmissionCleanupService
     }
 
     /**
-     * Calculate expiry threshold for a given config.
+     * Calculate the cleanup threshold for timed-out submissions.
+     *
+     * A submission is eligible for cleanup if its dateTimeout is older than this threshold,
+     * i.e., if deleteAfterTimeoutDays have passed since the submission timed out.
      */
-    public function getExpiryThreshold(FormDoiConfig $config): \DateTimeImmutable
+    public function getCleanupThreshold(FormDoiConfig $config): \DateTimeImmutable
     {
         $days = $config->getDeleteAfterTimeoutDays();
         if (null === $days) {
@@ -73,20 +76,22 @@ class SubmissionCleanupService
     }
 
     /**
-     * Find expired pending submissions for a given config.
+     * Find timed-out submissions eligible for cleanup for a given config.
+     *
+     * Only submissions with STATUS_TIMEOUT and dateTimeout older than deleteAfterTimeoutDays are returned.
      *
      * @return list<FormDoiSubmission>
      */
-    public function findExpiredSubmissions(FormDoiConfig $config, int $limit): array
+    public function findSubmissionsForCleanup(FormDoiConfig $config, int $limit): array
     {
         $form = $config->getForm();
         if (null === $form) {
             return [];
         }
 
-        $threshold = $this->getExpiryThreshold($config);
+        $threshold = $this->getCleanupThreshold($config);
 
-        return $this->submissionRepository->findExpiredPendingSubmissions(
+        return $this->submissionRepository->findTimedOutSubmissionsForCleanup(
             $form->getId(),
             $threshold,
             $limit

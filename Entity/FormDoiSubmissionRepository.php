@@ -13,11 +13,13 @@ use Mautic\CoreBundle\Entity\CommonRepository;
 class FormDoiSubmissionRepository extends CommonRepository
 {
     /**
-     * Find expired pending submissions for a specific form.
+     * Find timed-out submissions eligible for cleanup for a specific form.
+     *
+     * Only submissions with STATUS_TIMEOUT and dateTimeout older than the threshold are returned.
      *
      * @return list<FormDoiSubmission>
      */
-    public function findExpiredPendingSubmissions(
+    public function findTimedOutSubmissionsForCleanup(
         int $formId,
         \DateTimeInterface $threshold,
         ?int $limit = null
@@ -25,10 +27,11 @@ class FormDoiSubmissionRepository extends CommonRepository
         $qb = $this->createQueryBuilder('s')
             ->innerJoin('s.form', 'f')
             ->innerJoin('s.formSubmission', 'fs')
-            ->where('s.status = :pending')
-            ->andWhere('s.dateCreated < :threshold')
+            ->where('s.status = :timeout')
+            ->andWhere('s.dateTimeout IS NOT NULL')
+            ->andWhere('s.dateTimeout < :threshold')
             ->andWhere('f.id = :formId')
-            ->setParameter('pending', FormDoiSubmission::STATUS_PENDING)
+            ->setParameter('timeout', FormDoiSubmission::STATUS_TIMEOUT)
             ->setParameter('threshold', $threshold)
             ->setParameter('formId', $formId)
             ->orderBy('s.id', Criteria::ASC);
