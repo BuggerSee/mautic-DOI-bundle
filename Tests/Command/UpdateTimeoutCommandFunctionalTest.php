@@ -46,8 +46,10 @@ class UpdateTimeoutCommandFunctionalTest extends MauticMysqlTestCase
 
         Assert::assertTrue($expiredSubmission->isTimedOut());
         Assert::assertSame(FormDoiSubmission::STATUS_TIMEOUT, $expiredSubmission->getStatus());
+        Assert::assertNotNull($expiredSubmission->getDateTimeout());
         Assert::assertTrue($recentSubmission->isPending());
         Assert::assertSame(FormDoiSubmission::STATUS_PENDING, $recentSubmission->getStatus());
+        Assert::assertNull($recentSubmission->getDateTimeout());
     }
 
     public function testCommandWithCustomLimit(): void
