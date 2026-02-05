@@ -7,6 +7,7 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Service;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Mautic\FormBundle\Entity\Submission;
+use Mautic\FormBundle\Entity\SubmissionRepository;
 use Mautic\FormBundle\Helper\FormUploader;
 use Mautic\LeadBundle\Entity\Lead;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
@@ -34,6 +35,7 @@ class SubmissionCleanupService
         private EntityManagerInterface $entityManager,
         private FormDoiConfigRepository $configRepository,
         private FormDoiSubmissionRepository $submissionRepository,
+        private SubmissionRepository $coreSubmissionRepository,
         private FormUploader $formUploader,
         private LoggerInterface $logger
     ) {
@@ -115,6 +117,14 @@ class SubmissionCleanupService
         $lead                = $doiSubmission->getLead();
         $shouldDeleteContact = $this->shouldDeleteContact($lead, $doiSubmission);
 
+        // Reload submission via core repository to hydrate results from form_results table.
+        // Results are stored in a separate table and not loaded when the Submission
+        // is loaded via ORM relationships (see SubmissionRepository::getEntity()).
+        $coreSubmissionWithResults = $this->coreSubmissionRepository->getEntity($coreSubmission->getId());
+        if (null !== $coreSubmissionWithResults) {
+            $this->deleteUploadedFiles($coreSubmissionWithResults);
+        }
+
         try {
             $conn->beginTransaction();
 
@@ -136,10 +146,6 @@ class SubmissionCleanupService
             $this->entityManager->flush();
 
             $conn->commit();
-
-            // Delete uploaded files AFTER successful DB commit to avoid data inconsistency
-            // (orphaned files are preferable to deleted files with remaining DB records)
-            $this->deleteUploadedFiles($coreSubmission);
 
             return true;
         } catch (\Throwable $e) {

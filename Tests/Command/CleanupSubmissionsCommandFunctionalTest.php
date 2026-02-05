@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Command;
 
+use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
+use Mautic\FormBundle\Entity\Field;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\Submission;
 use Mautic\LeadBundle\Entity\Lead;
@@ -523,6 +525,58 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         Assert::assertSame(FormDoiSubmission::STATUS_SKIPPED, $existingSubmission->getStatus());
     }
 
+    public function testUploadedFileIsDeletedWithSubmission(): void
+    {
+        $form = $this->createFormWithFileFieldViaApi('File Upload Cleanup Test');
+        $this->createDoiConfigWithCleanup($form);
+
+        // Get the file field from the form
+        $fileField = null;
+        foreach ($form->getFields() as $field) {
+            if ($field->isFileType()) {
+                $fileField = $field;
+                break;
+            }
+        }
+        Assert::assertNotNull($fileField, 'Form should have a file field');
+
+        // Create an uploaded file for the submission
+        $uploadedFileName = 'test-upload-'.uniqid().'.txt';
+        $uploadedFilePath = $this->createUploadedFileForField($fileField, $uploadedFileName);
+
+        // Verify the file exists before cleanup
+        Assert::assertFileExists($uploadedFilePath, 'Uploaded file should exist before cleanup');
+
+        // Create a timed-out submission with the file reference in results
+        $timedOutSubmission = $this->createTimedOutDoiSubmissionWithFile(
+            $form,
+            'fileupload@example.com',
+            new \DateTime('-30 days'),
+            new \DateTime('-1 day'),
+            $fileField->getAlias(),
+            $uploadedFileName
+        );
+        $doiSubmissionId  = $timedOutSubmission->getId();
+        $coreSubmissionId = $timedOutSubmission->getFormSubmission()->getId();
+
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:cleanup-submissions');
+        $output        = $commandTester->getDisplay();
+
+        Assert::assertStringContainsString('Deleted: 1 submission', $output);
+
+        // Verify DOI submission is deleted
+        $this->em->clear();
+        $deletedDoiSubmission = $this->em->getRepository(FormDoiSubmission::class)->find($doiSubmissionId);
+        Assert::assertNull($deletedDoiSubmission, 'DOI submission should be deleted');
+
+        // Verify core submission is deleted
+        $deletedCoreSubmission = $this->em->getRepository(Submission::class)->find($coreSubmissionId);
+        Assert::assertNull($deletedCoreSubmission, 'Core submission should be deleted');
+
+        // Verify the uploaded file is deleted
+        Assert::assertFileDoesNotExist($uploadedFilePath, 'Uploaded file should be deleted with the submission');
+    }
+
     // =========================================================================
     // Validation tests
     // =========================================================================
@@ -686,6 +740,111 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         $doiSubmission->setEmail($existingContact->getEmail());
         $doiSubmission->setStatus(FormDoiSubmission::STATUS_TIMEOUT);
         $doiSubmission->setHash(hash('sha256', $existingContact->getEmail().time().random_int(0, 100000)));
+        $doiSubmission->setDateCreated($dateCreated);
+        $doiSubmission->setDateTimeout($dateTimeout);
+        $this->em->persist($doiSubmission);
+        $this->em->flush();
+
+        return $doiSubmission;
+    }
+
+    private function createFormWithFileFieldViaApi(string $name): Form
+    {
+        $formPayload = [
+            'name'        => $name,
+            'description' => '',
+            'formType'    => 'standalone',
+            'isPublished' => true,
+            'fields'      => [
+                [
+                    'label'        => 'Email',
+                    'type'         => 'email',
+                    'alias'        => 'email',
+                    'leadField'    => 'email',
+                    'mappedField'  => 'email',
+                    'mappedObject' => 'contact',
+                ],
+                [
+                    'label'      => 'Attachment',
+                    'alias'      => 'attachment',
+                    'type'       => 'file',
+                    'properties' => [
+                        'allowed_file_size'       => 1,
+                        'allowed_file_extensions' => ['txt', 'pdf', 'png'],
+                    ],
+                ],
+                [
+                    'label' => 'Submit',
+                    'type'  => 'button',
+                ],
+            ],
+            'postAction' => 'return',
+        ];
+
+        $this->client->request('POST', '/api/forms/new', $formPayload);
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $formId   = $response['form']['id'];
+
+        return $this->em->getRepository(Form::class)->find($formId);
+    }
+
+    /**
+     * Create a physical file in the form upload directory for a given field.
+     *
+     * @return string The full path to the created file
+     */
+    private function createUploadedFileForField(Field $field, string $fileName): string
+    {
+        /** @var CoreParametersHelper $coreParametersHelper */
+        $coreParametersHelper = static::getContainer()->get(CoreParametersHelper::class);
+        $uploadDir            = $coreParametersHelper->get('form_upload_dir');
+        $formId               = $field->getForm()->getId();
+        $fieldId              = $field->getId();
+
+        $fieldUploadDir = $uploadDir.DIRECTORY_SEPARATOR.$formId.DIRECTORY_SEPARATOR.$fieldId;
+        if (!is_dir($fieldUploadDir)) {
+            mkdir($fieldUploadDir, 0755, true);
+        }
+
+        $filePath = $fieldUploadDir.DIRECTORY_SEPARATOR.$fileName;
+        file_put_contents($filePath, 'Test file content for cleanup test');
+
+        return $filePath;
+    }
+
+    /**
+     * Create a timed-out DOI submission that has a file uploaded.
+     */
+    private function createTimedOutDoiSubmissionWithFile(
+        Form $form,
+        string $email,
+        \DateTime $dateCreated,
+        \DateTime $dateTimeout,
+        string $fileFieldAlias,
+        string $fileName
+    ): FormDoiSubmission {
+        $contact = new Lead();
+        $contact->setEmail($email);
+        $contact->setDateAdded($dateCreated);
+        $contact->setDateIdentified($dateCreated);
+        $this->em->persist($contact);
+
+        $submission = new Submission();
+        $submission->setForm($form);
+        $submission->setDateSubmitted($dateCreated);
+        $submission->setReferer('https://example.com/');
+        $submission->setLead($contact);
+        // Set the file reference in submission results
+        $submission->setResults([$fileFieldAlias => $fileName]);
+        $this->em->persist($submission);
+
+        $doiSubmission = new FormDoiSubmission();
+        $doiSubmission->setForm($form);
+        $doiSubmission->setFormSubmission($submission);
+        $doiSubmission->setLead($contact);
+        $doiSubmission->setEmail($email);
+        $doiSubmission->setStatus(FormDoiSubmission::STATUS_TIMEOUT);
+        $doiSubmission->setHash(hash('sha256', $email.time().random_int(0, 100000)));
         $doiSubmission->setDateCreated($dateCreated);
         $doiSubmission->setDateTimeout($dateTimeout);
         $this->em->persist($doiSubmission);
