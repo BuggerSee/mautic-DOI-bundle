@@ -12,7 +12,9 @@ Universal email verification plugin for Mautic, providing Double Opt-In (DOI) fu
 - **Security**: HMAC-based hash generation for verification links
 - **Console Commands**: Cron-compatible follow-up email sending and timeout processing
 
-## Requirements / Version Support
+## Requirements for this release
+> [!TIP]
+> Other releases of this plugin may cover different Mautic versions!
 - Mautic 5.2 
 - PHP 8.1 or higher
 
