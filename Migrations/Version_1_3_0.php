@@ -23,7 +23,7 @@ class Version_1_3_0 extends AbstractMigration
 
             $table = $schema->getTable($tableName);
 
-            return !$table->hasColumn('delete_after_timeout_days');
+            return !$table->hasColumn('delete_after_timeout');
         } catch (SchemaException) {
             return false;
         }
@@ -31,6 +31,6 @@ class Version_1_3_0 extends AbstractMigration
 
     protected function up(): void
     {
-        $this->addSql("ALTER TABLE `{$this->concatPrefix($this->formDoiConfigTable)}` ADD delete_after_timeout_days INT DEFAULT NULL");
+        $this->addSql("ALTER TABLE `{$this->concatPrefix($this->formDoiConfigTable)}` ADD delete_after_timeout TINYINT(1) DEFAULT 0 NOT NULL");
     }
 }

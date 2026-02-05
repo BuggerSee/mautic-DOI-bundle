@@ -12,7 +12,7 @@ use Mautic\CoreBundle\Entity\CommonRepository;
 class FormDoiConfigRepository extends CommonRepository
 {
     /**
-     * Find all DOI configs that have cleanup enabled (deleteAfterTimeoutDays is set).
+     * Find all DOI configs that have cleanup enabled (deleteAfterTimeout is true).
      *
      * @return list<FormDoiConfig>
      */
@@ -20,8 +20,9 @@ class FormDoiConfigRepository extends CommonRepository
     {
         return $this->createQueryBuilder('c')
             ->innerJoin('c.form', 'f')
-            ->where('c.deleteAfterTimeoutDays IS NOT NULL')
+            ->where('c.deleteAfterTimeout = :deleteEnabled')
             ->andWhere('c.enabled = :enabled')
+            ->setParameter('deleteEnabled', true)
             ->setParameter('enabled', true)
             ->getQuery()
             ->getResult();

@@ -33,24 +33,23 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     }
 
     // =========================================================================
-    // Test Case: Cleanup enabled with deleteAfterTimeoutDays set
-    // Submissions are deleted X days after their dateTimeout, not dateCreated
+    // Test Case: Cleanup enabled - timed-out submissions are deleted immediately
     // =========================================================================
 
-    public function testTimedOutSubmissionIsDeletedAfterTimeoutPeriod(): void
+    public function testTimedOutSubmissionIsDeletedImmediately(): void
     {
         $form = $this->formFixtureHelper->createFormViaApi('Cleanup Test Form');
-        $this->createDoiConfigWithCleanup($form, 7);
+        $this->createDoiConfigWithCleanup($form);
 
-        // Create a submission that timed out 8 days ago (past the 7-day cleanup threshold)
+        // Create a submission that timed out (even recently)
         $timedOutSubmission = $this->formFixtureHelper->createDoiSubmission(
             $form,
             'timedout@example.com',
             new \DateTime('-30 days') // Created 30 days ago
         );
-        // Mark as timed out 8 days ago
+        // Mark as timed out recently
         $timedOutSubmission->setStatus(FormDoiSubmission::STATUS_TIMEOUT);
-        $timedOutSubmission->setDateTimeout(new \DateTime('-8 days'));
+        $timedOutSubmission->setDateTimeout(new \DateTime('-1 hour'));
         $this->em->persist($timedOutSubmission);
         $this->em->flush();
 
@@ -72,40 +71,10 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         Assert::assertNull($deletedCoreSubmission, 'Core submission should be deleted');
     }
 
-    public function testRecentlyTimedOutSubmissionIsNotDeleted(): void
-    {
-        $form = $this->formFixtureHelper->createFormViaApi('Cleanup Test Form');
-        $this->createDoiConfigWithCleanup($form, 7);
-
-        // Create a submission that timed out only 6 days ago (not yet past 7-day cleanup threshold)
-        $recentTimeoutSubmission = $this->formFixtureHelper->createDoiSubmission(
-            $form,
-            'recenttimeout@example.com',
-            new \DateTime('-30 days') // Created 30 days ago
-        );
-        // Mark as timed out only 6 days ago
-        $recentTimeoutSubmission->setStatus(FormDoiSubmission::STATUS_TIMEOUT);
-        $recentTimeoutSubmission->setDateTimeout(new \DateTime('-6 days'));
-        $this->em->persist($recentTimeoutSubmission);
-        $this->em->flush();
-
-        $doiSubmissionId = $recentTimeoutSubmission->getId();
-
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:cleanup-submissions');
-        $output        = $commandTester->getDisplay();
-
-        Assert::assertStringContainsString('Deleted: 0 submission', $output);
-
-        // Verify submission still exists
-        $this->em->clear();
-        $existingSubmission = $this->em->getRepository(FormDoiSubmission::class)->find($doiSubmissionId);
-        Assert::assertNotNull($existingSubmission, 'Recently timed out submission should not be deleted');
-    }
-
     public function testPendingSubmissionIsNotDeleted(): void
     {
         $form = $this->formFixtureHelper->createFormViaApi('Cleanup Test Form');
-        $this->createDoiConfigWithCleanup($form, 7);
+        $this->createDoiConfigWithCleanup($form);
 
         // Create an old pending submission (never timed out)
         $pendingSubmission = $this->formFixtureHelper->createDoiSubmission(
@@ -130,7 +99,7 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     public function testConfirmedSubmissionIsNotDeleted(): void
     {
         $form = $this->formFixtureHelper->createFormViaApi('Cleanup Test Form');
-        $this->createDoiConfigWithCleanup($form, 7);
+        $this->createDoiConfigWithCleanup($form);
 
         // Create an old but confirmed submission
         $confirmedSubmission = $this->formFixtureHelper->createDoiSubmission(
@@ -156,13 +125,13 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     }
 
     // =========================================================================
-    // Test Case: deleteAfterTimeoutDays = null (never delete)
+    // Test Case: deleteAfterTimeout = false (never delete)
     // =========================================================================
 
     public function testTimedOutSubmissionRemainsWhenCleanupNotEnabled(): void
     {
         $form = $this->formFixtureHelper->createFormViaApi('No Cleanup Form');
-        // Create DOI config WITHOUT cleanup enabled (deleteAfterTimeoutDays = null)
+        // Create DOI config WITHOUT cleanup enabled (deleteAfterTimeout = false)
         $this->createDoiConfigWithoutCleanup($form);
 
         // Create a timed-out submission (even very old ones should not be deleted)
@@ -197,14 +166,14 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     public function testNewContactIsDeletedWithSubmission(): void
     {
         $form = $this->formFixtureHelper->createFormViaApi('Cleanup Test Form');
-        $this->createDoiConfigWithCleanup($form, 7);
+        $this->createDoiConfigWithCleanup($form);
 
-        // Create submission with a NEW contact that timed out 8 days ago
+        // Create submission with a NEW contact that timed out
         $timedOutSubmission = $this->createTimedOutDoiSubmissionWithNewContact(
             $form,
             'newcontact@example.com',
             new \DateTime('-30 days'), // Created 30 days ago
-            new \DateTime('-8 days')   // Timed out 8 days ago
+            new \DateTime('-1 day')    // Timed out 1 day ago
         );
         $contactId       = $timedOutSubmission->getLead()->getId();
         $doiSubmissionId = $timedOutSubmission->getId();
@@ -231,7 +200,7 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     public function testPreviouslyKnownContactRemainsAfterSubmissionDeletion(): void
     {
         $form = $this->formFixtureHelper->createFormViaApi('Cleanup Test Form');
-        $this->createDoiConfigWithCleanup($form, 7);
+        $this->createDoiConfigWithCleanup($form);
 
         // Create an existing contact FIRST (2 months ago)
         $existingContact = $this->formFixtureHelper->createContact('knowncontact@example.com');
@@ -246,7 +215,7 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
             $form,
             $existingContact,
             new \DateTime('-30 days'), // Created 30 days ago
-            new \DateTime('-8 days')   // Timed out 8 days ago
+            new \DateTime('-1 day')    // Timed out 1 day ago
         );
         $doiSubmissionId = $timedOutSubmission->getId();
 
@@ -281,15 +250,15 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         $form1 = $this->formFixtureHelper->createFormViaApi('Form One');
         $form2 = $this->formFixtureHelper->createFormViaApi('Form Two');
 
-        $this->createDoiConfigWithCleanup($form1, 7);
-        $this->createDoiConfigWithCleanup($form2, 7);
+        $this->createDoiConfigWithCleanup($form1);
+        $this->createDoiConfigWithCleanup($form2);
 
         // Create a NEW contact with a timed-out submission on form1
         $timedOutSubmission = $this->createTimedOutDoiSubmissionWithNewContact(
             $form1,
             'multisubmit@example.com',
             new \DateTime('-30 days'), // Created 30 days ago - this sets the contact's dateIdentified
-            new \DateTime('-8 days')   // Timed out 8 days ago (past 7-day cleanup threshold)
+            new \DateTime('-1 day')    // Timed out 1 day ago
         );
         $contact              = $timedOutSubmission->getLead();
         $contactId            = $contact->getId();
@@ -348,12 +317,12 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     public function testLimitOption(): void
     {
         $form = $this->formFixtureHelper->createFormViaApi('Limit Test Form');
-        $this->createDoiConfigWithCleanup($form, 7);
+        $this->createDoiConfigWithCleanup($form);
 
-        // Create 3 timed-out submissions with unique emails (all timed out 10+ days ago)
-        $sub1 = $this->createTimedOutDoiSubmission($form, 'limitopt1@example.com', new \DateTime('-30 days'), new \DateTime('-10 days'));
-        $sub2 = $this->createTimedOutDoiSubmission($form, 'limitopt2@example.com', new \DateTime('-31 days'), new \DateTime('-11 days'));
-        $sub3 = $this->createTimedOutDoiSubmission($form, 'limitopt3@example.com', new \DateTime('-32 days'), new \DateTime('-12 days'));
+        // Create 3 timed-out submissions with unique emails
+        $sub1 = $this->createTimedOutDoiSubmission($form, 'limitopt1@example.com', new \DateTime('-30 days'), new \DateTime('-1 day'));
+        $sub2 = $this->createTimedOutDoiSubmission($form, 'limitopt2@example.com', new \DateTime('-31 days'), new \DateTime('-2 days'));
+        $sub3 = $this->createTimedOutDoiSubmission($form, 'limitopt3@example.com', new \DateTime('-32 days'), new \DateTime('-3 days'));
 
         // Verify all 3 submissions exist before running command
         $this->em->clear();
@@ -380,15 +349,15 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     public function testBatchOption(): void
     {
         $form = $this->formFixtureHelper->createFormViaApi('Batch Test Form');
-        $this->createDoiConfigWithCleanup($form, 7);
+        $this->createDoiConfigWithCleanup($form);
 
-        // Create 5 timed-out submissions (all past cleanup threshold)
+        // Create 5 timed-out submissions
         for ($i = 1; $i <= 5; ++$i) {
             $this->createTimedOutDoiSubmission(
                 $form,
                 "batch{$i}@example.com",
                 new \DateTime('-'.(30 + $i).' days'), // Created 30+ days ago
-                new \DateTime('-'.(7 + $i).' days')   // Timed out 8-12 days ago
+                new \DateTime('-'.$i.' days')         // Timed out 1-5 days ago
             );
         }
 
@@ -403,11 +372,11 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         $form1 = $this->formFixtureHelper->createFormViaApi('Form One');
         $form2 = $this->formFixtureHelper->createFormViaApi('Form Two');
 
-        $this->createDoiConfigWithCleanup($form1, 7);
-        $this->createDoiConfigWithCleanup($form2, 7);
+        $this->createDoiConfigWithCleanup($form1);
+        $this->createDoiConfigWithCleanup($form2);
 
-        $submission1 = $this->createTimedOutDoiSubmission($form1, 'form1@example.com', new \DateTime('-30 days'), new \DateTime('-10 days'));
-        $submission2 = $this->createTimedOutDoiSubmission($form2, 'form2@example.com', new \DateTime('-30 days'), new \DateTime('-10 days'));
+        $submission1 = $this->createTimedOutDoiSubmission($form1, 'form1@example.com', new \DateTime('-30 days'), new \DateTime('-1 day'));
+        $submission2 = $this->createTimedOutDoiSubmission($form2, 'form2@example.com', new \DateTime('-30 days'), new \DateTime('-1 day'));
 
         $submission1Id = $submission1->getId();
         $submission2Id = $submission2->getId();
@@ -430,7 +399,7 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     public function testInvalidFormIdOption(): void
     {
         $form = $this->formFixtureHelper->createFormViaApi('Valid Form');
-        $this->createDoiConfigWithCleanup($form, 7);
+        $this->createDoiConfigWithCleanup($form);
 
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:cleanup-submissions', ['--form-id' => '99999']);
         $output        = $commandTester->getDisplay();
@@ -455,10 +424,10 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     public function testVerboseOutputShowsDeletedIds(): void
     {
         $form = $this->formFixtureHelper->createFormViaApi('Verbose Test Form');
-        $this->createDoiConfigWithCleanup($form, 7);
+        $this->createDoiConfigWithCleanup($form);
 
-        $submission1 = $this->createTimedOutDoiSubmission($form, 'verbose1@example.com', new \DateTime('-30 days'), new \DateTime('-10 days'));
-        $submission2 = $this->createTimedOutDoiSubmission($form, 'verbose2@example.com', new \DateTime('-31 days'), new \DateTime('-11 days'));
+        $submission1 = $this->createTimedOutDoiSubmission($form, 'verbose1@example.com', new \DateTime('-30 days'), new \DateTime('-1 day'));
+        $submission2 = $this->createTimedOutDoiSubmission($form, 'verbose2@example.com', new \DateTime('-31 days'), new \DateTime('-2 days'));
 
         $id1 = $submission1->getId();
         $id2 = $submission2->getId();
@@ -477,9 +446,9 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     public function testVeryVerboseOutputShowsPerSubmissionDetails(): void
     {
         $form = $this->formFixtureHelper->createFormViaApi('Very Verbose Test Form');
-        $this->createDoiConfigWithCleanup($form, 7);
+        $this->createDoiConfigWithCleanup($form);
 
-        $submission   = $this->createTimedOutDoiSubmission($form, 'veryverbose@example.com', new \DateTime('-30 days'), new \DateTime('-10 days'));
+        $submission   = $this->createTimedOutDoiSubmission($form, 'veryverbose@example.com', new \DateTime('-30 days'), new \DateTime('-1 day'));
         $submissionId = $submission->getId();
 
         $kernel        = static::getContainer()->get('kernel');
@@ -497,39 +466,39 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     // Edge cases
     // =========================================================================
 
-    public function testMultipleFormsWithDifferentTimeouts(): void
+    public function testMultipleFormsWithCleanupEnabled(): void
     {
-        $form7days  = $this->formFixtureHelper->createFormViaApi('7 Day Timeout Form');
-        $form14days = $this->formFixtureHelper->createFormViaApi('14 Day Timeout Form');
+        $formWithCleanup    = $this->formFixtureHelper->createFormViaApi('Form With Cleanup');
+        $formWithoutCleanup = $this->formFixtureHelper->createFormViaApi('Form Without Cleanup');
 
-        $this->createDoiConfigWithCleanup($form7days, 7);
-        $this->createDoiConfigWithCleanup($form14days, 14);
+        $this->createDoiConfigWithCleanup($formWithCleanup);
+        $this->createDoiConfigWithoutCleanup($formWithoutCleanup);
 
-        // Both timed out 10 days ago: past 7-day cleanup threshold, but not past 14-day threshold
-        $submission7days  = $this->createTimedOutDoiSubmission($form7days, 'form7@example.com', new \DateTime('-30 days'), new \DateTime('-10 days'));
-        $submission14days = $this->createTimedOutDoiSubmission($form14days, 'form14@example.com', new \DateTime('-30 days'), new \DateTime('-10 days'));
+        // Both submissions timed out
+        $submissionCleanup   = $this->createTimedOutDoiSubmission($formWithCleanup, 'cleanup@example.com', new \DateTime('-30 days'), new \DateTime('-1 day'));
+        $submissionNoCleanup = $this->createTimedOutDoiSubmission($formWithoutCleanup, 'nocleanup@example.com', new \DateTime('-30 days'), new \DateTime('-1 day'));
 
-        $id7days  = $submission7days->getId();
-        $id14days = $submission14days->getId();
+        $idCleanup   = $submissionCleanup->getId();
+        $idNoCleanup = $submissionNoCleanup->getId();
 
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:cleanup-submissions');
         $output        = $commandTester->getDisplay();
 
         Assert::assertStringContainsString('Deleted: 1 submissions', $output);
 
-        // Verify only the 7-day form submission is deleted
+        // Verify only the form with cleanup enabled has its submission deleted
         $this->em->clear();
-        $deleted7days   = $this->em->getRepository(FormDoiSubmission::class)->find($id7days);
-        $existing14days = $this->em->getRepository(FormDoiSubmission::class)->find($id14days);
+        $deletedCleanup    = $this->em->getRepository(FormDoiSubmission::class)->find($idCleanup);
+        $existingNoCleanup = $this->em->getRepository(FormDoiSubmission::class)->find($idNoCleanup);
 
-        Assert::assertNull($deleted7days, '7-day form submission should be deleted');
-        Assert::assertNotNull($existing14days, '14-day form submission should remain');
+        Assert::assertNull($deletedCleanup, 'Form with cleanup enabled should have submission deleted');
+        Assert::assertNotNull($existingNoCleanup, 'Form without cleanup should retain submission');
     }
 
     public function testSkippedSubmissionsAreNotDeleted(): void
     {
         $form = $this->formFixtureHelper->createFormViaApi('Skipped Test Form');
-        $this->createDoiConfigWithCleanup($form, 7);
+        $this->createDoiConfigWithCleanup($form);
 
         // Create an expired but skipped submission
         $skippedSubmission = $this->formFixtureHelper->createDoiSubmission(
@@ -552,18 +521,6 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         $existingSubmission = $this->em->getRepository(FormDoiSubmission::class)->find($doiSubmissionId);
         Assert::assertNotNull($existingSubmission, 'Skipped submission should not be deleted');
         Assert::assertSame(FormDoiSubmission::STATUS_SKIPPED, $existingSubmission->getStatus());
-    }
-
-    public function testNoFormsWithCleanupEnabled(): void
-    {
-        // Don't create any forms with cleanup enabled
-        $form = $this->formFixtureHelper->createFormViaApi('No Cleanup Form');
-        $this->createDoiConfigWithoutCleanup($form);
-
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:cleanup-submissions');
-        $output        = $commandTester->getDisplay();
-
-        Assert::assertStringContainsString('No forms have cleanup enabled', $output);
     }
 
     // =========================================================================
@@ -590,12 +547,12 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     // Helper methods
     // =========================================================================
 
-    private function createDoiConfigWithCleanup(Form $form, int $deleteAfterDays): FormDoiConfig
+    private function createDoiConfigWithCleanup(Form $form): FormDoiConfig
     {
         $config = new FormDoiConfig();
         $config->setForm($form);
         $config->setEnabled(true);
-        $config->setDeleteAfterTimeoutDays($deleteAfterDays);
+        $config->setDeleteAfterTimeout(true);
         $config->setSuccessRedirectUrl('https://example.com/success');
         $config->setErrorRedirectUrl('https://example.com/error');
         $this->em->persist($config);
@@ -609,7 +566,7 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         $config = new FormDoiConfig();
         $config->setForm($form);
         $config->setEnabled(true);
-        $config->setDeleteAfterTimeoutDays(null); // Cleanup NOT enabled
+        $config->setDeleteAfterTimeout(false); // Cleanup NOT enabled
         $config->setSuccessRedirectUrl('https://example.com/success');
         $config->setErrorRedirectUrl('https://example.com/error');
         $this->em->persist($config);
@@ -650,7 +607,6 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
 
     /**
      * Create a timed-out DOI submission.
-     * Cleanup is based on dateTimeout, not dateCreated.
      */
     private function createTimedOutDoiSubmission(
         Form $form,

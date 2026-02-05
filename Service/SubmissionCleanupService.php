@@ -58,27 +58,10 @@ class SubmissionCleanupService
     }
 
     /**
-     * Calculate the cleanup threshold for timed-out submissions.
-     *
-     * A submission is eligible for cleanup if its dateTimeout is older than this threshold,
-     * i.e., if deleteAfterTimeoutDays have passed since the submission timed out.
-     */
-    public function getCleanupThreshold(FormDoiConfig $config): \DateTimeImmutable
-    {
-        $days = $config->getDeleteAfterTimeoutDays();
-        if (null === $days) {
-            throw new \InvalidArgumentException('Config does not have deleteAfterTimeoutDays set');
-        }
-
-        $nowUtc = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-
-        return $nowUtc->modify(sprintf('-%d days', $days));
-    }
-
-    /**
      * Find timed-out submissions eligible for cleanup for a given config.
      *
-     * Only submissions with STATUS_TIMEOUT and dateTimeout older than deleteAfterTimeoutDays are returned.
+     * All submissions with STATUS_TIMEOUT are returned for immediate deletion
+     * (no grace period - the global DOI link timeout already controls when submissions time out).
      *
      * @return list<FormDoiSubmission>
      */
@@ -89,11 +72,8 @@ class SubmissionCleanupService
             return [];
         }
 
-        $threshold = $this->getCleanupThreshold($config);
-
         return $this->submissionRepository->findTimedOutSubmissionsForCleanup(
             $form->getId(),
-            $threshold,
             $limit
         );
     }

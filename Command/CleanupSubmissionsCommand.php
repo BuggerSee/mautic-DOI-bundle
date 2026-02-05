@@ -95,7 +95,7 @@ class CleanupSubmissionsCommand extends Command
         $configs = $this->cleanupService->getConfigsWithCleanupEnabled();
 
         if (empty($configs)) {
-            $io->info('No forms have cleanup enabled (deleteAfterTimeoutDays is not set on any form).');
+            $io->info('No forms have cleanup enabled.');
 
             return Command::SUCCESS;
         }
@@ -126,17 +126,13 @@ class CleanupSubmissionsCommand extends Command
                 continue;
             }
 
-            $formId       = $form->getId();
-            $formName     = $form->getName();
-            $timeoutDays  = $config->getDeleteAfterTimeoutDays();
-            $threshold    = $this->cleanupService->getCleanupThreshold($config);
+            $formId   = $form->getId();
+            $formName = $form->getName();
 
             $io->text(sprintf(
-                'Processing form "%s" (ID: %d, timeout: %d days, threshold: %s)...',
+                'Processing form "%s" (ID: %d, cleanup enabled)...',
                 $formName,
-                $formId,
-                $timeoutDays,
-                $threshold->format('Y-m-d H:i:s T')
+                $formId
             ));
 
             $formDeleted = 0;

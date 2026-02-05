@@ -88,7 +88,7 @@ class FormTypeExtension extends AbstractTypeExtension
             'skipPostAction'           => $doiConfig->getSkipPostAction(),
             'skipPostActionProperty'   => $doiConfig->getSkipPostActionProperty(),
             'skipConditions'           => $doiConfig->getSkipConditions(),
-            'deleteAfterTimeoutDays'   => $doiConfig->getDeleteAfterTimeoutDays(),
+            'deleteAfterTimeout'       => $doiConfig->isDeleteAfterTimeout(),
         ];
 
         // Add DOI config fields with ID data

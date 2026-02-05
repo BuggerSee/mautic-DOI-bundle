@@ -15,24 +15,20 @@ class FormDoiSubmissionRepository extends CommonRepository
     /**
      * Find timed-out submissions eligible for cleanup for a specific form.
      *
-     * Only submissions with STATUS_TIMEOUT and dateTimeout older than the threshold are returned.
+     * Returns all submissions with STATUS_TIMEOUT for immediate deletion.
      *
      * @return list<FormDoiSubmission>
      */
     public function findTimedOutSubmissionsForCleanup(
         int $formId,
-        \DateTimeInterface $threshold,
         ?int $limit = null
     ): array {
         $qb = $this->createQueryBuilder('s')
             ->innerJoin('s.form', 'f')
             ->innerJoin('s.formSubmission', 'fs')
             ->where('s.status = :timeout')
-            ->andWhere('s.dateTimeout IS NOT NULL')
-            ->andWhere('s.dateTimeout < :threshold')
             ->andWhere('f.id = :formId')
             ->setParameter('timeout', FormDoiSubmission::STATUS_TIMEOUT)
-            ->setParameter('threshold', $threshold)
             ->setParameter('formId', $formId)
             ->orderBy('s.id', Criteria::ASC);
 
