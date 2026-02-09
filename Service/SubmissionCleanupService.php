@@ -182,7 +182,7 @@ class SubmissionCleanupService
      * the submission was created, it is considered "previously known" and should not be deleted.
      *
      * Additionally, if the contact has other active DOI submissions (pending or confirmed),
-     * it should not be deleted.
+     * or has been active after the submission was created, it should not be deleted.
      */
     private function shouldDeleteContact(?Lead $lead, FormDoiSubmission $doiSubmission): bool
     {
@@ -210,7 +210,17 @@ class SubmissionCleanupService
         }
 
         // Contact is considered "new" if it was identified at the same time as the submission
-        return abs($contactDateIdentified->getTimestamp() - $submissionDateCreated->getTimestamp()) <= self::DATE_MATCH_DELTA;
+        if (abs($contactDateIdentified->getTimestamp() - $submissionDateCreated->getTimestamp()) > self::DATE_MATCH_DELTA) {
+            return false;
+        }
+
+        // Don't delete if contact has been active after the submission was created
+        $lastActive = $lead->getLastActive();
+        if (null !== $lastActive && ($lastActive->getTimestamp() - $submissionDateCreated->getTimestamp()) > self::DATE_MATCH_DELTA) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

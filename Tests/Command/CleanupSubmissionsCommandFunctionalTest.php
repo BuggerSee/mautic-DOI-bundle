@@ -196,6 +196,48 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     }
 
     /**
+     * If contact was created by this submission but has been active after the submission,
+     * only the submission is deleted; the contact remains.
+     */
+    public function testNewContactWithActivityAfterSubmissionIsNotDeleted(): void
+    {
+        $form = $this->formFixtureHelper->createFormViaApi('Cleanup Test Form');
+        $this->createDoiConfigWithCleanup($form);
+
+        // Create submission with a NEW contact that timed out
+        $timedOutSubmission = $this->createTimedOutDoiSubmissionWithNewContact(
+            $form,
+            'activecontact@example.com',
+            new \DateTime('-30 days'), // Created 30 days ago
+            new \DateTime('-1 day')    // Timed out 1 day ago
+        );
+        $contact   = $timedOutSubmission->getLead();
+        $contactId = $contact->getId();
+
+        // Simulate activity after the submission (e.g. visited a page 10 days ago)
+        $contact->setLastActive(new \DateTime('-10 days'));
+        $this->em->persist($contact);
+        $this->em->flush();
+
+        $doiSubmissionId = $timedOutSubmission->getId();
+
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:cleanup-submissions');
+        $output        = $commandTester->getDisplay();
+
+        Assert::assertStringContainsString('Deleted: 1 submission', $output);
+
+        // Verify submission is deleted
+        $this->em->clear();
+        $deletedSubmission = $this->em->getRepository(FormDoiSubmission::class)->find($doiSubmissionId);
+        Assert::assertNull($deletedSubmission, 'DOI submission should be deleted');
+
+        // Verify contact is NOT deleted because it had activity after submission
+        $existingContact = $this->em->getRepository(Lead::class)->find($contactId);
+        Assert::assertNotNull($existingContact, 'Contact with activity after submission should NOT be deleted');
+        Assert::assertSame('activecontact@example.com', $existingContact->getEmail());
+    }
+
+    /**
      * If contact was already known to the system before this submission,
      * only the submission is deleted; the contact remains.
      */
@@ -692,6 +734,7 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         $contact->setEmail($email);
         $contact->setDateAdded($dateCreated);
         $contact->setDateIdentified($dateCreated);
+        $contact->setLastActive($dateCreated);
         $this->em->persist($contact);
 
         $submission = new Submission();
@@ -827,6 +870,7 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         $contact->setEmail($email);
         $contact->setDateAdded($dateCreated);
         $contact->setDateIdentified($dateCreated);
+        $contact->setLastActive($dateCreated);
         $this->em->persist($contact);
 
         $submission = new Submission();
