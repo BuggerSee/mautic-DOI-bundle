@@ -141,6 +141,14 @@ class FormDoiConfigType extends AbstractType
                 'required'   => false,
             ]);
 
+        $builder->add('deleteAfterTimeout', YesNoButtonGroupType::class, [
+            'label' => 'mautic.plugin.doi.form.field.delete_after_timeout',
+            'attr'  => [
+                'class'   => 'form-control',
+                'tooltip' => 'mautic.plugin.doi.form.field.delete_after_timeout.tooltip',
+            ],
+        ]);
+
         if (isset($options['mautic_form'])) {
             $builder->setAttribute('mautic_form', $options['mautic_form']);
         }

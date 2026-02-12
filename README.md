@@ -10,7 +10,7 @@ Universal email verification plugin for Mautic, providing Double Opt-In (DOI) fu
 - **Link Expiration**: Configurable timeout for DOI verification links
 - **Flexible Redirects**: Configurable success/error pages after verification
 - **Security**: HMAC-based hash generation for verification links
-- **Console Commands**: Cron-compatible follow-up email sending and timeout processing
+- **Console Commands**: Cron-compatible follow-up email sending, timeout processing, and optional cleanup of expired submissions
 
 ## Requirements for this release
 > [!TIP]
@@ -41,6 +41,8 @@ Alternatively, it can be installed manually, following the usual steps:
 Set up the following cron jobs for automated processing:
 - `php bin/console leuchtfeuer:doi:send-followup` - Send follow-up reminder emails
 - `php bin/console leuchtfeuer:doi:update-timeout` - Mark expired pending submissions as timed out
+- `php bin/console leuchtfeuer:doi:cleanup-submissions` - Delete expired pending submissions (per-form setting)
+
 
 ### Form Configuration
 1. **Actions Tab**: Configure immediate vs. post-verification actions
@@ -51,6 +53,7 @@ Set up the following cron jobs for automated processing:
    - Thank you page redirect URL (optional)
    - Verification error redirect URL (optional)
    - Configure Conditions for skipping the verification (optional)
+   - Delete in case of DOI timeout (optional)
 
 ## Usage
 
@@ -84,9 +87,8 @@ and
 - Multi-language support: Translated DOI emails, language-aware redirects and feedback pages.
 - Multi-brand support: URL-aware feedback pages per brand.
 - Form behaviour: Per-form follow-up wait time setting.
-- Housekeeping: Cleanup rules for unconfirmed DOIs (global or per-form timeout).
 - Honeypot support: NHI field awareness and handling.
-- DOI email restriction: Only show emails containing {doi_link} token.
+- DOI email restriction: Only show emails containing `{doi_link}` token.
 - Audit trail (future): Optional contact field audit log (leads.emailverifications_audit) for verification events.
 
 

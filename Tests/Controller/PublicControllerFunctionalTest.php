@@ -139,6 +139,7 @@ class PublicControllerFunctionalTest extends MauticMysqlTestCase
         // Refresh and verify status is now timeout
         $this->em->refresh($doiSubmission);
         Assert::assertSame(FormDoiSubmission::STATUS_TIMEOUT, $doiSubmission->getStatus());
+        Assert::assertNotNull($doiSubmission->getDateTimeout());
     }
 
     /**

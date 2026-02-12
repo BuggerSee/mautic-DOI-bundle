@@ -13,6 +13,33 @@ use Mautic\CoreBundle\Entity\CommonRepository;
 class FormDoiSubmissionRepository extends CommonRepository
 {
     /**
+     * Find timed-out submissions eligible for cleanup for a specific form.
+     *
+     * Returns all submissions with STATUS_TIMEOUT for immediate deletion.
+     *
+     * @return list<FormDoiSubmission>
+     */
+    public function findTimedOutSubmissionsForCleanup(
+        int $formId,
+        ?int $limit = null
+    ): array {
+        $qb = $this->createQueryBuilder('s')
+            ->innerJoin('s.form', 'f')
+            ->innerJoin('s.formSubmission', 'fs')
+            ->where('s.status = :timeout')
+            ->andWhere('f.id = :formId')
+            ->setParameter('timeout', FormDoiSubmission::STATUS_TIMEOUT)
+            ->setParameter('formId', $formId)
+            ->orderBy('s.id', Criteria::ASC);
+
+        if (null !== $limit) {
+            $qb->setMaxResults($limit);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * @return list<FormDoiSubmission>
      */
     public function findPendingDueForFollowup(
@@ -59,5 +86,27 @@ class FormDoiSubmissionRepository extends CommonRepository
         }
 
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Check if a lead has other active DOI submissions (pending or confirmed) besides the given one.
+     */
+    public function hasOtherActiveSubmissionsForLead(int $leadId, int $excludeSubmissionId): bool
+    {
+        $count = $this->createQueryBuilder('s')
+            ->select('COUNT(s.id)')
+            ->where('s.lead = :leadId')
+            ->andWhere('s.status IN (:activeStatuses)')
+            ->andWhere('s.id != :excludeId')
+            ->setParameter('leadId', $leadId)
+            ->setParameter('activeStatuses', [
+                FormDoiSubmission::STATUS_PENDING,
+                FormDoiSubmission::STATUS_CONFIRMED,
+            ])
+            ->setParameter('excludeId', $excludeSubmissionId)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $count > 0;
     }
 }

@@ -52,6 +52,9 @@ class FormDoiSubmission
     #[ORM\Column(name: 'date_followup_sent', type: 'datetime', nullable: true)]
     private ?\DateTime $dateFollowupSent = null;
 
+    #[ORM\Column(name: 'date_timeout', type: 'datetime', nullable: true)]
+    private ?\DateTime $dateTimeout = null;
+
     #[ORM\Column(type: 'string', length: 20)]
     private string $status = self::STATUS_PENDING;
 
@@ -258,7 +261,20 @@ class FormDoiSubmission
      */
     public function timeout(): self
     {
-        $this->status = self::STATUS_TIMEOUT;
+        $this->status      = self::STATUS_TIMEOUT;
+        $this->dateTimeout = new \DateTime();
+
+        return $this;
+    }
+
+    public function getDateTimeout(): ?\DateTime
+    {
+        return $this->dateTimeout;
+    }
+
+    public function setDateTimeout(?\DateTime $dateTimeout): self
+    {
+        $this->dateTimeout = $dateTimeout;
 
         return $this;
     }

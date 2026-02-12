@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Migrations;
+
+use Doctrine\DBAL\Schema\Schema;
+use Mautic\CoreBundle\Exception\SchemaException;
+use Mautic\IntegrationsBundle\Migration\AbstractMigration;
+
+class Version_1_3_0b extends AbstractMigration
+{
+    private string $formDoiSubmissionsTable = 'form_doi_submissions';
+
+    protected function isApplicable(Schema $schema): bool
+    {
+        try {
+            $tableName = $this->concatPrefix($this->formDoiSubmissionsTable);
+
+            if (!$schema->hasTable($tableName)) {
+                return false;
+            }
+
+            $table = $schema->getTable($tableName);
+
+            return !$table->hasColumn('date_timeout');
+        } catch (SchemaException) {
+            return false;
+        }
+    }
+
+    protected function up(): void
+    {
+        $this->addSql("ALTER TABLE `{$this->concatPrefix($this->formDoiSubmissionsTable)}` ADD date_timeout DATETIME DEFAULT NULL AFTER `date_confirmed`");
+    }
+}
