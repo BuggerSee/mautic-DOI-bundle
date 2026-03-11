@@ -5,9 +5,9 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Model;
 use Doctrine\ORM\EntityManagerInterface;
 use Mautic\FormBundle\Entity\Form;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiAction;
-use MauticPlugin\LeuchtfeuerDoiBundle\Helper\ConditionFilterHelper;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionCondition;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionConditionRepository;
+use MauticPlugin\LeuchtfeuerDoiBundle\Helper\ConditionFilterHelper;
 
 class DoiActionConditionManager
 {

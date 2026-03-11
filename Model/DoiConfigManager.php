@@ -8,8 +8,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use Mautic\EmailBundle\Entity\EmailRepository;
 use Mautic\FormBundle\Entity\Form;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
-use MauticPlugin\LeuchtfeuerDoiBundle\Helper\ConditionFilterHelper;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfigRepository;
+use MauticPlugin\LeuchtfeuerDoiBundle\Helper\ConditionFilterHelper;
 
 class DoiConfigManager
 {
