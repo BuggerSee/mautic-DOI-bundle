@@ -7,6 +7,7 @@ use Mautic\FormBundle\Entity\Form;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiAction;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionCondition;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionConditionRepository;
+use MauticPlugin\LeuchtfeuerDoiBundle\Helper\ConditionFilterHelper;
 
 class DoiActionConditionManager
 {
@@ -63,6 +64,14 @@ class DoiActionConditionManager
 
             $processedActionIds[] = $realActionId;
             $conditions           = $data['conditions'] ?? null;
+
+            if ($conditions) {
+                // Filter conditions to remove references to deleted form fields
+                $conditions = ConditionFilterHelper::filterByExistingFormFields(
+                    $form->getFieldAliases(),
+                    $conditions
+                );
+            }
 
             if ($conditions) {
                 // Create or update condition. key logic by realActionId
