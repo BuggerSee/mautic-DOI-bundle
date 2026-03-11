@@ -65,6 +65,11 @@ class DoiActionConditionManager
             $conditions           = $data['conditions'] ?? null;
 
             if ($conditions) {
+                // Filter conditions to remove references to deleted form fields
+                $conditions = $this->filterConditions($form, $conditions);
+            }
+
+            if ($conditions) {
                 // Create or update condition. key logic by realActionId
                 $condition = $existingConditions[$realActionId] ?? new FormDoiActionCondition();
                 $condition->setAction($action);
@@ -85,5 +90,35 @@ class DoiActionConditionManager
         }
 
         $this->entityManager->flush();
+    }
+
+    /**
+     * Filter conditions to remove references to form fields that no longer exist.
+     *
+     * @param array<int, array<string, mixed>> $conditions
+     *
+     * @return array<int, array<string, mixed>>|null
+     */
+    private function filterConditions(Form $form, array $conditions): ?array
+    {
+        // Get all current field aliases from the form
+        $fieldAliases = $form->getFieldAliases();
+
+        $filtered = array_values(array_filter(
+            $conditions,
+            function (array $condition) use ($fieldAliases): bool {
+                // Keep conditions that are not based on form fields
+                if ('form' !== ($condition['object'] ?? '')) {
+                    return true;
+                }
+
+                // Keep conditions where the form field still exists
+                $fieldAlias = $condition['field'] ?? '';
+
+                return in_array($fieldAlias, $fieldAliases, true);
+            }
+        ));
+
+        return $filtered ?: null;
     }
 }
