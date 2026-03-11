@@ -8,6 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Mautic\EmailBundle\Entity\EmailRepository;
 use Mautic\FormBundle\Entity\Form;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfig;
+use MauticPlugin\LeuchtfeuerDoiBundle\Helper\ConditionFilterHelper;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiConfigRepository;
 
 class DoiConfigManager
@@ -63,7 +64,10 @@ class DoiConfigManager
         $doiConfig->setDeleteAfterTimeout((bool) ($formData['deleteAfterTimeout'] ?? false));
 
         // Filter skip conditions to remove references to deleted form fields
-        $skipConditions = $this->filterSkipConditions($form, $formData['skipConditions'] ?? null);
+        $skipConditions = ConditionFilterHelper::filterByExistingFormFields(
+            $form->getFieldAliases(),
+            $formData['skipConditions'] ?? null
+        );
         $doiConfig->setSkipConditions($skipConditions);
 
         $doiConfig->setForm($form);
@@ -73,39 +77,5 @@ class DoiConfigManager
         $this->entityManager->flush();
 
         return $doiConfig;
-    }
-
-    /**
-     * Filter skip conditions to remove references to form fields that no longer exist.
-     *
-     * @param array<int, array<string, mixed>>|null $conditions
-     *
-     * @return array<int, array<string, mixed>>|null
-     */
-    private function filterSkipConditions(Form $form, ?array $conditions): ?array
-    {
-        if (empty($conditions)) {
-            return null;
-        }
-
-        // Get all current field aliases from the form
-        $fieldAliases = $form->getFieldAliases();
-
-        $filtered = array_values(array_filter(
-            $conditions,
-            function (array $condition) use ($fieldAliases): bool {
-                // Keep conditions that are not based on form fields
-                if ('form' !== ($condition['object'] ?? '')) {
-                    return true;
-                }
-
-                // Keep conditions where the form field still exists
-                $fieldAlias = $condition['field'] ?? '';
-
-                return in_array($fieldAlias, $fieldAliases, true);
-            }
-        ));
-
-        return $filtered ?: null;
     }
 }

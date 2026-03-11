@@ -5,6 +5,7 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Model;
 use Doctrine\ORM\EntityManagerInterface;
 use Mautic\FormBundle\Entity\Form;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiAction;
+use MauticPlugin\LeuchtfeuerDoiBundle\Helper\ConditionFilterHelper;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionCondition;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiActionConditionRepository;
 
@@ -66,7 +67,10 @@ class DoiActionConditionManager
 
             if ($conditions) {
                 // Filter conditions to remove references to deleted form fields
-                $conditions = $this->filterConditions($form, $conditions);
+                $conditions = ConditionFilterHelper::filterByExistingFormFields(
+                    $form->getFieldAliases(),
+                    $conditions
+                );
             }
 
             if ($conditions) {
@@ -90,35 +94,5 @@ class DoiActionConditionManager
         }
 
         $this->entityManager->flush();
-    }
-
-    /**
-     * Filter conditions to remove references to form fields that no longer exist.
-     *
-     * @param array<int, array<string, mixed>> $conditions
-     *
-     * @return array<int, array<string, mixed>>|null
-     */
-    private function filterConditions(Form $form, array $conditions): ?array
-    {
-        // Get all current field aliases from the form
-        $fieldAliases = $form->getFieldAliases();
-
-        $filtered = array_values(array_filter(
-            $conditions,
-            function (array $condition) use ($fieldAliases): bool {
-                // Keep conditions that are not based on form fields
-                if ('form' !== ($condition['object'] ?? '')) {
-                    return true;
-                }
-
-                // Keep conditions where the form field still exists
-                $fieldAlias = $condition['field'] ?? '';
-
-                return in_array($fieldAlias, $fieldAliases, true);
-            }
-        ));
-
-        return $filtered ?: null;
     }
 }
