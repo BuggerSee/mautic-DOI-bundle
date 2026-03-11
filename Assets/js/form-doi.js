@@ -27,7 +27,11 @@
         const aliases = [];
         mQuery('input[name^="mauticform[doiConfig][skipConditions]"][name$="[field]"]').each(function() {
             const $field = mQuery(this);
-            const index = $field.attr('name').match(/\[(\d+)\]/)[1];
+            const match = $field.attr('name').match(/\[(\d+)\]/);
+            if (!match) {
+                return;
+            }
+            const index = match[1];
             const $object = mQuery('input[name="mauticform[doiConfig][skipConditions][' + index + '][object]"]');
             if ($object.val() === 'form') {
                 aliases.push($field.val());
@@ -40,7 +44,7 @@
      * Disable alias field in field edit modal if it matches a protected alias
      */
     const protectFieldAliasesOnEdit = function() {
-        mQuery(document).ajaxComplete(function(event, xhr, settings) {
+        mQuery(document).off('ajaxComplete.doiProtectAliases').on('ajaxComplete.doiProtectAliases', function(event, xhr, settings) {
             // Check if this is a field edit request
             if (!settings.url || !settings.url.includes('/forms/field/edit/')) {
                 return;
@@ -59,7 +63,7 @@
 
                 const currentAlias = $aliasField.val();
                 if (protectedAliases.includes(currentAlias)) {
-                    $aliasField.prop('disabled', true);
+                    $aliasField.prop('readonly', true);
                 }
             }, 100);
         });
