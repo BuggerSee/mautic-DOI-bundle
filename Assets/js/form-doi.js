@@ -3,7 +3,7 @@
         Mautic.initHideItemButton('#mauticforms-doi-verified-actions');
         formDeleteDoiActionListener();
     };
-    
+
     Mautic.onFormDoiBuilder = function() {
         const doiSwitch = mQuery('input[name="mauticform[doiConfig][enabled]"]');
 
@@ -15,6 +15,58 @@
 
         doiSwitch.on('change', updateDoiAttribute);
         updateDoiAttribute();
+
+        // Protect field aliases referenced in DOI skip conditions during clone
+        protectFieldAliasesOnEdit();
+    };
+
+    /**
+     * Get field aliases that are referenced in DOI skip conditions with object='form'
+     */
+    const getProtectedFieldAliases = function() {
+        const aliases = [];
+        mQuery('input[name^="mauticform[doiConfig][skipConditions]"][name$="[field]"]').each(function() {
+            const $field = mQuery(this);
+            const match = $field.attr('name').match(/\[(\d+)\]/);
+            if (!match) {
+                return;
+            }
+            const index = match[1];
+            const $object = mQuery('input[name="mauticform[doiConfig][skipConditions][' + index + '][object]"]');
+            if ($object.val() === 'form') {
+                aliases.push($field.val());
+            }
+        });
+        return aliases;
+    };
+
+    /**
+     * Disable alias field in field edit modal if it matches a protected alias
+     */
+    const protectFieldAliasesOnEdit = function() {
+        mQuery(document).off('ajaxComplete.doiProtectAliases').on('ajaxComplete.doiProtectAliases', function(event, xhr, settings) {
+            // Check if this is a field edit request
+            if (!settings.url || !settings.url.includes('/forms/field/edit/')) {
+                return;
+            }
+
+            const protectedAliases = getProtectedFieldAliases();
+            if (protectedAliases.length === 0) {
+                return;
+            }
+
+            setTimeout(function() {
+                const $aliasField = mQuery('#formfield_alias');
+                if ($aliasField.length === 0) {
+                    return;
+                }
+
+                const currentAlias = $aliasField.val();
+                if (protectedAliases.includes(currentAlias)) {
+                    $aliasField.prop('readonly', true);
+                }
+            }, 100);
+        });
     };
 
     Mautic.formDoiActionOnLoad = function (container, response) {

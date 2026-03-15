@@ -52,7 +52,7 @@ class SkipConditionType extends AbstractType
             ]
         );
 
-        $formModifier = function (FormEvent $event) use ($fieldChoices): void {
+        $formModifier = function (FormEvent $event) use ($fieldChoices, $formEntity): void {
             $data        = (array) $event->getData();
             $form        = $event->getForm();
             $fieldAlias  = $data['field'] ?? null;
@@ -66,12 +66,16 @@ class SkipConditionType extends AbstractType
                 $operator = array_key_first($operators);
             }
 
+            // Detect clone scenario: form field reference exists but form has no ID yet (not persisted)
+            $isCloneScenario   = null === $formEntity?->getId() && 'form' === $fieldObject && $fieldAlias;
+            $disableValidation = $isCloneScenario || (null === $field && $fieldAlias);
+
             $form->add(
                 'operator',
                 ChoiceType::class,
                 [
                     'label'   => false,
-                    'choices' => $operators,
+                    'choices' => $disableValidation ? [$operator => $operator] : $operators,
                     'attr'    => [
                         'class'    => 'form-control not-chosen',
                         'onchange' => 'Mautic.doiConvertLeadFilterInput(this)',
@@ -79,12 +83,15 @@ class SkipConditionType extends AbstractType
                 ]
             );
 
+            $propertiesOptions = ['label' => false];
+            if ($disableValidation) {
+                $propertiesOptions['allow_extra_fields'] = true;
+            }
+
             $form->add(
                 'properties',
                 FilterPropertiesType::class,
-                [
-                    'label' => false,
-                ]
+                $propertiesOptions
             );
 
             if (null === $field) {
