@@ -22,7 +22,7 @@ class FollowUpSender
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
         private LeadRepository $leadRepository,
-        private DoiTokenParser $doiTokenParser
+        private DoiTokenParser $doiTokenParser,
     ) {
     }
 
@@ -87,7 +87,7 @@ class FollowUpSender
         return true;
     }
 
-    private function hydrateCustomFieldData(Lead $lead = null): void
+    private function hydrateCustomFieldData(?Lead $lead = null): void
     {
         if (null === $lead) {
             return;

@@ -15,7 +15,7 @@ class FormDoiActionExecutionLogRepository extends CommonRepository
         FormDoiSubmission $doiSubmission,
         FormDoiAction $action,
         bool $isExecuted,
-        string $details = null
+        ?string $details = null,
     ): void {
         $log = new FormDoiActionExecutionLog();
         $log->setSubmission($submission);

@@ -21,7 +21,7 @@ class SendFollowUpCommand extends Command
     public function __construct(
         private FormDoiSubmissionRepository $submissionRepo,
         private FollowUpSender $followUpSender,
-        private Config $pluginConfig
+        private Config $pluginConfig,
     ) {
         parent::__construct();
     }

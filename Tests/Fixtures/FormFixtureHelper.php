@@ -23,7 +23,7 @@ final class FormFixtureHelper
 {
     public function __construct(
         private EntityManagerInterface $em,
-        private KernelBrowser $client
+        private KernelBrowser $client,
     ) {
     }
 
@@ -36,7 +36,7 @@ final class FormFixtureHelper
         return $company;
     }
 
-    public function addContactToCompany(Lead $lead, Company $company, \DateTime $dateAdded = null, bool $isPrimary = true): CompanyLead
+    public function addContactToCompany(Lead $lead, Company $company, ?\DateTime $dateAdded = null, bool $isPrimary = true): CompanyLead
     {
         $companyLead = new CompanyLead();
         $companyLead->setCompany($company);
@@ -73,7 +73,7 @@ final class FormFixtureHelper
         bool $skipOnCookie = false,
         ?string $skipPostAction = null,
         ?string $skipPostActionProperty = null,
-        array $skipConditions = []
+        array $skipConditions = [],
     ): FormDoiConfig {
         $config = new FormDoiConfig();
         $config->setForm($form);

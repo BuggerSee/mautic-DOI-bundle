@@ -678,7 +678,7 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
     private function createDoiSubmissionForExistingContact(
         Form $form,
         Lead $existingContact,
-        \DateTime $dateSubmitted
+        \DateTime $dateSubmitted,
     ): FormDoiSubmission {
         $submission = new Submission();
         $submission->setForm($form);
@@ -708,7 +708,7 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         Form $form,
         string $email,
         \DateTime $dateCreated,
-        \DateTime $dateTimeout
+        \DateTime $dateTimeout,
     ): FormDoiSubmission {
         $doiSubmission = $this->formFixtureHelper->createDoiSubmission($form, $email, $dateCreated);
         $doiSubmission->setStatus(FormDoiSubmission::STATUS_TIMEOUT);
@@ -727,7 +727,7 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         Form $form,
         string $email,
         \DateTime $dateCreated,
-        \DateTime $dateTimeout
+        \DateTime $dateTimeout,
     ): FormDoiSubmission {
         // Create contact with same dateAdded as submission dateCreated
         $contact = new Lead();
@@ -767,7 +767,7 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         Form $form,
         Lead $existingContact,
         \DateTime $dateCreated,
-        \DateTime $dateTimeout
+        \DateTime $dateTimeout,
     ): FormDoiSubmission {
         $submission = new Submission();
         $submission->setForm($form);
@@ -864,7 +864,7 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         \DateTime $dateCreated,
         \DateTime $dateTimeout,
         string $fileFieldAlias,
-        string $fileName
+        string $fileName,
     ): FormDoiSubmission {
         $contact = new Lead();
         $contact->setEmail($email);

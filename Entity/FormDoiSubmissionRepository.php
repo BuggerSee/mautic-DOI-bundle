@@ -21,7 +21,7 @@ class FormDoiSubmissionRepository extends CommonRepository
      */
     public function findTimedOutSubmissionsForCleanup(
         int $formId,
-        ?int $limit = null
+        ?int $limit = null,
     ): array {
         $qb = $this->createQueryBuilder('s')
             ->innerJoin('s.form', 'f')
@@ -44,7 +44,7 @@ class FormDoiSubmissionRepository extends CommonRepository
      */
     public function findPendingDueForFollowup(
         \DateTimeInterface $threshold,
-        ?int $limit = null
+        ?int $limit = null,
     ): array {
         $qb = $this->createQueryBuilder('s')
             ->innerJoin('s.form', 'f')
@@ -72,7 +72,7 @@ class FormDoiSubmissionRepository extends CommonRepository
      */
     public function findPendingExpired(
         \DateTimeInterface $expirationThreshold,
-        ?int $limit = null
+        ?int $limit = null,
     ): array {
         $qb = $this->createQueryBuilder('s')
             ->andWhere('s.status = :pending')

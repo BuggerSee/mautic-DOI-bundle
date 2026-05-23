@@ -13,7 +13,7 @@ class DoiActionConditionManager
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private FormDoiActionConditionRepository $repository
+        private FormDoiActionConditionRepository $repository,
     ) {
     }
 

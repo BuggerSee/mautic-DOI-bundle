@@ -33,7 +33,7 @@ class PublicController extends AbstractController
         private LoggerInterface $logger,
         private DoiActionsDispatcher $doiActionsDispatcher,
         private ContactTracker $contactTracker,
-        private Config $config
+        private Config $config,
     ) {
     }
 

@@ -25,7 +25,7 @@ class CleanupSubmissionsCommand extends Command
 
     public function __construct(
         private SubmissionCleanupService $cleanupService,
-        private Config $pluginConfig
+        private Config $pluginConfig,
     ) {
         parent::__construct();
     }

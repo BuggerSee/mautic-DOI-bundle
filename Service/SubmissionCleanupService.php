@@ -37,7 +37,7 @@ class SubmissionCleanupService
         private FormDoiSubmissionRepository $submissionRepository,
         private SubmissionRepository $coreSubmissionRepository,
         private FormUploader $formUploader,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
     ) {
     }
 

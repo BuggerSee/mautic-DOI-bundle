@@ -27,7 +27,7 @@ class FormBuilderSubscriber implements EventSubscriberInterface
         private DoiConfigManager $doiConfigManager,
         private DoiActionConditionManager $doiActionConditionManager,
         private RequestStack $requestStack,
-        private Config $pluginConfig
+        private Config $pluginConfig,
     ) {
     }
 
