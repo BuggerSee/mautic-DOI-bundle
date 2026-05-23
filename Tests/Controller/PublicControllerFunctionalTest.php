@@ -4,7 +4,9 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Controller;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\FormBundle\Entity\Submission;
+use Mautic\LeadBundle\Entity\LeadEventLog;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
+use MauticPlugin\LeuchtfeuerDoiBundle\Enum\DoiVerificationHistoryMetadata;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\FormFixtureHelper;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
@@ -79,6 +81,14 @@ class PublicControllerFunctionalTest extends MauticMysqlTestCase
         $this->em->refresh($doiSubmission);
         Assert::assertSame('confirmed', $doiSubmission->getStatus());
         Assert::assertNotNull($doiSubmission->getDateConfirmed());
+
+        // Verify a success history entry was created
+        $logs = $this->em->getRepository(LeadEventLog::class)->findBy([
+            'bundle' => DoiVerificationHistoryMetadata::BUNDLE,
+            'object' => DoiVerificationHistoryMetadata::OBJECT,
+        ]);
+        Assert::assertCount(1, $logs);
+        Assert::assertSame('success', $logs[0]->getAction());
     }
 
     /**
@@ -140,6 +150,14 @@ class PublicControllerFunctionalTest extends MauticMysqlTestCase
         $this->em->refresh($doiSubmission);
         Assert::assertSame(FormDoiSubmission::STATUS_TIMEOUT, $doiSubmission->getStatus());
         Assert::assertNotNull($doiSubmission->getDateTimeout());
+
+        // Verify a failure history entry was created
+        $logs = $this->em->getRepository(LeadEventLog::class)->findBy([
+            'bundle' => DoiVerificationHistoryMetadata::BUNDLE,
+            'object' => DoiVerificationHistoryMetadata::OBJECT,
+        ]);
+        Assert::assertCount(1, $logs);
+        Assert::assertSame('failure', $logs[0]->getAction());
     }
 
     /**
@@ -179,6 +197,14 @@ class PublicControllerFunctionalTest extends MauticMysqlTestCase
         $this->em->refresh($doiSubmission);
         Assert::assertSame(FormDoiSubmission::STATUS_CONFIRMED, $doiSubmission->getStatus());
         Assert::assertNotNull($doiSubmission->getDateConfirmed());
+
+        // Verify a success history entry was created
+        $logs = $this->em->getRepository(LeadEventLog::class)->findBy([
+            'bundle' => DoiVerificationHistoryMetadata::BUNDLE,
+            'object' => DoiVerificationHistoryMetadata::OBJECT,
+        ]);
+        Assert::assertCount(1, $logs);
+        Assert::assertSame('success', $logs[0]->getAction());
     }
 
     /**
@@ -216,5 +242,42 @@ class PublicControllerFunctionalTest extends MauticMysqlTestCase
         // Status should still be timeout
         $this->em->refresh($doiSubmission);
         Assert::assertSame(FormDoiSubmission::STATUS_TIMEOUT, $doiSubmission->getStatus());
+
+        // Verify a failure history entry was created (and only one — deduplication)
+        $logs = $this->em->getRepository(LeadEventLog::class)->findBy([
+            'bundle' => DoiVerificationHistoryMetadata::BUNDLE,
+            'object' => DoiVerificationHistoryMetadata::OBJECT,
+        ]);
+        Assert::assertCount(1, $logs);
+        Assert::assertSame('failure', $logs[0]->getAction());
+    }
+
+    public function testVerifyEmailActionDeduplicatesHistoryEntries(): void
+    {
+        $form = $this->formFixtureHelper->createFormViaApi('Test DOI Dedup Form');
+        $this->formFixtureHelper->createDoiConfig(
+            form: $form,
+            successRedirectUrl: 'https://example.com/success',
+            errorRedirectUrl: 'https://example.com/error'
+        );
+
+        $doiSubmission = $this->formFixtureHelper->createDoiSubmission($form, 'dedup@example.com', new \DateTime());
+        $doiSubmission->timeout();
+        $this->em->persist($doiSubmission);
+        $this->em->flush();
+
+        $formId    = $form->getId();
+        $hash      = $doiSubmission->getHash();
+        $token     = base64_encode("{$formId}:{$hash}");
+
+        // Click twice on the timed-out link
+        $this->client->request(Request::METHOD_GET, "/email/verify/{$token}");
+        $this->client->request(Request::METHOD_GET, "/email/verify/{$token}");
+
+        $logs = $this->em->getRepository(LeadEventLog::class)->findBy([
+            'bundle' => DoiVerificationHistoryMetadata::BUNDLE,
+            'object' => DoiVerificationHistoryMetadata::OBJECT,
+        ]);
+        Assert::assertCount(1, $logs, 'Only one history entry should exist even after multiple clicks');
     }
 }

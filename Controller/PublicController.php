@@ -12,6 +12,7 @@ use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiSubmissionManager;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiActionsDispatcher;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiTokenParser;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiVerificationHistoryRecorder;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\RuleEvaluator;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -34,6 +35,7 @@ class PublicController extends AbstractController
         private DoiActionsDispatcher $doiActionsDispatcher,
         private ContactTracker $contactTracker,
         private Config $config,
+        private DoiVerificationHistoryRecorder $verificationHistoryRecorder,
     ) {
     }
 
@@ -73,6 +75,7 @@ class PublicController extends AbstractController
 
         if ($submission->isTimedOut()) {
             $this->logger->info('DOI submission already timed out', ['hash' => $hash, 'formId' => $formId]);
+            $this->verificationHistoryRecorder->recordFailure($submission);
 
             return $this->createErrorResponse($form);
         }
@@ -81,12 +84,14 @@ class PublicController extends AbstractController
             $this->logger->info('DOI submission has expired', ['hash' => $hash, 'formId' => $formId]);
             $submission->timeout();
             $this->submissionManager->save($submission);
+            $this->verificationHistoryRecorder->recordFailure($submission);
 
             return $this->createErrorResponse($form);
         }
 
         if (!$submission->isPending()) {
             $this->logger->error('DOI submission is not pending', ['hash' => $hash, 'formId' => $formId, 'status' => $submission->getStatus()]);
+            $this->verificationHistoryRecorder->recordFailure($submission);
 
             return $this->createErrorResponse($form);
         }
@@ -98,6 +103,7 @@ class PublicController extends AbstractController
         $submission->setBrowserProofToken($browserProofToken);
 
         $this->submissionManager->save($submission);
+        $this->verificationHistoryRecorder->recordSuccess($submission);
         $this->doiActionsDispatcher->executePostEmailVerificationActions($submission);
 
         return $this->createSuccessResponseWithCookie($submission, $browserProofToken, $request);
