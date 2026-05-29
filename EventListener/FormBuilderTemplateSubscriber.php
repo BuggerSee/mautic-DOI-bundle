@@ -19,7 +19,7 @@ class FormBuilderTemplateSubscriber implements EventSubscriberInterface
         private FormDoiActionManager $formDoiActionManager,
         private FormDoiActionSessionManager $formDoiActionSessionManager,
         private Config $pluginConfig,
-        private AvailableSkipOptions $availableSkipOptions
+        private AvailableSkipOptions $availableSkipOptions,
     ) {
     }
 

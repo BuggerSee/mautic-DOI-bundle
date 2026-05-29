@@ -29,7 +29,7 @@ class FormTypeExtension extends AbstractTypeExtension
         private DoiActionConditionManager $doiActionConditionManager,
         private FormDoiActionManager $formDoiActionManager,
         private FormDoiActionSessionManager $formDoiActionSessionManager,
-        private FormModel $formModel
+        private FormModel $formModel,
     ) {
     }
 

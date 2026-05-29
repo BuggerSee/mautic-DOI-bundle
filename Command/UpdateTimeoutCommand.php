@@ -26,7 +26,7 @@ class UpdateTimeoutCommand extends Command
     public function __construct(
         private FormDoiSubmissionRepository $submissionRepo,
         private EntityManagerInterface $em,
-        private Config $pluginConfig
+        private Config $pluginConfig,
     ) {
         parent::__construct();
     }

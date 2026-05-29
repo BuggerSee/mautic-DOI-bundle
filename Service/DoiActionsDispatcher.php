@@ -22,7 +22,7 @@ class DoiActionsDispatcher
         private FormModel $formModel,
         private SubmissionEventRecreator $submissionEventRecreator,
         private RuleEvaluator $ruleEvaluator,
-        private FormDoiActionExecutionLogRepository $formDoiActionExecutionLogRepository
+        private FormDoiActionExecutionLogRepository $formDoiActionExecutionLogRepository,
     ) {
     }
 

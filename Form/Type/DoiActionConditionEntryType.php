@@ -18,7 +18,7 @@ class DoiActionConditionEntryType extends AbstractType
 {
     public function __construct(
         private TranslatorInterface $translator,
-        private AvailableSkipOptions $availableOptionsProvider
+        private AvailableSkipOptions $availableOptionsProvider,
     ) {
     }
 

@@ -15,7 +15,7 @@ class FormDoiActionManager
     public function __construct(
         private EntityManagerInterface $entityManager,
         private FormDoiActionRepository $formDoiActionRepository,
-        private FormDoiActionConditionRepository $formDoiActionConditionRepository
+        private FormDoiActionConditionRepository $formDoiActionConditionRepository,
     ) {
     }
 

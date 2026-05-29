@@ -26,7 +26,7 @@ class FormSubmissionSubscriber implements EventSubscriberInterface
         private DoiConfigManager $doiConfigManager,
         private FormDoiSubmissionManager $submissionManager,
         private DoiActionsDispatcher $actionsDispatcher,
-        private DoiHashGenerator $hashGenerator
+        private DoiHashGenerator $hashGenerator,
     ) {
     }
 
