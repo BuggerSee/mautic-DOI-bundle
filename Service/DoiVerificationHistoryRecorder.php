@@ -9,11 +9,13 @@ use Mautic\LeadBundle\Entity\LeadEventLogRepository;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\LeuchtfeuerDoiBundle\Enum\DoiVerificationHistoryAction;
 use MauticPlugin\LeuchtfeuerDoiBundle\Enum\DoiVerificationHistoryMetadata;
+use Psr\Log\LoggerInterface;
 
 final class DoiVerificationHistoryRecorder
 {
     public function __construct(
         private LeadEventLogRepository $leadEventLogRepository,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -32,6 +34,22 @@ final class DoiVerificationHistoryRecorder
     }
 
     private function record(
+        FormDoiSubmission $submission,
+        DoiVerificationHistoryAction $action,
+        \DateTimeInterface $clickedAt,
+    ): void {
+        try {
+            $this->persistRecord($submission, $action, $clickedAt);
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to record DOI verification history', [
+                'doiSubmissionId' => $submission->getId(),
+                'action'          => $action->value,
+                'error'           => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function persistRecord(
         FormDoiSubmission $submission,
         DoiVerificationHistoryAction $action,
         \DateTimeInterface $clickedAt,
