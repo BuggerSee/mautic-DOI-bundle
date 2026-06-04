@@ -11,4 +11,4 @@ jobs:
       mauticVersion: 5
       skipCodeReview: true
     secrets:
-      PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      PERSONAL_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
