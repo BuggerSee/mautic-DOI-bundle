@@ -19,6 +19,16 @@
   "extra": {
     "install-directory-name": "LeuchtfeuerDoiBundle"
   },
+  "autoload": {
+    "psr-4": {
+      "MauticPlugin\\LeuchtfeuerDoiBundle\\": ""
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "MauticPlugin\\LeuchtfeuerDoiBundle\\Tests\\": "Tests"
+    }
+  },
   "minimum-stability": "dev",
   "repositories": [
     {
