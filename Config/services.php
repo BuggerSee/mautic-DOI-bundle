@@ -13,7 +13,9 @@ return function (ContainerConfigurator $configurator): void {
         ->autoconfigure()
         ->public();
 
-    $excludes = [];
+    $excludes = [
+        'Enum',
+    ];
 
     $services->load('MauticPlugin\\LeuchtfeuerDoiBundle\\Entity\\', '../Entity/*Repository.php')
         ->tag(ServiceRepositoryCompilerPass::REPOSITORY_SERVICE_TAG);
