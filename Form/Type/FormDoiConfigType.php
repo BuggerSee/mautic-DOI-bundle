@@ -8,6 +8,7 @@ use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;
 use Mautic\EmailBundle\Form\Type\EmailListType;
 use Mautic\FormBundle\Entity\Form;
 use Mautic\LeadBundle\Form\DataTransformer\FieldFilterTransformer;
+use Mautic\LeadBundle\Segment\RelativeDate;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\AvailableSkipOptions;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -27,6 +28,7 @@ class FormDoiConfigType extends AbstractType
     public function __construct(
         private TranslatorInterface $translator,
         private AvailableSkipOptions $availableSkipOptions,
+        private RelativeDate $relativeDate,
     ) {
     }
 
@@ -153,7 +155,7 @@ class FormDoiConfigType extends AbstractType
             $builder->setAttribute('mautic_form', $options['mautic_form']);
         }
 
-        $filterModalTransformer = new FieldFilterTransformer($this->translator, ['object' => 'lead']);
+        $filterModalTransformer = new FieldFilterTransformer($this->translator, $this->relativeDate, ['object' => 'lead']);
         $builder->add(
             $builder->create(
                 'skipConditions',

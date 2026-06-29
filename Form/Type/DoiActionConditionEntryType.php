@@ -4,6 +4,7 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Form\Type;
 
 use Mautic\FormBundle\Entity\Form;
 use Mautic\LeadBundle\Form\DataTransformer\FieldFilterTransformer;
+use Mautic\LeadBundle\Segment\RelativeDate;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\AvailableSkipOptions;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
@@ -19,6 +20,7 @@ class DoiActionConditionEntryType extends AbstractType
     public function __construct(
         private TranslatorInterface $translator,
         private AvailableSkipOptions $availableOptionsProvider,
+        private RelativeDate $relativeDate,
     ) {
     }
 
@@ -32,7 +34,7 @@ class DoiActionConditionEntryType extends AbstractType
         $builder->add('actionId', HiddenType::class);
 
         // Collection of conditions for this action
-        $filterModalTransformer = new FieldFilterTransformer($this->translator, ['object' => 'lead']);
+        $filterModalTransformer = new FieldFilterTransformer($this->translator, $this->relativeDate, ['object' => 'lead']);
 
         $builder->add(
             $builder->create(
