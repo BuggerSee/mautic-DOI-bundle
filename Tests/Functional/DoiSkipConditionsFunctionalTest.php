@@ -30,7 +30,6 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
     }
 
     /**
-     *
      * @param array<int, mixed>    $skipConditions
      * @param array<string, mixed> $submissionData
      * @param int                  $contactNumber  To ensure unique emails per test

@@ -38,7 +38,6 @@ class DoiActionsEvaluationFunctionalTest extends MauticMysqlTestCase
     }
 
     /**
-     *
      * @param array<mixed>|null    $conditions    The conditions definition
      * @param array<string, mixed> $leadData      Profile data to pre-fill on the contact
      * @param array<string, mixed> $companyData   Company data (if any)

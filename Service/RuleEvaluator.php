@@ -63,6 +63,7 @@ class RuleEvaluator
         if (!$submission->isConfirmed()) {
             return false;
         }
+
         // Validate the email address matches
         return $submission->getEmail() === $email;
     }

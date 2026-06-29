@@ -13,7 +13,6 @@ use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\FormFixtureHelper;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mime\Email as MimeEmail;
 
 class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase

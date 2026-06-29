@@ -11,7 +11,6 @@ use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\FormFixtureHelper;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 class PublicControllerFunctionalTest extends MauticMysqlTestCase
 {

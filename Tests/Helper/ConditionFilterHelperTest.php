@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 class ConditionFilterHelperTest extends TestCase
 {
     /**
-     *
      * @param array<string>                         $fieldAliases
      * @param array<int, array<string, mixed>>|null $conditions
      * @param array<int, array<string, mixed>>|null $expected
