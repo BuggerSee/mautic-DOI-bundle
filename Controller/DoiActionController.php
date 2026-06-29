@@ -120,7 +120,7 @@ class DoiActionController extends AbstractStandardFormController
         FormModel $formModel): JsonResponse|Response
     {
         $method     = $request->getMethod();
-        $formaction = $request->request->get('formaction') ?? [];
+        $formaction = $request->request->all()['formaction'] ?? [];
         $formId     = Request::METHOD_POST === $method ? ($formaction['formId'] ?? '') : $request->query->get('formId');
         $actions    = $formDoiActionSessionManager->getActionsFromSession($formId);
         $valid      = $cancelled      = false;
