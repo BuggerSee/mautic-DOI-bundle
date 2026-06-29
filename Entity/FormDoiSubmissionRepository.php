@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerDoiBundle\Entity;
 
-use Doctrine\Common\Collections\Criteria;
+use Doctrine\Common\Collections\Order;
 use Mautic\CoreBundle\Entity\CommonRepository;
 
 /**
@@ -30,7 +30,7 @@ class FormDoiSubmissionRepository extends CommonRepository
             ->andWhere('f.id = :formId')
             ->setParameter('timeout', FormDoiSubmission::STATUS_TIMEOUT)
             ->setParameter('formId', $formId)
-            ->orderBy('s.id', Criteria::ASC);
+            ->orderBy('s.id', Order::Ascending->value);
 
         if (null !== $limit) {
             $qb->setMaxResults($limit);
@@ -56,7 +56,7 @@ class FormDoiSubmissionRepository extends CommonRepository
             ->andWhere('dc.followUpEmail IS NOT NULL')
             ->setParameter('pending', FormDoiSubmission::STATUS_PENDING)
             ->setParameter('threshold', $threshold)
-            ->orderBy('s.id', Criteria::DESC);
+            ->orderBy('s.id', Order::Descending->value);
 
         if (null !== $limit) {
             $qb->setMaxResults($limit);
@@ -79,7 +79,7 @@ class FormDoiSubmissionRepository extends CommonRepository
             ->andWhere('s.dateCreated < :threshold')
             ->setParameter('pending', FormDoiSubmission::STATUS_PENDING)
             ->setParameter('threshold', $expirationThreshold)
-            ->orderBy('s.id', Criteria::ASC);
+            ->orderBy('s.id', Order::Ascending->value);
 
         if (null !== $limit) {
             $qb->setMaxResults($limit);
