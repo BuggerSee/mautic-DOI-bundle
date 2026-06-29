@@ -12,9 +12,8 @@ class SubmissionEventRecreatorTest extends TestCase
     /**
      * @param array<string, mixed> $results
      * @param array<string, mixed> $expected
-     *
-     * @dataProvider provideContactFieldMatchesData
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('provideContactFieldMatchesData')]
     public function testGetContactFieldMatches(string $message, Form $form, array $results, array $expected): void
     {
         $service = new SubmissionEventRecreator();

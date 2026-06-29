@@ -11,6 +11,7 @@ class LeuchtfeuerDoiIntegration extends BasicIntegration implements BasicInterfa
     use ConfigurationTrait;
 
     public const INTEGRATION_NAME = 'LeuchtfeuerDoi';
+
     public const DISPLAY_NAME     = 'DOI by Leuchtfeuer';
 
     public function getName(): string

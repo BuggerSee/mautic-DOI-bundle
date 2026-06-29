@@ -174,7 +174,7 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         $notReadySubmission = $this->formFixtureHelper->createDoiSubmission($form, 'notready@example.com', new \DateTime('-23 hours'));
         $readySubmission    = $this->formFixtureHelper->createDoiSubmission($form, 'ready@example.com', new \DateTime('-25 hours'));
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:send-followup');
+        $this->testSymfonyCommand('leuchtfeuer:doi:send-followup');
 
         $this->em->refresh($notReadySubmission);
         $this->em->refresh($readySubmission);

@@ -10,7 +10,9 @@ use Mautic\FormBundle\Entity\Submission;
 class FormDoiActionExecutionLog
 {
     public const DETAILS_CONDITIONS_MET     = 'conditions_met';
+
     public const DETAILS_CONDITIONS_NOT_MET = 'conditions_not_met';
+
     public const DETAILS_ERROR              = 'execution_error';
 
     #[ORM\Id]

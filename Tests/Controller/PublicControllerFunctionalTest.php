@@ -48,14 +48,14 @@ class PublicControllerFunctionalTest extends MauticMysqlTestCase
             'mauticform[email]' => 'lead@example.com',
         ]);
         $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Ensure the submission was created properly.
         $submissions = $this->em->getRepository(Submission::class)->findAll();
         Assert::assertCount(1, $submissions);
 
-        $clientResponse = $this->client->getResponse();
-        $this->assertSame(Response::HTTP_OK, $clientResponse->getStatusCode());
+        $this->client->getResponse();
+        $this->assertResponseIsSuccessful();
 
         // Find the DOI submission that should have been created
         $doiSubmissions = $this->em->getRepository(FormDoiSubmission::class)->findAll();

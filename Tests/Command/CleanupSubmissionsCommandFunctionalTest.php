@@ -286,9 +286,8 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
      * Scenario: Contact submits form1, doesn't confirm, times out. During the cleanup grace period,
      * contact submits form2. When cleanup runs, only the timed-out submission should be deleted;
      * the contact should remain because they have another active submission.
-     *
-     * @dataProvider provideOtherSubmissionStatuses
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('provideOtherSubmissionStatuses')]
     public function testContactWithOtherActiveSubmissionsIsNotDeleted(string $otherStatus): void
     {
         $form1 = $this->formFixtureHelper->createFormViaApi('Form One');
@@ -364,9 +363,9 @@ class CleanupSubmissionsCommandFunctionalTest extends MauticMysqlTestCase
         $this->createDoiConfigWithCleanup($form);
 
         // Create 3 timed-out submissions with unique emails
-        $sub1 = $this->createTimedOutDoiSubmission($form, 'limitopt1@example.com', new \DateTime('-30 days'), new \DateTime('-1 day'));
-        $sub2 = $this->createTimedOutDoiSubmission($form, 'limitopt2@example.com', new \DateTime('-31 days'), new \DateTime('-2 days'));
-        $sub3 = $this->createTimedOutDoiSubmission($form, 'limitopt3@example.com', new \DateTime('-32 days'), new \DateTime('-3 days'));
+        $this->createTimedOutDoiSubmission($form, 'limitopt1@example.com', new \DateTime('-30 days'), new \DateTime('-1 day'));
+        $this->createTimedOutDoiSubmission($form, 'limitopt2@example.com', new \DateTime('-31 days'), new \DateTime('-2 days'));
+        $this->createTimedOutDoiSubmission($form, 'limitopt3@example.com', new \DateTime('-32 days'), new \DateTime('-3 days'));
 
         // Verify all 3 submissions exist before running command
         $this->em->clear();

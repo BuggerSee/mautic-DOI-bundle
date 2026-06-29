@@ -40,7 +40,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $followUpEmail     = $this->createEmail('DOI Follow-up Email');
 
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
         $formElement->setValues([
@@ -53,7 +53,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         ]);
 
         $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Verify DOI config was saved
         $savedDoiConfig = $this->doiConfigManager->getFormDoiConfig($form);
@@ -74,7 +74,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $form = $this->formFixtureHelper->createForm('Test DOI Form Disabled', 'test_doi_form_disabled');
 
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
         $formElement->setValues([
@@ -82,7 +82,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         ]);
 
         $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Verify DOI config was saved as disabled
         $savedDoiConfig = $this->doiConfigManager->getFormDoiConfig($form);
@@ -98,7 +98,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $form = $this->formFixtureHelper->createForm('Test DOI Validation', 'test_doi_validation');
 
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
         $formElement->setValues([
@@ -124,7 +124,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $form = $this->formFixtureHelper->createForm('Test DOI Disabled Validation', 'test_doi_disabled_validation');
 
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
         $formElement->setValues([
@@ -133,7 +133,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         ]);
 
         $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Verify DOI config was saved as disabled
         $savedDoiConfig = $this->doiConfigManager->getFormDoiConfig($form);
@@ -160,7 +160,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
 
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Verify that existing values are loaded
         $enabledField = $crawler->filter('input[name="mauticform[doiConfig][enabled]"]:checked');
@@ -204,7 +204,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Request the edit form
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Update the form with new values
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
@@ -219,7 +219,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Submit the updated form
         $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Refresh the entity manager to ensure we're getting the latest data
         $this->em->clear();
@@ -251,7 +251,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Load the form edit page
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Assert DOI fields are not present
         $this->assertCount(0, $crawler->filter('input[name="mauticform[doiConfig][enabled]"]'), 'Enabled field should not be present');
@@ -270,7 +270,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Get the form edit page first (mirrors the real UI: editor is open before actions are added)
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Add the DOI action via AJAX while the editor is open
         $this->submitNewDoiActionForm($sessionId);
@@ -286,7 +286,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         ]);
 
         $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Verify DOI action is persisted in database
         $doiActionRepository = $this->em->getRepository(FormDoiAction::class);
@@ -307,7 +307,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Get the form edit page first (mirrors the real UI: editor is open before actions are added)
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Create initial action via AJAX while the editor is open
         $this->submitNewDoiActionForm($sessionId);
@@ -322,7 +322,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         ]);
 
         $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         $doiActionRepository = $this->em->getRepository(FormDoiAction::class);
         $savedActions        = $doiActionRepository->findBy(['form' => $form]);
@@ -331,7 +331,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Re-open the editor (loads the persisted action into the session) before editing it
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         $this->submitEditDoiActionForm($sessionId, $doiAction->getId());
 
@@ -346,7 +346,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         ]);
 
         $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Verify the action was updated
         $updatedAction = $doiActionRepository->find($doiAction->getId());
@@ -364,7 +364,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Get the form edit page first (mirrors the real UI: editor is open before actions are added)
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Create initial action via AJAX while the editor is open
         $this->submitNewDoiActionForm($sessionId);
@@ -380,7 +380,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         ]);
 
         $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Verify DOI action is persisted in database
         $doiActionRepository = $this->em->getRepository(FormDoiAction::class);
@@ -390,7 +390,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Re-open the editor (loads the persisted action into the session) before removing it
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Remove the DOI action
         $this->client->request(
@@ -400,7 +400,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
             [],
             $this->createAjaxHeaders()
         );
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Verify the action was removed from the session
         $this->assertDoiActionNotInSession($sessionId);
@@ -414,7 +414,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         ]);
 
         $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         // Verify the action was removed from the database
         $remainingActions = $doiActionRepository->findBy(['form' => $form]);
@@ -499,7 +499,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         ]);
 
         $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk(), 'Saving cloned form failed.');
+        $this->assertResponseIsSuccessful('Saving cloned form failed.');
 
         $this->em->clear();
 
@@ -551,7 +551,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
             [],
             $this->createAjaxHeaders()
         );
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         $content    = json_decode($this->client->getResponse()->getContent())->newContent;
         $crawler    = new Crawler($content, $this->client->getInternalRequest()->getUri());
@@ -566,7 +566,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
             'formaction[formId]'              => $sessionId,
         ]);
         $this->client->submit($actionForm, [], $this->createAjaxHeaders());
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
     }
 
     private function submitEditDoiActionForm(string $sessionId, int $doiActionId): void
@@ -581,7 +581,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
             [],
             $this->createAjaxHeaders()
         );
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         $content    = json_decode($this->client->getResponse()->getContent())->newContent;
         $crawler    = new Crawler($content, $this->client->getInternalRequest()->getUri());
@@ -596,7 +596,7 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
             'formaction[formId]'              => $sessionId,
         ]);
         $this->client->submit($actionForm, [], $this->createAjaxHeaders());
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
     }
 
     private function assertDoiActionNotInSession(string $sessionId): void

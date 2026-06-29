@@ -63,13 +63,8 @@ class RuleEvaluator
         if (!$submission->isConfirmed()) {
             return false;
         }
-
         // Validate the email address matches
-        if ($submission->getEmail() !== $email) {
-            return false;
-        }
-
-        return true;
+        return $submission->getEmail() === $email;
     }
 
     public function shouldSkipBasedOnConditions(FormDoiConfig $config, Submission $submission, Lead $contact): bool

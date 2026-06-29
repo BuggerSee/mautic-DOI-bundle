@@ -30,12 +30,12 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
     }
 
     /**
-     * @dataProvider skipConditionsDataProvider
      *
      * @param array<int, mixed>    $skipConditions
      * @param array<string, mixed> $submissionData
      * @param int                  $contactNumber  To ensure unique emails per test
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('skipConditionsDataProvider')]
     public function testSkipConditionsEvaluation(array $skipConditions, array $submissionData, string $expectedStatus, int $contactNumber): void
     {
         // 1. Setup: Create Form and DOI Config with the specific conditions
@@ -84,7 +84,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         $formElement->setValues($mauticFormValues);
         $this->client->submit($formElement);
-        Assert::assertTrue($this->client->getResponse()->isOk());
+        self::assertResponseIsSuccessful();
 
         // 3. Assertion: Check the status of the created DOI submission
         $doiRepo = $this->em->getRepository(FormDoiSubmission::class);

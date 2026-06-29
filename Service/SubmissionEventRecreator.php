@@ -60,7 +60,7 @@ class SubmissionEventRecreator
                         $validOptionValues = array_column($optionsList, 'value');
 
                         // Sort valid options by string length, descending.
-                        usort($validOptionValues, fn ($a, $b) => strlen($b) <=> strlen($a));
+                        usort($validOptionValues, fn ($a, $b): int => strlen($b) <=> strlen($a));
 
                         $matchedValues   = [];
                         $remainingStr    = $leadValue;

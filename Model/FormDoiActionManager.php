@@ -26,7 +26,7 @@ class FormDoiActionManager
     {
         $actions = $this->formDoiActionRepository->findBy(['form' => $form], ['order' => 'ASC']);
 
-        return array_map(fn (FormDoiAction $action) => $action->convertToArray(), $actions);
+        return array_map(fn (FormDoiAction $action): array => $action->convertToArray(), $actions);
     }
 
     /**

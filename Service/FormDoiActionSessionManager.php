@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 class FormDoiActionSessionManager
 {
     private const SESSION_KEY_PREFIX = 'mautic.form.';
+
     private const SESSION_KEY_SUFFIX = '.actions.doi_verified';
 
     public function __construct(private RequestStack $requestStack)

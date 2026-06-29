@@ -12,6 +12,7 @@ use MauticPlugin\LeuchtfeuerDoiBundle\Helper\MigrationHelper;
 class Version_0_0_3 extends AbstractMigration
 {
     private string $formDoiSubmissionsTable = 'form_doi_submissions';
+
     private Schema $schema;
 
     protected function isApplicable(Schema $schema): bool

@@ -163,7 +163,7 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
         $formElement = $formCrawler->form();
         $formElement->setValues($formData);
         $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         $submissions = $this->em->getRepository(Submission::class)->findAll();
         Assert::assertCount(1, $submissions);
@@ -189,8 +189,8 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
         $token     = base64_encode($tokenData);
 
         $this->client->request(Request::METHOD_GET, "/email/verify/{$token}");
-        $response = $this->client->getResponse();
-        $this->assertSame(Response::HTTP_OK, $response->getStatusCode());
+        $this->client->getResponse();
+        $this->assertResponseIsSuccessful();
     }
 
     /**

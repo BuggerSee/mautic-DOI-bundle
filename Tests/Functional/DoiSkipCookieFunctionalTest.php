@@ -62,7 +62,7 @@ class DoiSkipCookieFunctionalTest extends MauticMysqlTestCase
         $formElement = $formCrawler->form();
         $formElement->setValues(['mauticform[email]' => $email]);
         $this->client->submit($formElement);
-        Assert::assertTrue($this->client->getResponse()->isOk());
+        self::assertResponseIsSuccessful();
 
         // 3. Find the created DOI submission and verify it's pending
         $doiRepo = $this->em->getRepository(FormDoiSubmission::class);
@@ -107,7 +107,7 @@ class DoiSkipCookieFunctionalTest extends MauticMysqlTestCase
         $formElement = $formCrawler->form();
         $formElement->setValues(['mauticform[email]' => $email]);
         $this->client->submit($formElement);
-        Assert::assertTrue($this->client->getResponse()->isOk(), 'Second form submission should be successful.');
+        self::assertResponseIsSuccessful('Second form submission should be successful.');
 
         // 7. Assert that a NEW, SKIPPED DOI submission was created
         $allDoiSubmissions = $doiRepo->findBy(['email' => $email], ['id' => 'DESC']);

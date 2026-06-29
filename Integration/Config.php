@@ -11,6 +11,7 @@ use Mautic\PluginBundle\Entity\Integration;
 class Config
 {
     public const DEFAULT_FOLLOWUP_WAIT_TIME = 24;
+
     public const DEFAULT_DOI_LINK_TIMEOUT   = 48;
 
     public function __construct(

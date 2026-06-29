@@ -18,7 +18,9 @@ use Symfony\Component\HttpFoundation\RequestStack;
 class FormBuilderSubscriber implements EventSubscriberInterface
 {
     private const SESSION_ID_KEY                   = 'sessionId';
+
     private const DOI_CONFIG_KEY                   = 'doiConfig';
+
     private const DOI_ACTION_CONDITIONS_CONFIG_KEY = 'doiActionConditionsConfig';
 
     public function __construct(
