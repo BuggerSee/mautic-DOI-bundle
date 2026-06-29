@@ -131,8 +131,7 @@ class DoiSkippedSubmitActionHandler
 
         if ($asArrayPayload) {
             return [
-                'successMessage' => [],
-                'hideform_text'  => $message,
+                'successMessage' => [$message],
                 'hideform'       => true,
             ];
         }
