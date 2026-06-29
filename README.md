@@ -15,8 +15,9 @@ Universal email verification plugin for Mautic, providing Double Opt-In (DOI) fu
 ## Requirements for this release
 > [!TIP]
 > Other releases of this plugin may cover different Mautic versions!
-- Mautic 5.2 
+- Mautic 7.0
 - PHP 8.1 or higher
+- MySQL 8.4+ or MariaDB 10.11+
 
 
 ## Installation
