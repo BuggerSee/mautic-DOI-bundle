@@ -268,16 +268,13 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $verificationEmail = $this->createEmail('DOI Verification Email');
         $sessionId         = (string) $form->getId();
 
-        $this->submitNewDoiActionForm($sessionId);
-        $this->assertDoiActionInSession($sessionId);
-
-        $sessionData = $this->storeSessionData();
-
-        // Get the form edit page
+        // Get the form edit page first (mirrors the real UI: editor is open before actions are added)
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
         $this->assertTrue($this->client->getResponse()->isOk());
 
-        $this->restoreSessionData($sessionData);
+        // Add the DOI action via AJAX while the editor is open
+        $this->submitNewDoiActionForm($sessionId);
+        $this->assertDoiActionInSession($sessionId);
 
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
 
@@ -308,17 +305,13 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $verificationEmail = $this->createEmail('DOI Verification Email');
         $sessionId         = (string) $form->getId();
 
-        // Create initial action
-        $this->submitNewDoiActionForm($sessionId);
-        $this->assertDoiActionInSession($sessionId);
-
-        $sessionData = $this->storeSessionData();
-
-        // Get the form edit page
+        // Get the form edit page first (mirrors the real UI: editor is open before actions are added)
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
         $this->assertTrue($this->client->getResponse()->isOk());
 
-        $this->restoreSessionData($sessionData);
+        // Create initial action via AJAX while the editor is open
+        $this->submitNewDoiActionForm($sessionId);
+        $this->assertDoiActionInSession($sessionId);
 
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
 
@@ -336,17 +329,13 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(1, $savedActions);
         $doiAction = $savedActions[0];
 
-        $this->submitEditDoiActionForm($sessionId, $doiAction->getId());
-
-        $this->assertDoiActionInSession($sessionId);
-
-        $sessionData = $this->storeSessionData();
-
-        // Get the form edit page
+        // Re-open the editor (loads the persisted action into the session) before editing it
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
         $this->assertTrue($this->client->getResponse()->isOk());
 
-        $this->restoreSessionData($sessionData);
+        $this->submitEditDoiActionForm($sessionId, $doiAction->getId());
+
+        $this->assertDoiActionInSession($sessionId);
 
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
 
@@ -373,17 +362,13 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $verificationEmail = $this->createEmail('DOI Verification Email');
         $sessionId         = (string) $form->getId();
 
-        // Create initial action
-        $this->submitNewDoiActionForm($sessionId);
-        $this->assertDoiActionInSession($sessionId);
-
-        $sessionData = $this->storeSessionData();
-
-        // Get the form edit page
+        // Get the form edit page first (mirrors the real UI: editor is open before actions are added)
         $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
         $this->assertTrue($this->client->getResponse()->isOk());
 
-        $this->restoreSessionData($sessionData);
+        // Create initial action via AJAX while the editor is open
+        $this->submitNewDoiActionForm($sessionId);
+        $this->assertDoiActionInSession($sessionId);
 
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
 
@@ -403,6 +388,10 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(1, $savedActions);
         $doiAction = $savedActions[0];
 
+        // Re-open the editor (loads the persisted action into the session) before removing it
+        $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
+        $this->assertTrue($this->client->getResponse()->isOk());
+
         // Remove the DOI action
         $this->client->request(
             'POST',
@@ -415,13 +404,8 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
         // Verify the action was removed from the session
         $this->assertDoiActionNotInSession($sessionId);
-        $sessionData = $this->storeSessionData();
 
-        // Save the form again to persist changes
-        $crawler = $this->client->request('GET', sprintf('/s/forms/edit/%d', $form->getId()));
-        $this->assertTrue($this->client->getResponse()->isOk());
-        $this->restoreSessionData($sessionData);
-
+        // Save the form again (using the editor already open) to persist the removal
         $formElement = $crawler->filterXPath('//form[@name="mauticform"]')->form();
         $formElement->setValues([
             'mauticform[doiConfig][enabled]'             => '1',
@@ -617,34 +601,24 @@ class FormDoiControllerFunctionalTest extends MauticMysqlTestCase
 
     private function assertDoiActionNotInSession(string $sessionId): void
     {
-        $sessionManager   = $this->getContainer()->get('MauticPlugin\LeuchtfeuerDoiBundle\Service\FormDoiActionSessionManager');
-        $actionsInSession = $sessionManager->getActionsFromSession($sessionId);
+        $actionsInSession = $this->getDoiActionsFromSession($sessionId);
         $this->assertEmpty($actionsInSession, 'Actions should not be in session');
     }
 
     private function assertDoiActionInSession(string $sessionId): void
     {
-        $sessionManager   = $this->getContainer()->get('MauticPlugin\LeuchtfeuerDoiBundle\Service\FormDoiActionSessionManager');
-        $actionsInSession = $sessionManager->getActionsFromSession($sessionId);
+        $actionsInSession = $this->getDoiActionsFromSession($sessionId);
         $this->assertNotEmpty($actionsInSession, 'Actions should be in session');
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<int|string, mixed>
      */
-    private function storeSessionData(): array
+    private function getDoiActionsFromSession(string $sessionId): array
     {
-        return $this->client->getRequest()->getSession()->all();
-    }
+        $sessionKey = 'mautic.form.'.$sessionId.'.actions.doi_verified';
 
-    /**
-     * @param array<string, mixed> $sessionData
-     */
-    private function restoreSessionData(array $sessionData): void
-    {
-        foreach ($sessionData as $key => $value) {
-            $this->client->getRequest()->getSession()->set($key, $value);
-        }
+        return $this->client->getRequest()->getSession()->get($sessionKey, []);
     }
 
     private function createEmail(string $name): Email
