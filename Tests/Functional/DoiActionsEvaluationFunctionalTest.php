@@ -338,7 +338,7 @@ class DoiActionsEvaluationFunctionalTest extends MauticMysqlTestCase
                     'glue'       => 'and',
                     'field'      => 'colors', // Select box in complex form
                     'object'     => 'form',
-                    'operator'   => OperatorOptions::IN,
+                    'operator'   => OperatorOptions::INCLUDING_ANY,
                     'properties' => ['filter' => ['red', 'blue']],
                 ],
             ],

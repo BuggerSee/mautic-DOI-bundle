@@ -312,7 +312,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         yield 'Colors select IN with matching value, should skip' => [
             'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['red', 'green']], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::INCLUDING_ANY, 'properties' => ['filter' => ['red', 'green']], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
             ],
             'submissionData' => ['colors' => 'red'],
             'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
@@ -321,7 +321,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         yield 'Colors select IN with non-matching value, should be pending' => [
             'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['red', 'green']], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::INCLUDING_ANY, 'properties' => ['filter' => ['red', 'green']], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
             ],
             'submissionData' => ['colors' => 'blue'],
             'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
@@ -330,7 +330,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         yield 'Colors select NOT_IN with non-matching value, should skip' => [
             'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['red', 'green']], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::EXCLUDING_ANY, 'properties' => ['filter' => ['red', 'green']], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
             ],
             'submissionData' => ['colors' => 'blue'],
             'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
@@ -339,7 +339,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         yield 'Colors select NOT_IN with matching value, should be pending' => [
             'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['red', 'green']], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::EXCLUDING_ANY, 'properties' => ['filter' => ['red', 'green']], 'field' => 'colors', 'type' => 'select', 'object' => 'form'],
             ],
             'submissionData' => ['colors' => 'green'],
             'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
@@ -422,7 +422,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         yield 'Available days multiselect IN with one matching value, should skip' => [
             'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::INCLUDING_ANY, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
             ],
             'submissionData' => ['available_days' => ['tuesday', 'wednesday']],
             'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
@@ -431,7 +431,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         yield 'Available days multiselect IN with multiple matching values, should skip' => [
             'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['monday', 'wednesday', 'friday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::INCLUDING_ANY, 'properties' => ['filter' => ['monday', 'wednesday', 'friday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
             ],
             'submissionData' => ['available_days' => ['monday', 'wednesday']],
             'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
@@ -440,7 +440,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         yield 'Available days multiselect IN with no matching values, should be pending' => [
             'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::INCLUDING_ANY, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
             ],
             'submissionData' => ['available_days' => ['tuesday', 'thursday']],
             'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
@@ -449,7 +449,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         yield 'Available days multiselect NOT_IN with no matching values, should skip' => [
             'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::EXCLUDING_ANY, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
             ],
             'submissionData' => ['available_days' => ['tuesday', 'thursday']],
             'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
@@ -458,7 +458,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         yield 'Available days multiselect NOT_IN with one matching value, should be pending' => [
             'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::EXCLUDING_ANY, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
             ],
             'submissionData' => ['available_days' => ['monday', 'thursday']],
             'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
@@ -467,7 +467,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         yield 'Available days multiselect NOT_IN with all matching values, should be pending' => [
             'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::EXCLUDING_ANY, 'properties' => ['filter' => ['monday', 'wednesday']], 'field' => 'available_days', 'type' => 'select', 'object' => 'form'],
             ],
             'submissionData' => ['available_days' => ['monday', 'wednesday']],
             'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
@@ -488,7 +488,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
         yield 'Checkbox IN rule where one submitted value matches, should skip' => [
             'skipConditions' => [
                 // Skips if submitted interests include 'tech' OR 'sales'
-                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::INCLUDING_ANY, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
             ],
             // user submits 'marketing' and 'tech'
             'submissionData' => ['interests' => ['marketing', 'tech']],
@@ -499,7 +499,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
         yield 'Checkbox IN rule where no submitted values match, should be pending' => [
             'skipConditions' => [
                 // Skips if submitted interests include 'tech' OR 'sales'
-                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::INCLUDING_ANY, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
             ],
             // user only submits 'marketing'
             'submissionData' => ['interests' => ['marketing']],
@@ -511,7 +511,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
         yield 'Checkbox NOT IN rule where no submitted values match, should skip' => [
             'skipConditions' => [
                 // Skips if submitted interests DO NOT include 'tech' OR 'sales'
-                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::EXCLUDING_ANY, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
             ],
             // user only submits 'marketing'
             'submissionData' => ['interests' => ['marketing']],
@@ -522,7 +522,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
         yield 'Checkbox NOT IN rule where one submitted value matches, should be pending' => [
             'skipConditions' => [
                 // Skips if submitted interests DO NOT include 'tech' OR 'sales'
-                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::EXCLUDING_ANY, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
             ],
             // user submits 'marketing' and 'tech'
             'submissionData' => ['interests' => ['marketing', 'tech']],
@@ -533,7 +533,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
         yield 'Checkbox NOT IN with an empty submission, should skip' => [
             'skipConditions' => [
                 // Skips if submitted interests DO NOT include 'tech' OR 'sales'
-                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::EXCLUDING_ANY, 'properties' => ['filter' => ['tech', 'sales']], 'field' => 'interests', 'type' => 'checkboxgrp', 'object' => 'form'],
             ],
             // user does not check any boxes
             'submissionData' => ['interests' => []],
@@ -581,7 +581,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         yield 'Radio group IN with matching value, should skip' => [
             'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['email', 'sms']], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::INCLUDING_ANY, 'properties' => ['filter' => ['email', 'sms']], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
             ],
             'submissionData' => ['contact_preference' => 'email'],
             'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
@@ -590,7 +590,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         yield 'Radio group IN with non-matching value, should be pending' => [
             'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::IN, 'properties' => ['filter' => ['email', 'sms']], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::INCLUDING_ANY, 'properties' => ['filter' => ['email', 'sms']], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
             ],
             'submissionData' => ['contact_preference' => 'phone'],
             'expectedStatus' => FormDoiSubmission::STATUS_PENDING,
@@ -599,7 +599,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         yield 'Radio group NOT_IN with non-matching value, should skip' => [
             'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['email', 'sms']], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::EXCLUDING_ANY, 'properties' => ['filter' => ['email', 'sms']], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
             ],
             'submissionData' => ['contact_preference' => 'phone'],
             'expectedStatus' => FormDoiSubmission::STATUS_SKIPPED,
@@ -608,7 +608,7 @@ class DoiSkipConditionsFunctionalTest extends MauticMysqlTestCase
 
         yield 'Radio group NOT_IN with matching value, should be pending' => [
             'skipConditions' => [
-                ['glue' => 'and', 'operator' => OperatorOptions::NOT_IN, 'properties' => ['filter' => ['email', 'sms']], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
+                ['glue' => 'and', 'operator' => OperatorOptions::EXCLUDING_ANY, 'properties' => ['filter' => ['email', 'sms']], 'field' => 'contact_preference', 'type' => 'radiogrp', 'object' => 'form'],
             ],
             'submissionData' => ['contact_preference' => 'sms'],
             'expectedStatus' => FormDoiSubmission::STATUS_PENDING,

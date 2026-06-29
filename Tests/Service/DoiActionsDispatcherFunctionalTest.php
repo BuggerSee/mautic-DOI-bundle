@@ -14,6 +14,7 @@ use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mime\Email as MimeEmail;
 
 class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
 {
@@ -146,6 +147,7 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
 
         $messages = $this->getMailerMessagesByToAddress('test@example.com');
         Assert::assertCount(1, $messages);
+        Assert::assertInstanceOf(MimeEmail::class, $messages[0]);
         Assert::assertStringContainsString('Test Email for Lead', $messages[0]->getSubject());
     }
 

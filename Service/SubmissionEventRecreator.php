@@ -73,7 +73,7 @@ class SubmissionEventRecreator
                             }
                         }
 
-                        // Re-index keys to be sequential (0, 1, 2...).
+                        // @phpstan-ignore-next-line Re-index keys to be sequential (0, 1, 2...).
                         $finalValue = array_values($matchedValues);
                     }
                 }
