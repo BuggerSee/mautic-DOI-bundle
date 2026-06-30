@@ -60,7 +60,7 @@ class SubmissionEventRecreator
                         $validOptionValues = array_column($optionsList, 'value');
 
                         // Sort valid options by string length, descending.
-                        usort($validOptionValues, fn ($a, $b) => strlen($b) <=> strlen($a));
+                        usort($validOptionValues, fn ($a, $b): int => strlen($b) <=> strlen($a));
 
                         $matchedValues   = [];
                         $remainingStr    = $leadValue;
@@ -73,7 +73,7 @@ class SubmissionEventRecreator
                             }
                         }
 
-                        // Re-index keys to be sequential (0, 1, 2...).
+                        // @phpstan-ignore-next-line Re-index keys to be sequential (0, 1, 2...).
                         $finalValue = array_values($matchedValues);
                     }
                 }

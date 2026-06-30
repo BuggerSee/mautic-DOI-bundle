@@ -15,6 +15,7 @@ use PHPUnit\Framework\Assert;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Mime\Email as MimeEmail;
 
 class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
 {
@@ -54,7 +55,8 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         // Verify email was sent with correct DOI token
         $messages = $this->getMailerMessagesByToAddress('old@example.com');
         Assert::assertCount(1, $messages, 'Should have exactly one follow-up email sent');
-        $message  = $messages[0];
+        $message = $messages[0];
+        Assert::assertInstanceOf(MimeEmail::class, $message);
         $htmlBody = $message->getHtmlBody();
 
         $doiLinkPattern = '/https?:\/\/[^\/]+\/email\/verify\/([A-Za-z0-9+\/=]+)/';
@@ -103,11 +105,13 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         // Extract DOI tokens from both emails
         $doiLinkPattern = '/https?:\/\/[^\/]+\/email\/verify\/([A-Za-z0-9+\/=]+)/';
 
+        Assert::assertInstanceOf(MimeEmail::class, $messages1[0]);
         $htmlBody1 = $messages1[0]->getHtmlBody();
         preg_match($doiLinkPattern, $htmlBody1, $matches1);
         Assert::assertNotEmpty($matches1, 'DOI link should be present in contact 1 email');
         $token1 = $matches1[1];
 
+        Assert::assertInstanceOf(MimeEmail::class, $messages2[0]);
         $htmlBody2 = $messages2[0]->getHtmlBody();
         preg_match($doiLinkPattern, $htmlBody2, $matches2);
         Assert::assertNotEmpty($matches2, 'DOI link should be present in contact 2 email');
@@ -170,7 +174,7 @@ class SendFollowUpCommandFunctionalTest extends MauticMysqlTestCase
         $notReadySubmission = $this->formFixtureHelper->createDoiSubmission($form, 'notready@example.com', new \DateTime('-23 hours'));
         $readySubmission    = $this->formFixtureHelper->createDoiSubmission($form, 'ready@example.com', new \DateTime('-25 hours'));
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:doi:send-followup');
+        $this->testSymfonyCommand('leuchtfeuer:doi:send-followup');
 
         $this->em->refresh($notReadySubmission);
         $this->em->refresh($readySubmission);

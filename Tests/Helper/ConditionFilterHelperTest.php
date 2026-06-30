@@ -10,12 +10,11 @@ use PHPUnit\Framework\TestCase;
 class ConditionFilterHelperTest extends TestCase
 {
     /**
-     * @dataProvider provideFilterByExistingFormFieldsData
-     *
      * @param array<string>                         $fieldAliases
      * @param array<int, array<string, mixed>>|null $conditions
      * @param array<int, array<string, mixed>>|null $expected
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('provideFilterByExistingFormFieldsData')]
     public function testFilterByExistingFormFields(string $message, array $fieldAliases, ?array $conditions, ?array $expected): void
     {
         $result = ConditionFilterHelper::filterByExistingFormFields($fieldAliases, $conditions);

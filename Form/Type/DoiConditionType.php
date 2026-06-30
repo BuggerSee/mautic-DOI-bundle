@@ -52,7 +52,7 @@ class DoiConditionType extends AbstractType
         $formModifier = function (FormEvent $event) use ($fieldChoices): void {
             $data        = (array) $event->getData();
             $form        = $event->getForm();
-            $fieldAlias  = $data['field'] ?? null;
+            $fieldAlias  = $data['field'] ?? '';
             $fieldObject = $data['object'] ?? 'lead';
             $field       = $fieldChoices[$fieldObject][$fieldAlias] ?? null;
             $operators   = $field['operators'] ?? [];

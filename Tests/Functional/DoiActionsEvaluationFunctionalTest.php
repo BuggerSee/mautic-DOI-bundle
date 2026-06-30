@@ -38,14 +38,13 @@ class DoiActionsEvaluationFunctionalTest extends MauticMysqlTestCase
     }
 
     /**
-     * @dataProvider conditionsDataProvider
-     *
      * @param array<mixed>|null    $conditions    The conditions definition
      * @param array<string, mixed> $leadData      Profile data to pre-fill on the contact
      * @param array<string, mixed> $companyData   Company data (if any)
      * @param array<string, mixed> $formData      The submitted form values
      * @param bool                 $shouldExecute Whether we expect the DOI Action (Add to Segment) to run after verification
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('conditionsDataProvider')]
     public function testConditionalDoiActionExecution(
         ?array $conditions,
         array $leadData,
@@ -136,7 +135,7 @@ class DoiActionsEvaluationFunctionalTest extends MauticMysqlTestCase
 
         $formElement->setValues($mauticFormValues);
         $this->client->submit($formElement);
-        Assert::assertTrue($this->client->getResponse()->isOk());
+        self::assertResponseIsSuccessful();
 
         // 7. Verify Submission and Retrieve DOI details
         /** @var FormDoiSubmission|null $doiSubmission */
@@ -338,7 +337,7 @@ class DoiActionsEvaluationFunctionalTest extends MauticMysqlTestCase
                     'glue'       => 'and',
                     'field'      => 'colors', // Select box in complex form
                     'object'     => 'form',
-                    'operator'   => OperatorOptions::IN,
+                    'operator'   => OperatorOptions::INCLUDING_ANY,
                     'properties' => ['filter' => ['red', 'blue']],
                 ],
             ],

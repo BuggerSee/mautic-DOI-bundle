@@ -13,7 +13,7 @@ use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\FormFixtureHelper;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\PluginFixtureHelper;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mime\Email as MimeEmail;
 
 class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
 {
@@ -146,6 +146,7 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
 
         $messages = $this->getMailerMessagesByToAddress('test@example.com');
         Assert::assertCount(1, $messages);
+        Assert::assertInstanceOf(MimeEmail::class, $messages[0]);
         Assert::assertStringContainsString('Test Email for Lead', $messages[0]->getSubject());
     }
 
@@ -161,7 +162,7 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
         $formElement = $formCrawler->form();
         $formElement->setValues($formData);
         $this->client->submit($formElement);
-        $this->assertTrue($this->client->getResponse()->isOk());
+        $this->assertResponseIsSuccessful();
 
         $submissions = $this->em->getRepository(Submission::class)->findAll();
         Assert::assertCount(1, $submissions);
@@ -187,8 +188,8 @@ class DoiActionsDispatcherFunctionalTest extends MauticMysqlTestCase
         $token     = base64_encode($tokenData);
 
         $this->client->request(Request::METHOD_GET, "/email/verify/{$token}");
-        $response = $this->client->getResponse();
-        $this->assertSame(Response::HTTP_OK, $response->getStatusCode());
+        $this->client->getResponse();
+        $this->assertResponseIsSuccessful();
     }
 
     /**

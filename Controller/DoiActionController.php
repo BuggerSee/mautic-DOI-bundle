@@ -12,6 +12,7 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class DoiActionController extends AbstractStandardFormController
 {
@@ -120,7 +121,7 @@ class DoiActionController extends AbstractStandardFormController
         FormModel $formModel): JsonResponse|Response
     {
         $method     = $request->getMethod();
-        $formaction = $request->request->get('formaction') ?? [];
+        $formaction = $request->request->all()['formaction'] ?? [];
         $formId     = Request::METHOD_POST === $method ? ($formaction['formId'] ?? '') : $request->query->get('formId');
         $actions    = $formDoiActionSessionManager->getActionsFromSession($formId);
         $valid      = $cancelled      = false;
@@ -234,7 +235,7 @@ class DoiActionController extends AbstractStandardFormController
         if (!$request->isXmlHttpRequest()
             || !$this->security->isGranted(['form:forms:editown', 'form:forms:editother', 'form:forms:create'], 'MATCH_ONE')
         ) {
-            return $this->accessDenied();
+            throw new AccessDeniedHttpException($this->translator->trans('mautic.core.url.error.401', ['%url%' => $request->getRequestUri()]));
         }
 
         $formAction = (array_key_exists($objectId, $actions)) ? $actions[$objectId] : null;

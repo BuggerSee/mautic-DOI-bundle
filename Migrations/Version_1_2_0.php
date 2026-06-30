@@ -12,6 +12,7 @@ use MauticPlugin\LeuchtfeuerDoiBundle\Helper\MigrationHelper;
 class Version_1_2_0 extends AbstractMigration
 {
     private string $conditionsTable = 'form_doi_actions_conditions';
+
     private string $logsTable       = 'form_doi_action_execution_logs';
 
     private Schema $schema;

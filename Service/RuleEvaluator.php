@@ -65,11 +65,7 @@ class RuleEvaluator
         }
 
         // Validate the email address matches
-        if ($submission->getEmail() !== $email) {
-            return false;
-        }
-
-        return true;
+        return $submission->getEmail() === $email;
     }
 
     public function shouldSkipBasedOnConditions(FormDoiConfig $config, Submission $submission, Lead $contact): bool
@@ -218,7 +214,7 @@ class RuleEvaluator
             case OperatorOptions::NOT_EMPTY:
                 return !empty($actualValue);
 
-            case OperatorOptions::IN:
+            case OperatorOptions::INCLUDING_ANY:
                 if (!is_array($filterValue)) {
                     return false;
                 }
@@ -232,7 +228,7 @@ class RuleEvaluator
                 // Return true if any of the actual values are in the filter list
                 return !empty(array_intersect($actualValuesLower, $filterValuesLower));
 
-            case OperatorOptions::NOT_IN:
+            case OperatorOptions::EXCLUDING_ANY:
                 if (!is_array($filterValue)) {
                     return true;
                 }

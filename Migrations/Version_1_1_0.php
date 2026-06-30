@@ -11,6 +11,7 @@ use Mautic\IntegrationsBundle\Migration\AbstractMigration;
 class Version_1_1_0 extends AbstractMigration
 {
     private string $formDoiSubmissionsTable = 'form_doi_submissions';
+
     private string $formDoiConfigTable      = 'form_doi_config';
 
     private Schema $schema;

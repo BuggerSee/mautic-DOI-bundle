@@ -221,4 +221,69 @@ class DoiSkippedSubmitActionFunctionalTest extends MauticMysqlTestCase
         Assert::assertArrayHasKey('successMessage', $postMessagePayload, 'The "successMessage" key should be present.');
         Assert::assertSame(self::CUSTOM_MESSAGE, $postMessagePayload['successMessage'], 'The success message should be the custom skip message.');
     }
+
+    /**
+     * Verifies that the custom "skip action" hideform hides the form and displays the configured message
+     * when a known contact submits the form via AJAX.
+     */
+    public function testSkipActionHidesFormWithCustomMessage(): void
+    {
+        // 1. Arrange
+        $email = 'hideform-test@example.com';
+
+        /** @var Form $form */
+        $form = $this->formFixtureHelper->createFormViaApi('Test Skip Hide Form');
+        $form->setIsPublished(true);
+        // Default action is a message
+        $form->setPostAction('message');
+        $form->setPostActionProperty(self::STANDARD_MESSAGE);
+        $this->em->flush();
+
+        $this->formFixtureHelper->createDoiConfig(
+            form: $form,
+            // But the skip action is hideform
+            skipPostAction: 'hideform',
+            skipPostActionProperty: self::CUSTOM_MESSAGE,
+            skipConditions: self::SKIP_CONDITIONS,
+        );
+
+        // 2. Act (Phase 2): Submit the form via AJAX
+        $payload = [
+            'mauticform' => [
+                'email'     => $email,
+                'formId'    => $form->getId(),
+                'formName'  => $form->getAlias(),
+                'messenger' => 1,
+            ],
+        ];
+        $this->client->request(Request::METHOD_POST, "/form/submit?formId={$form->getId()}", $payload);
+        $response = $this->client->getResponse();
+        $content  = $response->getContent();
+
+        // 3. Assert
+        Assert::assertTrue($response->isOk(), 'Response should be successful.');
+        Assert::assertFalse($response->isRedirect(), 'Response should not be an HTTP redirect.');
+
+        // For AJAX requests, Mautic returns HTML with a postMessage script. We need to parse the JSON from it.
+        preg_match('/parent\\.postMessage\\("(.+)",/U', $content, $matches);
+        Assert::assertArrayHasKey(1, $matches, 'Could not find postMessage payload in the response.');
+
+        // The captured group is a string-escaped JSON payload with Unicode sequences (\uXXXX).
+        // To correctly decode it, we perform a two-step process.
+        // 1. Wrap the string in quotes to make it a valid JSON string literal.
+        $jsonStringLiteral = '"'.$matches[1].'"';
+
+        // 2. The first decode resolves the Unicode sequences (e.g., \u007B -> {) into a single string.
+        $decodedJsonString = json_decode($jsonStringLiteral);
+        Assert::assertIsString($decodedJsonString, 'First JSON decode should result in a string.');
+
+        // 3. The second decode parses the now-valid JSON string into a PHP array.
+        $postMessagePayload = json_decode($decodedJsonString, true);
+        Assert::assertIsArray($postMessagePayload, "The postMessage payload could not be decoded into an array. JSON: {$decodedJsonString}");
+
+        // The core assertion: The hideform action should hide the form and show the custom message.
+        Assert::assertTrue($postMessagePayload['hideform'], 'The "hideform" key should be true.');
+        Assert::assertArrayHasKey('successMessage', $postMessagePayload, 'The "successMessage" key should be present.');
+        Assert::assertSame(self::CUSTOM_MESSAGE, $postMessagePayload['successMessage'], 'The success message should be the custom skip message.');
+    }
 }
