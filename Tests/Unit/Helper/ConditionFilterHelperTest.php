@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Helper;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Unit\Helper;
 
 use MauticPlugin\LeuchtfeuerDoiBundle\Helper\ConditionFilterHelper;
 use PHPUnit\Framework\TestCase;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Service;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Unit\Service;
 
 use Mautic\FormBundle\Entity\Form;
 use Mautic\LeadBundle\Entity\Lead;
