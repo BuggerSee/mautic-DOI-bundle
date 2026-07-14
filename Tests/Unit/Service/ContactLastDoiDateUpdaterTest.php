@@ -85,7 +85,6 @@ class ContactLastDoiDateUpdaterTest extends TestCase
         $submission->setLead($lead);
 
         $reflection = new \ReflectionProperty(FormDoiSubmission::class, 'id');
-        $reflection->setAccessible(true);
         $reflection->setValue($submission, 99);
 
         $this->leadModel->method('setFieldValues')->willThrowException(new \RuntimeException('update failed'));
