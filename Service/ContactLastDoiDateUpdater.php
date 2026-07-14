@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MauticPlugin\LeuchtfeuerDoiBundle\Service;
 
 use Mautic\LeadBundle\Model\LeadModel;
-use MauticPlugin\LeuchtfeuerDoiBundle\Enum\LastDoiDateField;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
+use MauticPlugin\LeuchtfeuerDoiBundle\Enum\LastDoiDateField;
 use Psr\Log\LoggerInterface;
 
 final class ContactLastDoiDateUpdater

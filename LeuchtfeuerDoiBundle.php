@@ -10,8 +10,6 @@ use Mautic\IntegrationsBundle\Bundle\AbstractPluginBundle;
 use Mautic\LeadBundle\Model\FieldModel;
 use Mautic\PluginBundle\Entity\Plugin;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\LastDoiDateFieldInstaller;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 
 class LeuchtfeuerDoiBundle extends AbstractPluginBundle
 {
