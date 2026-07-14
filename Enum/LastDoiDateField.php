@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MauticPlugin\LeuchtfeuerDoiBundle\Doi;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Enum;
 
 final class LastDoiDateField
 {

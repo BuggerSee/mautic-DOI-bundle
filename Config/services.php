@@ -14,7 +14,6 @@ return function (ContainerConfigurator $configurator): void {
         ->public();
 
     $excludes = [
-        'Doi',
         'Enum',
     ];
 

@@ -13,7 +13,7 @@ use Mautic\LeadBundle\Entity\LeadList;
 use Mautic\LeadBundle\Entity\LeadListRepository;
 use Mautic\LeadBundle\Entity\ListLead;
 use Mautic\LeadBundle\Model\FieldModel;
-use MauticPlugin\LeuchtfeuerDoiBundle\Doi\LastDoiDateField;
+use MauticPlugin\LeuchtfeuerDoiBundle\Enum\LastDoiDateField;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\LastDoiDateFieldInstaller;
 use MauticPlugin\LeuchtfeuerDoiBundle\Tests\Fixtures\FormFixtureHelper;

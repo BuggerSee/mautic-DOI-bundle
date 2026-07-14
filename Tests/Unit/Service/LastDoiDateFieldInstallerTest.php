@@ -6,7 +6,7 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Unit\Service;
 
 use Mautic\LeadBundle\Entity\LeadField;
 use Mautic\LeadBundle\Model\FieldModel;
-use MauticPlugin\LeuchtfeuerDoiBundle\Doi\LastDoiDateField;
+use MauticPlugin\LeuchtfeuerDoiBundle\Enum\LastDoiDateField;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\LastDoiDateFieldInstaller;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

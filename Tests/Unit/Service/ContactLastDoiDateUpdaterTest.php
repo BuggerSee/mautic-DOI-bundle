@@ -8,7 +8,7 @@ use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Entity\Submission;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\LeadModel;
-use MauticPlugin\LeuchtfeuerDoiBundle\Doi\LastDoiDateField;
+use MauticPlugin\LeuchtfeuerDoiBundle\Enum\LastDoiDateField;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\ContactLastDoiDateUpdater;
 use PHPUnit\Framework\MockObject\MockObject;

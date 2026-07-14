@@ -6,7 +6,7 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle\Service;
 
 use Mautic\LeadBundle\Entity\LeadField;
 use Mautic\LeadBundle\Model\FieldModel;
-use MauticPlugin\LeuchtfeuerDoiBundle\Doi\LastDoiDateField;
+use MauticPlugin\LeuchtfeuerDoiBundle\Enum\LastDoiDateField;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
