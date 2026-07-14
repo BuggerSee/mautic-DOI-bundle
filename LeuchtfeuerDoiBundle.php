@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerDoiBundle;
 
+use Doctrine\DBAL\Schema\Schema;
 use Mautic\CoreBundle\Factory\MauticFactory;
 use Mautic\IntegrationsBundle\Bundle\AbstractPluginBundle;
 use Mautic\PluginBundle\Entity\Plugin;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\LastDoiDateFieldInstaller;
 
 class LeuchtfeuerDoiBundle extends AbstractPluginBundle
 {
@@ -16,7 +18,16 @@ class LeuchtfeuerDoiBundle extends AbstractPluginBundle
      */
     public static function onPluginInstall(Plugin $plugin, MauticFactory $factory, $metadata = null, $installedSchema = null): void
     {
-        // run DB migrations instead of automatic schema update
         self::onPluginUpdate($plugin, $factory, $metadata);
+    }
+
+    /**
+     * @param array<int, mixed>|null $metadata
+     */
+    public static function onPluginUpdate(Plugin $plugin, MauticFactory $factory, $metadata = null, ?Schema $installedSchema = null): void
+    {
+        parent::onPluginUpdate($plugin, $factory, $metadata, $installedSchema);
+
+        LastDoiDateFieldInstaller::install($factory);
     }
 }
