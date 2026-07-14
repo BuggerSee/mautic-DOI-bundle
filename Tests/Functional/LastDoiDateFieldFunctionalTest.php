@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Functional;
 
-use Mautic\CoreBundle\Factory\MauticFactory;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\FormBundle\Entity\Form;
-use Mautic\FormBundle\Entity\Submission;
 use Mautic\LeadBundle\Command\UpdateLeadListsCommand;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Entity\LeadField;
 use Mautic\LeadBundle\Entity\LeadList;
 use Mautic\LeadBundle\Entity\LeadListRepository;
 use Mautic\LeadBundle\Entity\ListLead;
+use Mautic\LeadBundle\Model\FieldModel;
 use MauticPlugin\LeuchtfeuerDoiBundle\Doi\LastDoiDateField;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\LastDoiDateFieldInstaller;
@@ -36,9 +35,12 @@ class LastDoiDateFieldFunctionalTest extends MauticMysqlTestCase
         $pluginFixtureHelper = new PluginFixtureHelper($this->em);
         $pluginFixtureHelper->createAndEnablePlugin();
 
-        $factory = static::getContainer()->get('mautic.factory');
-        \assert($factory instanceof MauticFactory);
-        LastDoiDateFieldInstaller::install($factory);
+        /** @var FieldModel $fieldModel */
+        $fieldModel = static::getContainer()->get('mautic.lead.model.field');
+        LastDoiDateFieldInstaller::install(
+            $fieldModel,
+            static::getContainer()->get('translator'),
+        );
 
         $this->formFixtureHelper = new FormFixtureHelper($this->em, $this->client);
     }
@@ -76,8 +78,10 @@ class LastDoiDateFieldFunctionalTest extends MauticMysqlTestCase
     public function testLastDoiDateIsOverwrittenOnRepeatVerification(): void
     {
         $formOne = $this->createDoiForm('Last DOI Date Form A');
+        $formTwo = $this->createDoiForm('Last DOI Date Form B');
+
         $this->submitDoiForm($formOne, 'repeat@example.com');
-        $firstSubmission = $this->getLatestDoiSubmission();
+        $firstSubmission = $this->getLatestDoiSubmissionForEmail('repeat@example.com');
         $this->verifyDoiSubmission($formOne, $firstSubmission);
 
         $contact = $firstSubmission->getLead();
@@ -89,9 +93,8 @@ class LastDoiDateFieldFunctionalTest extends MauticMysqlTestCase
 
         sleep(1);
 
-        $formTwo = $this->createDoiForm('Last DOI Date Form B');
         $this->submitDoiForm($formTwo, 'repeat@example.com');
-        $secondSubmission = $this->getLatestDoiSubmission();
+        $secondSubmission = $this->getLatestDoiSubmissionForEmail('repeat@example.com');
         $this->verifyDoiSubmission($formTwo, $secondSubmission);
 
         $this->em->refresh($contact);
@@ -105,12 +108,13 @@ class LastDoiDateFieldFunctionalTest extends MauticMysqlTestCase
 
     public function testLastDoiDateCanBeUsedAsSegmentFilter(): void
     {
-        $verifiedForm = $this->createDoiForm('Segment Verified Form');
+        $verifiedForm   = $this->createDoiForm('Segment Verified Form');
+        $unverifiedForm = $this->createDoiForm('Segment Unverified Form');
+
         $this->submitDoiForm($verifiedForm, 'segment-verified@example.com');
-        $verifiedSubmission = $this->getLatestDoiSubmission();
+        $verifiedSubmission = $this->getLatestDoiSubmissionForEmail('segment-verified@example.com');
         $this->verifyDoiSubmission($verifiedForm, $verifiedSubmission);
 
-        $unverifiedForm = $this->createDoiForm('Segment Unverified Form');
         $this->submitDoiForm($unverifiedForm, 'segment-unverified@example.com');
 
         $segment = new LeadList();
@@ -130,17 +134,26 @@ class LastDoiDateFieldFunctionalTest extends MauticMysqlTestCase
         ]);
         $this->em->persist($segment);
         $this->em->flush();
+        $segmentId = $segment->getId();
 
-        $output = $this->testSymfonyCommand(UpdateLeadListsCommand::NAME, ['-i' => $segment->getId(), '--env' => 'test']);
+        $this->em->clear();
+
+        $output = $this->testSymfonyCommand(UpdateLeadListsCommand::NAME, ['-i' => $segmentId, '--env' => 'test']);
         Assert::assertSame(0, $output->getStatusCode());
+
+        $segment = $this->em->getRepository(LeadList::class)->find($segmentId);
+        Assert::assertInstanceOf(LeadList::class, $segment);
+
+        $verifiedSubmission = $this->em->getRepository(FormDoiSubmission::class)->findOneBy(['email' => 'segment-verified@example.com']);
+        Assert::assertInstanceOf(FormDoiSubmission::class, $verifiedSubmission);
 
         $verifiedContact = $verifiedSubmission->getLead();
         Assert::assertNotNull($verifiedContact);
 
         $listLeadRepository = $this->em->getRepository(ListLead::class);
         Assert::assertNotNull($listLeadRepository->findOneBy([
-            'leadlist' => $segment,
-            'lead'     => $verifiedContact,
+            'list' => $segment,
+            'lead' => $verifiedContact,
         ]));
 
         $unverifiedSubmission = $this->em->getRepository(FormDoiSubmission::class)->findOneBy(['email' => 'segment-unverified@example.com']);
@@ -149,13 +162,13 @@ class LastDoiDateFieldFunctionalTest extends MauticMysqlTestCase
         Assert::assertNotNull($unverifiedContact);
 
         Assert::assertNull($listLeadRepository->findOneBy([
-            'leadlist' => $segment,
-            'lead'     => $unverifiedContact,
+            'list' => $segment,
+            'lead' => $unverifiedContact,
         ]));
 
         /** @var LeadListRepository $leadListRepository */
         $leadListRepository = $this->em->getRepository(LeadList::class);
-        Assert::assertSame('1', $leadListRepository->getLeadCount([$segment->getId()]));
+        Assert::assertSame(1, (int) $leadListRepository->getLeadCount($segment->getId()));
     }
 
     private function createDoiForm(string $name): Form
@@ -180,6 +193,18 @@ class LastDoiDateFieldFunctionalTest extends MauticMysqlTestCase
         $this->client->submit($formElement);
 
         Assert::assertTrue($this->client->getResponse()->isOk());
+    }
+
+    private function getLatestDoiSubmissionForEmail(string $email): FormDoiSubmission
+    {
+        $doiSubmissions = $this->em->getRepository(FormDoiSubmission::class)->findBy(
+            ['email' => $email],
+            ['id' => 'DESC'],
+            1
+        );
+        Assert::assertCount(1, $doiSubmissions);
+
+        return $doiSubmissions[0];
     }
 
     private function getLatestDoiSubmission(): FormDoiSubmission

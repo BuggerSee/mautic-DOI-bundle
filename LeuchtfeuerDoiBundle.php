@@ -7,8 +7,11 @@ namespace MauticPlugin\LeuchtfeuerDoiBundle;
 use Doctrine\DBAL\Schema\Schema;
 use Mautic\CoreBundle\Factory\MauticFactory;
 use Mautic\IntegrationsBundle\Bundle\AbstractPluginBundle;
+use Mautic\LeadBundle\Model\FieldModel;
 use Mautic\PluginBundle\Entity\Plugin;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\LastDoiDateFieldInstaller;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 class LeuchtfeuerDoiBundle extends AbstractPluginBundle
 {
@@ -28,6 +31,30 @@ class LeuchtfeuerDoiBundle extends AbstractPluginBundle
     {
         parent::onPluginUpdate($plugin, $factory, $metadata, $installedSchema);
 
-        LastDoiDateFieldInstaller::install($factory);
+        $fieldModel = $factory->getModel('lead.field');
+        \assert($fieldModel instanceof FieldModel);
+
+        $logger = new NullLogger();
+        foreach (['monolog.logger.mautic', 'logger'] as $serviceId) {
+            if (!$factory->serviceExists($serviceId)) {
+                continue;
+            }
+
+            try {
+                $service = $factory->get($serviceId);
+                if ($service instanceof LoggerInterface) {
+                    $logger = $service;
+                    break;
+                }
+            } catch (\Throwable) {
+                continue;
+            }
+        }
+
+        LastDoiDateFieldInstaller::install(
+            $fieldModel,
+            $factory->getTranslator(),
+            $logger,
+        );
     }
 }

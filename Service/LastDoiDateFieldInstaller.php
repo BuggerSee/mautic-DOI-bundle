@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerDoiBundle\Service;
 
-use Mautic\CoreBundle\Factory\MauticFactory;
 use Mautic\LeadBundle\Entity\LeadField;
 use Mautic\LeadBundle\Model\FieldModel;
 use MauticPlugin\LeuchtfeuerDoiBundle\Doi\LastDoiDateField;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class LastDoiDateFieldInstaller
@@ -20,18 +20,12 @@ final class LastDoiDateFieldInstaller
     ) {
     }
 
-    public static function install(MauticFactory $factory): void
-    {
-        $fieldModel = $factory->getModel('lead.field');
-        \assert($fieldModel instanceof FieldModel);
-
-        $installer = new self(
-            $fieldModel,
-            $factory->getTranslator(),
-            $factory->getLogger(true)
-        );
-
-        $installer->installIfMissing();
+    public static function install(
+        FieldModel $fieldModel,
+        TranslatorInterface $translator,
+        ?LoggerInterface $logger = null,
+    ): void {
+        (new self($fieldModel, $translator, $logger ?? new NullLogger()))->installIfMissing();
     }
 
     public function installIfMissing(): void
