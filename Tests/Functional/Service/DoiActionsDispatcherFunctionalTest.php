@@ -1,6 +1,6 @@
 <?php
 
-namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Service;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Functional\Service;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\FormBundle\Entity\Form;

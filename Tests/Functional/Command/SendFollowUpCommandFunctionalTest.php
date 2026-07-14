@@ -1,6 +1,6 @@
 <?php
 
-namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Command;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Functional\Command;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\EmailBundle\Entity\Email;

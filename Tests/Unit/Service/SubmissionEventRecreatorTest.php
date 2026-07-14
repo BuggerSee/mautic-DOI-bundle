@@ -1,6 +1,6 @@
 <?php
 
-namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Service;
+namespace MauticPlugin\LeuchtfeuerDoiBundle\Tests\Unit\Service;
 
 use Mautic\FormBundle\Entity\Field;
 use Mautic\FormBundle\Entity\Form;
