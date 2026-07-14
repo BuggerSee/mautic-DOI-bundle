@@ -34,27 +34,10 @@ class LeuchtfeuerDoiBundle extends AbstractPluginBundle
         $fieldModel = $factory->getModel('lead.field');
         \assert($fieldModel instanceof FieldModel);
 
-        $logger = new NullLogger();
-        foreach (['monolog.logger.mautic', 'logger'] as $serviceId) {
-            if (!$factory->serviceExists($serviceId)) {
-                continue;
-            }
-
-            try {
-                $service = $factory->get($serviceId);
-                if ($service instanceof LoggerInterface) {
-                    $logger = $service;
-                    break;
-                }
-            } catch (\Throwable) {
-                continue;
-            }
-        }
-
         LastDoiDateFieldInstaller::install(
             $fieldModel,
             $factory->getTranslator(),
-            $logger,
+            $factory->getLogger(),
         );
     }
 }
