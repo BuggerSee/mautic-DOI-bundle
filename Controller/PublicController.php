@@ -10,6 +10,7 @@ use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmission;
 use MauticPlugin\LeuchtfeuerDoiBundle\Entity\FormDoiSubmissionRepository;
 use MauticPlugin\LeuchtfeuerDoiBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerDoiBundle\Model\FormDoiSubmissionManager;
+use MauticPlugin\LeuchtfeuerDoiBundle\Service\ContactLastDoiDateUpdater;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiActionsDispatcher;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiTokenParser;
 use MauticPlugin\LeuchtfeuerDoiBundle\Service\DoiVerificationHistoryRecorder;
@@ -36,6 +37,7 @@ class PublicController extends AbstractController
         private ContactTracker $contactTracker,
         private Config $config,
         private DoiVerificationHistoryRecorder $verificationHistoryRecorder,
+        private ContactLastDoiDateUpdater $contactLastDoiDateUpdater,
     ) {
     }
 
@@ -104,6 +106,7 @@ class PublicController extends AbstractController
 
         $this->submissionManager->save($submission);
         $this->verificationHistoryRecorder->recordSuccess($submission);
+        $this->contactLastDoiDateUpdater->updateFromSubmission($submission);
         $this->doiActionsDispatcher->executePostEmailVerificationActions($submission);
 
         return $this->createSuccessResponseWithCookie($submission, $browserProofToken, $request);
