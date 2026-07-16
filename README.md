@@ -103,6 +103,7 @@ Feel free to open issues or submit pull requests on [GitHub](#). Follow the cont
 ## Credits
 @patrykgruszka
 @biozshock
+@hluchas
 
 ## Author
 Leuchtfeuer Digital Marketing GmbH
